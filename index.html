@@ -619,6 +619,14 @@
       }
 
       /* ---------- reference + song builder ---------- */
+      .ref-key-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem 1.25rem;
+        align-items: center;
+        justify-content: space-between;
+      }
+
       .numeral {
         color: var(--faint);
         font-size: 0.72rem;
@@ -1007,48 +1015,33 @@
               </div>
             </div>
 
-            <!-- ============= chord reference ============= -->
-            <div class="tool-card">
+            <!-- ============= song builder (with chord reference) ============= -->
+            <div class="tool-card wide">
               <div class="tool-head">
-                <h3 class="tool-title">Chord reference</h3>
-                <span class="tool-meta">click a chord to add it to the builder</span>
+                <h3 class="tool-title">Song builder</h3>
+                <span class="tool-meta">pick a key · click chords · loop until stopped</span>
               </div>
 
               <div class="drone-block">
                 <p class="drone-label" id="ref-roots-label">key</p>
-                <div class="qual-row" id="ref-roots" role="group" aria-labelledby="ref-roots-label"></div>
+                <div class="ref-key-row">
+                  <div class="qual-row" id="ref-roots" role="group" aria-labelledby="ref-roots-label"></div>
+                  <div class="tool-row">
+                    <button class="ghost-btn" id="ref-major" type="button" aria-pressed="true">major</button>
+                    <button class="ghost-btn" id="ref-minor" type="button" aria-pressed="false">minor</button>
+                  </div>
+                </div>
               </div>
 
-              <div class="drone-block tool-row">
-                <button class="ghost-btn" id="ref-major" type="button" aria-pressed="true">major</button>
-                <button class="ghost-btn" id="ref-minor" type="button" aria-pressed="false">minor</button>
+              <div class="drone-block">
+                <p class="drone-label" id="ref-chords-label">chords in key — click to add to the sequence</p>
+                <p class="tool-status" id="ref-scale" aria-live="polite"></p>
+                <div class="qual-row" id="ref-chords"></div>
               </div>
 
-              <p class="tool-status" id="ref-scale" aria-live="polite"></p>
-              <div class="qual-row" id="ref-chords"></div>
-            </div>
-
-            <!-- ============= song builder ============= -->
-            <div class="tool-card">
-              <div class="tool-head">
-                <h3 class="tool-title">Song builder</h3>
-                <span class="tool-meta">sequence · loops until stopped</span>
-              </div>
-
-              <div class="seq-area" id="seq-area"></div>
-
-              <div class="bpm-row">
-                <div class="bpm-value"><span id="song-bpm-num">80</span><small>BPM</small></div>
-                <input
-                  class="bpm-slider"
-                  id="song-bpm"
-                  type="range"
-                  min="60"
-                  max="200"
-                  step="1"
-                  value="80"
-                  aria-label="Song tempo in beats per minute"
-                />
+              <div class="drone-block">
+                <p class="drone-label" id="seq-label">sequence</p>
+                <div class="seq-area" id="seq-area"></div>
               </div>
 
               <div class="metro-controls">
@@ -1057,10 +1050,24 @@
                   <option value="2">2 beats</option>
                   <option value="4" selected>4 beats</option>
                   <option value="8">8 beats</option>
+                  <option value="16">16 beats</option>
                 </select>
+                <div class="bpm-row">
+                  <div class="bpm-value"><span id="song-bpm-num">80</span><small>BPM</small></div>
+                  <input
+                    class="bpm-slider"
+                    id="song-bpm"
+                    type="range"
+                    min="60"
+                    max="200"
+                    step="1"
+                    value="80"
+                    aria-label="Song tempo in beats per minute"
+                  />
+                </div>
                 <button class="play-btn" id="song-btn" type="button" aria-pressed="false">▶ play loop</button>
               </div>
-              <p class="tool-status" id="song-status" aria-live="polite">no chords yet — click chords from the reference</p>
+              <p class="tool-status" id="song-status" aria-live="polite">no chords yet — click chords from above</p>
             </div>
           </div>
         </section>
@@ -1771,7 +1778,7 @@
           if (!seq.length) {
             const p = document.createElement("p");
             p.className = "tool-status";
-            p.textContent = "no chords yet — click chords from the reference";
+            p.textContent = "no chords yet — click chords from above";
             seqArea.appendChild(p);
             return;
           }
@@ -1794,7 +1801,7 @@
               if (!songPlaying) {
                 songStatus.textContent = seq.length
                   ? seq.length + " chord" + (seq.length > 1 ? "s" : "") + " in the sequence"
-                  : "no chords yet — click chords from the reference";
+                  : "no chords yet — click chords from above";
               }
             });
             chip.appendChild(x);
@@ -1825,7 +1832,7 @@
 
         function playSong() {
           if (!seq.length) {
-            songStatus.textContent = "add some chords first — click them in the chord reference";
+            songStatus.textContent = "add some chords first — click them from the chords in key";
             return;
           }
           const ctx = ensureAudio();
@@ -1852,7 +1859,7 @@
           renderSeq();
           songStatus.textContent = seq.length
             ? "stopped — " + seq.length + " chord" + (seq.length > 1 ? "s" : "") + " in the sequence"
-            : "no chords yet — click chords from the reference";
+            : "no chords yet — click chords from above";
         }
 
         songBtn.addEventListener("click", () => (songPlaying ? stopSong() : playSong()));
