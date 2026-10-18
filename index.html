@@ -1040,12 +1040,12 @@
               </div>
 
               <div class="drone-block">
-                <p class="drone-label" id="seq-label">sequence</p>
+                <p class="drone-label" id="seq-label">sequence — click a chord to change its length</p>
                 <div class="seq-area" id="seq-area"></div>
               </div>
 
               <div class="metro-controls">
-                <select class="time-sig" id="beats-per-chord" aria-label="Beats per chord">
+                <select class="time-sig" id="beats-per-chord" aria-label="Default beats for newly added chords">
                   <option value="1">1 beat</option>
                   <option value="2">2 beats</option>
                   <option value="4" selected>4 beats</option>
@@ -1773,6 +1773,8 @@
 
         /* ---------- song builder ---------- */
 
+        const BEAT_STEPS = [1, 2, 4, 8, 16];
+
         function renderSeq() {
           seqArea.innerHTML = "";
           if (!seq.length) {
@@ -1783,15 +1785,26 @@
             return;
           }
           seq.forEach((c, i) => {
-            const chip = document.createElement("span");
+            const chip = document.createElement("button");
+            chip.type = "button";
             chip.className = "qual-btn seq-chip" + (songPlaying && i === songIdx ? " active" : "");
-            chip.textContent = chordName(c.root, c.quality);
-            const x = document.createElement("button");
-            x.type = "button";
-            x.className = "seq-x";
-            x.textContent = "×";
-            x.setAttribute("aria-label", "Remove " + chordName(c.root, c.quality));
-            x.addEventListener("click", () => {
+            chip.textContent = chordName(c.root, c.quality) + " · " + c.beats;
+            chip.title = "click to change this chord's length (beats)";
+            chip.setAttribute(
+              "aria-label",
+              chordName(c.root, c.quality) + ", " + c.beats + " beats — click to change length"
+            );
+            chip.addEventListener("click", () => {
+              c.beats = BEAT_STEPS[(BEAT_STEPS.indexOf(c.beats) + 1) % BEAT_STEPS.length];
+              renderSeq();
+            });
+            const rm = document.createElement("button");
+            rm.type = "button";
+            rm.className = "seq-x";
+            rm.textContent = "×";
+            rm.setAttribute("aria-label", "Remove " + chordName(c.root, c.quality));
+            rm.addEventListener("click", (e) => {
+              e.stopPropagation();
               seq.splice(i, 1);
               if (songPlaying && !seq.length) stopSong();
               else {
@@ -1804,13 +1817,13 @@
                   : "no chords yet — click chords from above";
               }
             });
-            chip.appendChild(x);
+            chip.appendChild(rm);
             seqArea.appendChild(chip);
           });
         }
 
         function addChip(root, quality) {
-          seq.push({ root, quality });
+          seq.push({ root, quality, beats: parseInt(beatsSel.value, 10) });
           renderSeq();
           if (!songPlaying) {
             songStatus.textContent =
@@ -1825,8 +1838,9 @@
           renderSeq();
           songStatus.textContent =
             "playing " + chordName(seq[i].root, seq[i].quality) +
+            " · " + seq[i].beats + " beats" +
             " (" + (i + 1) + " of " + seq.length + ") · looping";
-          const ms = (parseInt(beatsSel.value, 10) * 60000) / parseInt(songBpmSlider.value, 10);
+          const ms = (seq[i].beats * 60000) / parseInt(songBpmSlider.value, 10);
           songTimer = setTimeout(() => playChord((songIdx + 1) % seq.length), ms);
         }
 
