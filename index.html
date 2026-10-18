@@ -618,6 +618,45 @@
         background: rgba(245, 182, 70, 0.08);
       }
 
+      /* ---------- reference + song builder ---------- */
+      .numeral {
+        color: var(--faint);
+        font-size: 0.72rem;
+        margin-left: 0.3rem;
+      }
+
+      .seq-area {
+        min-height: 3.6rem;
+        border: 1px dashed rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        padding: 0.6rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        align-content: flex-start;
+      }
+
+      .seq-chip {
+        display: inline-flex;
+        align-items: center;
+        cursor: default;
+      }
+
+      .seq-x {
+        margin-left: 0.45rem;
+        background: none;
+        border: 0;
+        color: var(--faint);
+        font-size: 0.95rem;
+        line-height: 1;
+        padding: 0;
+        cursor: pointer;
+      }
+
+      .seq-x:hover {
+        color: var(--rec);
+      }
+
       /* ---------- setlist ---------- */
       .setlist-wrap {
         margin-top: clamp(2rem, 5vh, 3rem);
@@ -966,6 +1005,62 @@
                 <p class="tool-status" id="drone-status" aria-live="polite"></p>
                 <button class="play-btn" id="drone-btn" type="button" aria-pressed="false">▶ start drone</button>
               </div>
+            </div>
+
+            <!-- ============= chord reference ============= -->
+            <div class="tool-card">
+              <div class="tool-head">
+                <h3 class="tool-title">Chord reference</h3>
+                <span class="tool-meta">click a chord to add it to the builder</span>
+              </div>
+
+              <div class="drone-block">
+                <p class="drone-label" id="ref-roots-label">key</p>
+                <div class="qual-row" id="ref-roots" role="group" aria-labelledby="ref-roots-label"></div>
+              </div>
+
+              <div class="drone-block tool-row">
+                <button class="ghost-btn" id="ref-major" type="button" aria-pressed="true">major</button>
+                <button class="ghost-btn" id="ref-minor" type="button" aria-pressed="false">minor</button>
+              </div>
+
+              <p class="tool-status" id="ref-scale" aria-live="polite"></p>
+              <div class="qual-row" id="ref-chords"></div>
+            </div>
+
+            <!-- ============= song builder ============= -->
+            <div class="tool-card">
+              <div class="tool-head">
+                <h3 class="tool-title">Song builder</h3>
+                <span class="tool-meta">sequence · loops until stopped</span>
+              </div>
+
+              <div class="seq-area" id="seq-area"></div>
+
+              <div class="bpm-row">
+                <div class="bpm-value"><span id="song-bpm-num">80</span><small>BPM</small></div>
+                <input
+                  class="bpm-slider"
+                  id="song-bpm"
+                  type="range"
+                  min="60"
+                  max="200"
+                  step="1"
+                  value="80"
+                  aria-label="Song tempo in beats per minute"
+                />
+              </div>
+
+              <div class="metro-controls">
+                <select class="time-sig" id="beats-per-chord" aria-label="Beats per chord">
+                  <option value="1">1 beat</option>
+                  <option value="2">2 beats</option>
+                  <option value="4" selected>4 beats</option>
+                  <option value="8">8 beats</option>
+                </select>
+                <button class="play-btn" id="song-btn" type="button" aria-pressed="false">▶ play loop</button>
+              </div>
+              <p class="tool-status" id="song-status" aria-live="polite">no chords yet — click chords from the reference</p>
             </div>
           </div>
         </section>
@@ -1469,14 +1564,14 @@
             chordLabel() + " — " + chordNotesText() + (dronePlaying ? " · droning" : "");
         }
 
-        function buildVoices() {
+        function buildVoices(rootIdx, quality) {
           const ctx = audioCtx;
-          const root = DRONE_ROOTS[droneRoot];
+          const root = DRONE_ROOTS[rootIdx];
           const now = ctx.currentTime;
           // voicing: sub-octave root for body, every chord tone doubled an
           // octave up, and the root two octaves up as a quiet sheen
           const specs = [{ f: root.freq / 2, level: 0.08 }];
-          CHORDS[droneQuality].forEach((s) => {
+          CHORDS[quality].forEach((s) => {
             const f = root.freq * Math.pow(2, s / 12);
             specs.push({ f, level: 0.1 }, { f: f * 2, level: 0.045 });
           });
@@ -1519,7 +1614,7 @@
           }
           ctx.resume().then(() => {
             ensureDrone();
-            droneVoices = buildVoices();
+            droneVoices = buildVoices(droneRoot, droneQuality);
             dronePlaying = true;
             droneBtn.setAttribute("aria-pressed", "true");
             droneBtn.textContent = "■ stop drone";
@@ -1549,7 +1644,7 @@
             [...droneRootsEl.children].forEach((c, j) => c.classList.toggle("active", j === i));
             if (dronePlaying) {
               releaseVoices(droneVoices);
-              droneVoices = buildVoices();
+              droneVoices = buildVoices(droneRoot, droneQuality);
             }
             updateDroneStatus();
           });
@@ -1568,7 +1663,7 @@
             );
             if (dronePlaying) {
               releaseVoices(droneVoices);
-              droneVoices = buildVoices();
+              droneVoices = buildVoices(droneRoot, droneQuality);
             }
             updateDroneStatus();
           });
@@ -1576,6 +1671,198 @@
         });
 
         updateDroneStatus();
+
+        /* ============ CHORD REFERENCE + SONG BUILDER ============ */
+
+        const DEGREES = {
+          major: [
+            { s: 0, q: "maj", r: "I" },
+            { s: 2, q: "min", r: "ii" },
+            { s: 4, q: "min", r: "iii" },
+            { s: 5, q: "maj", r: "IV" },
+            { s: 7, q: "maj", r: "V" },
+            { s: 9, q: "min", r: "vi" },
+            { s: 11, q: "dim", r: "vii°" },
+          ],
+          minor: [
+            { s: 0, q: "min", r: "i" },
+            { s: 2, q: "dim", r: "ii°" },
+            { s: 3, q: "maj", r: "III" },
+            { s: 5, q: "min", r: "iv" },
+            { s: 7, q: "min", r: "v" },
+            { s: 8, q: "maj", r: "VI" },
+            { s: 10, q: "maj", r: "VII" },
+          ],
+        };
+
+        const refRootsEl = document.getElementById("ref-roots");
+        const refChordsEl = document.getElementById("ref-chords");
+        const refScaleEl = document.getElementById("ref-scale");
+        const refMajorBtn = document.getElementById("ref-major");
+        const refMinorBtn = document.getElementById("ref-minor");
+        const seqArea = document.getElementById("seq-area");
+        const songBtn = document.getElementById("song-btn");
+        const songStatus = document.getElementById("song-status");
+        const songBpmSlider = document.getElementById("song-bpm");
+        const songBpmNum = document.getElementById("song-bpm-num");
+        const beatsSel = document.getElementById("beats-per-chord");
+
+        let refRoot = 8; // C
+        let refMode = "major";
+        let seq = [];
+        let songPlaying = false;
+        let songIdx = 0;
+        let songVoices = [];
+        let songTimer = null;
+
+        function chordName(root, quality) {
+          return DRONE_ROOTS[root].name + CHORD_SUFFIX[quality];
+        }
+
+        function renderRef() {
+          [...refRootsEl.children].forEach((c, j) =>
+            c.classList.toggle("active", j === refRoot)
+          );
+          refMajorBtn.setAttribute("aria-pressed", String(refMode === "major"));
+          refMinorBtn.setAttribute("aria-pressed", String(refMode === "minor"));
+          const degs = DEGREES[refMode];
+          refScaleEl.textContent =
+            refMode + " scale in " + DRONE_ROOTS[refRoot].name + " — " +
+            degs.map((d) => NOTE_NAMES[(40 + refRoot + d.s) % 12]).join(" ");
+          refChordsEl.innerHTML = "";
+          degs.forEach((d) => {
+            const rootIdx = (refRoot + d.s) % 12;
+            const name = chordName(rootIdx, d.q);
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "qual-btn";
+            b.innerHTML = name + '<span class="numeral">' + d.r + "</span>";
+            b.setAttribute("aria-label", "Add " + name + " to the sequence");
+            b.addEventListener("click", () => addChip(rootIdx, d.q));
+            refChordsEl.appendChild(b);
+          });
+        }
+
+        DRONE_ROOTS.forEach((r, i) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "qual-btn";
+          b.textContent = r.name;
+          b.addEventListener("click", () => {
+            refRoot = i;
+            renderRef();
+          });
+          refRootsEl.appendChild(b);
+        });
+
+        refMajorBtn.addEventListener("click", () => {
+          refMode = "major";
+          renderRef();
+        });
+        refMinorBtn.addEventListener("click", () => {
+          refMode = "minor";
+          renderRef();
+        });
+
+        /* ---------- song builder ---------- */
+
+        function renderSeq() {
+          seqArea.innerHTML = "";
+          if (!seq.length) {
+            const p = document.createElement("p");
+            p.className = "tool-status";
+            p.textContent = "no chords yet — click chords from the reference";
+            seqArea.appendChild(p);
+            return;
+          }
+          seq.forEach((c, i) => {
+            const chip = document.createElement("span");
+            chip.className = "qual-btn seq-chip" + (songPlaying && i === songIdx ? " active" : "");
+            chip.textContent = chordName(c.root, c.quality);
+            const x = document.createElement("button");
+            x.type = "button";
+            x.className = "seq-x";
+            x.textContent = "×";
+            x.setAttribute("aria-label", "Remove " + chordName(c.root, c.quality));
+            x.addEventListener("click", () => {
+              seq.splice(i, 1);
+              if (songPlaying && !seq.length) stopSong();
+              else {
+                if (songPlaying && songIdx >= seq.length) songIdx = 0;
+                renderSeq();
+              }
+              if (!songPlaying) {
+                songStatus.textContent = seq.length
+                  ? seq.length + " chord" + (seq.length > 1 ? "s" : "") + " in the sequence"
+                  : "no chords yet — click chords from the reference";
+              }
+            });
+            chip.appendChild(x);
+            seqArea.appendChild(chip);
+          });
+        }
+
+        function addChip(root, quality) {
+          seq.push({ root, quality });
+          renderSeq();
+          if (!songPlaying) {
+            songStatus.textContent =
+              seq.length + " chord" + (seq.length > 1 ? "s" : "") + " in the sequence";
+          }
+        }
+
+        function playChord(i) {
+          releaseVoices(songVoices);
+          songIdx = i;
+          songVoices = buildVoices(seq[i].root, seq[i].quality);
+          renderSeq();
+          songStatus.textContent =
+            "playing " + chordName(seq[i].root, seq[i].quality) +
+            " (" + (i + 1) + " of " + seq.length + ") · looping";
+          const ms = (parseInt(beatsSel.value, 10) * 60000) / parseInt(songBpmSlider.value, 10);
+          songTimer = setTimeout(() => playChord((songIdx + 1) % seq.length), ms);
+        }
+
+        function playSong() {
+          if (!seq.length) {
+            songStatus.textContent = "add some chords first — click them in the chord reference";
+            return;
+          }
+          const ctx = ensureAudio();
+          if (!ctx) {
+            songStatus.textContent = "(audio is unavailable in this browser)";
+            return;
+          }
+          ctx.resume().then(() => {
+            ensureDrone();
+            songPlaying = true;
+            songBtn.setAttribute("aria-pressed", "true");
+            songBtn.textContent = "■ stop loop";
+            playChord(0);
+          });
+        }
+
+        function stopSong() {
+          songPlaying = false;
+          clearTimeout(songTimer);
+          releaseVoices(songVoices);
+          songVoices = [];
+          songBtn.setAttribute("aria-pressed", "false");
+          songBtn.textContent = "▶ play loop";
+          renderSeq();
+          songStatus.textContent = seq.length
+            ? "stopped — " + seq.length + " chord" + (seq.length > 1 ? "s" : "") + " in the sequence"
+            : "no chords yet — click chords from the reference";
+        }
+
+        songBtn.addEventListener("click", () => (songPlaying ? stopSong() : playSong()));
+
+        songBpmSlider.addEventListener("input", () => {
+          songBpmNum.textContent = songBpmSlider.value;
+        });
+
+        renderRef();
+        renderSeq();
       })();
     </script>
   </body>
