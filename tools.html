@@ -582,18 +582,25 @@
         border-color: rgba(245, 182, 70, 0.5);
       }
 
-      .bpm-input-wrap {
+      .bpm-stack {
         display: flex;
         flex-direction: column;
         align-items: center;
-        line-height: 1;
+        gap: 0.15rem;
+        margin-bottom: 1.1rem;
+      }
+
+      .bpm-stack .bpm-row {
+        width: 100%;
+        max-width: 28rem;
+        flex-wrap: nowrap;
       }
 
       .bpm-input {
-        width: 5.4ch;
+        width: 7ch;
         font-family: var(--mono);
-        font-size: 2rem;
-        font-weight: 600;
+        font-size: 3.4rem;
+        font-weight: 700;
         text-align: center;
         background: transparent;
         border: 0;
@@ -601,6 +608,8 @@
         color: var(--text);
         outline: none;
         padding: 0;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
         -moz-appearance: textfield;
         appearance: textfield;
       }
@@ -615,12 +624,12 @@
         border-bottom-color: var(--amber);
       }
 
-      .bpm-input-wrap small {
+      .bpm-label {
         font-family: var(--mono);
-        font-size: 0.68rem;
+        font-size: 0.7rem;
         color: var(--faint);
-        letter-spacing: 0.12em;
-        margin-top: 0.2rem;
+        letter-spacing: 0.18em;
+        margin-top: -0.35rem;
       }
 
       .time-slash {
@@ -1104,23 +1113,23 @@
 
               <div class="beat-blocks" id="beat-blocks" role="group" aria-label="Beats — click a block to cycle accent, normal, rest"></div>
 
-              <div class="bpm-row">
-                <button class="step-btn" id="bpm-down" type="button" aria-label="Decrease tempo">−</button>
-                <div class="bpm-input-wrap">
-                  <input class="bpm-input" id="bpm-input" type="number" min="40" max="300" value="100" aria-label="Tempo in beats per minute" />
-                  <small>BPM</small>
+              <div class="bpm-stack">
+                <input class="bpm-input" id="bpm-input" type="number" min="40" max="300" value="100" aria-label="Tempo in beats per minute" />
+                <small class="bpm-label">BPM</small>
+                <div class="bpm-row">
+                  <button class="step-btn" id="bpm-down" type="button" aria-label="Decrease tempo">−</button>
+                  <input
+                    class="bpm-slider"
+                    id="bpm-slider"
+                    type="range"
+                    min="40"
+                    max="300"
+                    step="1"
+                    value="100"
+                    aria-label="Tempo slider"
+                  />
+                  <button class="step-btn" id="bpm-up" type="button" aria-label="Increase tempo">+</button>
                 </div>
-                <button class="step-btn" id="bpm-up" type="button" aria-label="Increase tempo">+</button>
-                <input
-                  class="bpm-slider"
-                  id="bpm-slider"
-                  type="range"
-                  min="40"
-                  max="300"
-                  step="1"
-                  value="100"
-                  aria-label="Tempo slider"
-                />
               </div>
 
               <div class="metro-controls">
