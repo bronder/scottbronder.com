@@ -475,6 +475,40 @@
       }
 
       /* ---------- metronome ---------- */
+      .glyph-row {
+        display: flex;
+        gap: 0.4rem;
+      }
+
+      .glyph-btn {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 8px;
+        padding: 0.3rem 0.5rem;
+        cursor: pointer;
+        color: var(--muted);
+        transition: border-color 0.15s ease, color 0.15s ease,
+          background-color 0.15s ease;
+      }
+
+      .glyph-btn:hover {
+        border-color: rgba(245, 182, 70, 0.5);
+        color: var(--text);
+      }
+
+      .glyph-btn.active {
+        border-color: var(--amber);
+        color: var(--amber);
+        background: rgba(245, 182, 70, 0.08);
+      }
+
+      .glyph-btn svg {
+        width: 34px;
+        height: 22px;
+        display: block;
+        fill: currentColor;
+      }
+
       .beat-blocks {
         display: flex;
         gap: 0.5rem;
@@ -1063,6 +1097,11 @@
                 <span class="tool-meta">click blocks to accent · 1x–4x adds subdivisions</span>
               </div>
 
+              <div class="seq-head">
+                <p class="drone-label">subdivide all</p>
+                <div class="glyph-row" id="sub-all" role="group" aria-label="Set subdivision for all beats"></div>
+              </div>
+
               <div class="beat-blocks" id="beat-blocks" role="group" aria-label="Beats — click a block to cycle accent, normal, rest"></div>
 
               <div class="bpm-row">
@@ -1473,6 +1512,8 @@
         const topSel = document.getElementById("top-number");
         const bottomSel = document.getElementById("bottom-number");
         const soundSel = document.getElementById("sound-style");
+        const subAllEl = document.getElementById("sub-all");
+        const SVG_NS = "http://www.w3.org/2000/svg";
 
         let bpm = 100;
         let bottom = 4;
@@ -1498,6 +1539,85 @@
           beats.length = n;
           renderBlocks();
         }
+
+        // rhythm-note glyphs for the subdivide-all buttons (1..4 notes per beat)
+        function noteGlyph(n) {
+          const svg = document.createElementNS(SVG_NS, "svg");
+          svg.setAttribute("viewBox", "0 0 44 26");
+          const head = (x) => {
+            const e = document.createElementNS(SVG_NS, "ellipse");
+            e.setAttribute("cx", x);
+            e.setAttribute("cy", 20);
+            e.setAttribute("rx", 3.4);
+            e.setAttribute("ry", 2.6);
+            e.setAttribute("transform", "rotate(-18 " + x + " 20)");
+            svg.appendChild(e);
+          };
+          const stem = (x) => {
+            const r = document.createElementNS(SVG_NS, "rect");
+            r.setAttribute("x", x + 3.1);
+            r.setAttribute("y", 9);
+            r.setAttribute("width", 1.3);
+            r.setAttribute("height", 11);
+            svg.appendChild(r);
+          };
+          const beam = (x1, x2, y, h) => {
+            const r = document.createElementNS(SVG_NS, "rect");
+            r.setAttribute("x", x1);
+            r.setAttribute("y", y);
+            r.setAttribute("width", x2 - x1);
+            r.setAttribute("height", h);
+            svg.appendChild(r);
+          };
+          const xs = [1, 2, 3, 4].map((i) => 6 + ((i - 1) * 44) / 5.2);
+          if (n === 1) {
+            head(xs[0] + 4);
+            stem(xs[0] + 4);
+          } else {
+            for (let i = 0; i < n; i++) {
+              head(xs[i]);
+              stem(xs[i]);
+            }
+            beam(xs[0] + 3.1, xs[n - 1] + 4.4, 9, 2.8);
+            if (n === 4) beam(xs[0] + 3.1, xs[n - 1] + 4.4, 12.5, 2.8);
+            if (n === 3) {
+              const t = document.createElementNS(SVG_NS, "text");
+              t.setAttribute("x", (xs[0] + xs[n - 1]) / 2 + 2);
+              t.setAttribute("y", 6.5);
+              t.setAttribute("text-anchor", "middle");
+              t.setAttribute("font-family", "ui-monospace, monospace");
+              t.setAttribute("font-size", "7");
+              t.setAttribute("fill", "currentColor");
+              t.textContent = "3";
+              svg.appendChild(t);
+            }
+          }
+          return svg;
+        }
+
+        function updateSubAllActive() {
+          const n = beats.length ? beats[0].subdiv : 0;
+          const all = beats.every((b) => b.subdiv === n);
+          [...subAllEl.children].forEach((btn) =>
+            btn.classList.toggle("active", all && Number(btn.dataset.n) === n)
+          );
+        }
+
+        [1, 2, 3, 4].forEach((n) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "glyph-btn";
+          btn.dataset.n = String(n);
+          btn.title =
+            n === 1 ? "quarters" : n === 2 ? "eighths" : n === 3 ? "triplets" : "sixteenths";
+          btn.setAttribute("aria-label", "Subdivide all beats into " + n);
+          btn.appendChild(noteGlyph(n));
+          btn.addEventListener("click", () => {
+            beats.forEach((b) => (b.subdiv = n));
+            renderBlocks();
+          });
+          subAllEl.appendChild(btn);
+        });
 
         function renderBlocks() {
           beatBlocksEl.innerHTML = "";
@@ -1535,6 +1655,7 @@
             wrap.appendChild(sub);
             beatBlocksEl.appendChild(wrap);
           });
+          updateSubAllActive();
         }
 
         function setBpm(v) {
