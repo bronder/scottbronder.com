@@ -1,0 +1,1964 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Toolbench — Scott Bronder</title>
+    <meta
+      name="description"
+      content="Free browser guitar tools by Scott Bronder: a tuner with mic pitch detection, a metronome, a chord drone, and a looping song builder. No apps, no sign-ups."
+    />
+    <meta property="og:title" content="The Toolbench — Scott Bronder" />
+    <meta
+      property="og:description"
+      content="Free browser guitar tools: tuner, metronome, chord drone, song builder."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://scottbronder.com/" />
+    <meta name="theme-color" content="#0b0d11" />
+    <meta name="color-scheme" content="dark" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d11'/%3E%3Cg stroke='%23aab4c2'%3E%3Cline x1='12' y1='14' x2='52' y2='14' stroke-width='2.6'/%3E%3Cline x1='12' y1='22' x2='52' y2='22' stroke-width='2.3'/%3E%3Cline x1='12' y1='30' x2='52' y2='30' stroke-width='2'/%3E%3Cline x1='12' y1='38' x2='52' y2='38' stroke-width='1.7'/%3E%3Cline x1='12' y1='46' x2='52' y2='46' stroke-width='1.4'/%3E%3Cline x1='12' y1='54' x2='52' y2='54' stroke-width='1.2'/%3E%3C/g%3E%3Ccircle cx='40' cy='30' r='4' fill='%23f5b646'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0d11;
+        --panel: #10141b;
+        --text: #eef0f3;
+        --muted: #9aa3ad;
+        --faint: #6b7480;
+        --line: rgba(255, 255, 255, 0.07);
+        --blue: #7aa2f7;
+        --amber: #f5b646;
+        --amber2: #ff8e3c;
+        --rec: #ff5f56;
+        --green: #34d399;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+      }
+
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      ::selection {
+        background: rgba(245, 182, 70, 0.35);
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background:
+          radial-gradient(70rem 34rem at 50% -12rem, rgba(122, 162, 247, 0.13), transparent 60%),
+          radial-gradient(60rem 34rem at 88% 118%, rgba(245, 182, 70, 0.07), transparent 62%),
+          var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.55;
+      }
+
+      .page {
+        width: 100%;
+        max-width: 74rem;
+        margin: 0 auto;
+        padding: clamp(1.25rem, 4vw, 3rem);
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+      }
+
+      /* ---------- header ---------- */
+      .site-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        font-size: 0.85rem;
+      }
+
+      .wordmark {
+        font-family: var(--mono);
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .wordmark .tld {
+        color: var(--amber);
+      }
+
+      .site-header nav {
+        display: flex;
+        gap: 1.4rem;
+      }
+
+      .site-header a:not(.wordmark),
+      .site-footer a {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .site-header a:not(.wordmark):hover,
+      .site-footer a:hover {
+        color: var(--text);
+      }
+
+      /* ---------- hero ---------- */
+      .hero {
+        padding: clamp(2.5rem, 7vh, 5rem) 0 clamp(2rem, 5vh, 3.5rem);
+      }
+
+      .eyebrow-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--blue);
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--green);
+        border: 1px solid rgba(52, 211, 153, 0.3);
+        border-radius: 999px;
+        padding: 0.32rem 0.8rem;
+      }
+
+      .chip-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
+      }
+
+      h1 {
+        margin-top: 1.1rem;
+        font-size: clamp(2.8rem, 8vw, 5.4rem);
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        line-height: 1.03;
+      }
+
+      h1 .day {
+        display: block;
+      }
+
+      h1 .shred {
+        display: block;
+        font-family: var(--serif);
+        font-style: italic;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        padding-right: 0.12em;
+        background: linear-gradient(100deg, var(--amber) 10%, var(--amber2) 55%, var(--amber) 95%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .sub {
+        margin-top: 1.2rem;
+        max-width: 58ch;
+        color: var(--muted);
+        font-size: clamp(1rem, 2.5vw, 1.12rem);
+      }
+
+      .stats {
+        margin-top: 1.6rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.6rem;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--faint);
+      }
+
+      .stats b {
+        color: var(--amber);
+        font-weight: 500;
+      }
+
+      /* ---------- decorative string divider ---------- */
+      .rig-divider {
+        position: relative;
+        height: 84px;
+        margin: clamp(0.5rem, 3vh, 1.5rem) 0 clamp(2rem, 6vh, 3.5rem);
+      }
+
+      .rig-divider svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      /* ---------- section heads ---------- */
+      .section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.5rem 1.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.75rem;
+      }
+
+      .section-title {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 500;
+        margin: 0;
+      }
+
+      .section-title b {
+        color: var(--amber);
+        font-weight: 500;
+      }
+
+      .head-meta {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--faint);
+      }
+
+      /* ---------- toolbench ---------- */
+      .tool-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .tool-tab {
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.55rem 1.15rem;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .tool-tab:hover {
+        color: var(--text);
+        border-color: rgba(245, 182, 70, 0.5);
+      }
+
+      .tool-tab.active {
+        border-color: var(--amber);
+        color: var(--amber);
+        background: rgba(245, 182, 70, 0.08);
+      }
+
+      .tool-panel[hidden] {
+        display: none;
+      }
+
+      .tools-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+      }
+
+      @media (max-width: 860px) {
+        .tools-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .tool-card {
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 12px;
+        background: var(--panel);
+        padding: 1.25rem 1.35rem 1.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .tool-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.5rem 1rem;
+        flex-wrap: wrap;
+      }
+
+      .tool-title {
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text);
+      }
+
+      .tool-meta {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--faint);
+      }
+
+      /* ---------- tuner ---------- */
+      .tuner-display {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #0c0f15;
+        padding: 1rem 1.1rem;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 0.3rem 1.1rem;
+      }
+
+      .tuner-note {
+        font-family: var(--mono);
+        font-size: 2.6rem;
+        font-weight: 600;
+        line-height: 1;
+        color: var(--text);
+        min-width: 2.2ch;
+      }
+
+      .tuner-note .oct {
+        font-size: 1.1rem;
+        color: var(--muted);
+      }
+
+      .tuner-note.in-tune {
+        color: var(--green);
+      }
+
+      .tuner-hz {
+        grid-column: 1;
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--faint);
+      }
+
+      .cents-track {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        position: relative;
+        height: 34px;
+        align-self: center;
+      }
+
+      .cents-rail {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 3px;
+        transform: translateY(-50%);
+        border-radius: 2px;
+        background: linear-gradient(90deg, rgba(245, 182, 70, 0.15), rgba(52, 211, 153, 0.4) 42% 58%, rgba(245, 182, 70, 0.15));
+      }
+
+      .cents-notch {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 2px;
+        height: 16px;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.35);
+      }
+
+      .cents-needle {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--amber);
+        box-shadow: 0 0 10px rgba(245, 182, 70, 0.7);
+        transition: left 0.08s linear, background-color 0.15s ease;
+      }
+
+      .cents-needle.in-tune {
+        background: var(--green);
+        box-shadow: 0 0 12px rgba(52, 211, 153, 0.9);
+      }
+
+      .cents-labels {
+        grid-column: 2;
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        color: var(--faint);
+      }
+
+      .string-btns {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem;
+      }
+
+      .string-btn {
+        font-family: var(--mono);
+        font-size: 0.95rem;
+        padding: 0.6rem 0;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--muted);
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .string-btn small {
+        display: block;
+        font-size: 0.6rem;
+        color: var(--faint);
+        margin-top: 0.1rem;
+      }
+
+      .string-btn:hover {
+        border-color: rgba(245, 182, 70, 0.5);
+        color: var(--text);
+      }
+
+      .string-btn.active {
+        border-color: var(--amber);
+        color: var(--amber);
+        background: rgba(245, 182, 70, 0.08);
+      }
+
+      .tool-row {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .ghost-btn {
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        padding: 0.55rem 0.95rem;
+        border-radius: 999px;
+        border: 1px solid rgba(122, 162, 247, 0.45);
+        background: transparent;
+        color: var(--blue);
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .ghost-btn:hover {
+        background: rgba(122, 162, 247, 0.1);
+        border-color: var(--blue);
+      }
+
+      .ghost-btn[aria-pressed="true"] {
+        background: rgba(122, 162, 247, 0.15);
+        border-color: var(--blue);
+      }
+
+      .tool-status {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--faint);
+        min-height: 1.1rem;
+      }
+
+      /* ---------- metronome ---------- */
+      .beat-dots {
+        display: flex;
+        gap: 0.6rem;
+        justify-content: center;
+        padding: 0.4rem 0;
+      }
+
+      .beat-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.03);
+        transition: background-color 0.06s ease, box-shadow 0.06s ease, border-color 0.06s ease;
+      }
+
+      .beat-dot.on {
+        border-color: var(--blue);
+        background: var(--blue);
+        box-shadow: 0 0 10px rgba(122, 162, 247, 0.7);
+      }
+
+      .beat-dot.down.on {
+        border-color: var(--amber);
+        background: var(--amber);
+        box-shadow: 0 0 12px rgba(245, 182, 70, 0.8);
+      }
+
+      .bpm-row {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+      }
+
+      .bpm-value {
+        font-family: var(--mono);
+        font-size: 2rem;
+        font-weight: 600;
+        min-width: 3.4ch;
+        text-align: center;
+        line-height: 1;
+      }
+
+      .bpm-value small {
+        font-size: 0.72rem;
+        font-weight: 400;
+        color: var(--faint);
+        display: block;
+        letter-spacing: 0.1em;
+      }
+
+      .step-btn {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--muted);
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease;
+      }
+
+      .step-btn:hover {
+        border-color: rgba(245, 182, 70, 0.5);
+        color: var(--text);
+      }
+
+      .bpm-slider {
+        flex: 1;
+        accent-color: var(--amber);
+        min-width: 8rem;
+      }
+
+      .metro-controls {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .time-sig {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+        padding: 0.5rem 0.6rem;
+      }
+
+      .play-btn {
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 0.7rem 1.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(245, 182, 70, 0.55);
+        background: transparent;
+        color: var(--amber);
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      }
+
+      .play-btn:hover {
+        background: rgba(245, 182, 70, 0.1);
+      }
+
+      .play-btn[aria-pressed="true"] {
+        background: linear-gradient(115deg, var(--amber), var(--amber2));
+        border-color: transparent;
+        color: #191104;
+        font-weight: 600;
+      }
+
+      /* ---------- drone ---------- */
+      .tool-card.wide {
+        grid-column: 1 / -1;
+      }
+
+      .drone-label {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin: 0 0 0.45rem;
+      }
+
+      .drone-block + .drone-block {
+        margin-top: 0.9rem;
+      }
+
+      .qual-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+      }
+
+      .qual-btn {
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--muted);
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .qual-btn:hover {
+        border-color: rgba(245, 182, 70, 0.5);
+        color: var(--text);
+      }
+
+      .qual-btn.active {
+        border-color: var(--amber);
+        color: var(--amber);
+        background: rgba(245, 182, 70, 0.08);
+      }
+
+      /* ---------- reference + song builder ---------- */
+      .ref-key-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem 1.25rem;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .seq-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem 1.25rem;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.45rem;
+      }
+
+      .seq-head .drone-label,
+      .ref-key-row .drone-label {
+        margin: 0;
+      }
+
+      .numeral {
+        color: var(--faint);
+        font-size: 0.72rem;
+        margin-left: 0.3rem;
+      }
+
+      .seq-area {
+        min-height: 3.6rem;
+        border: 1px dashed rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        padding: 0.6rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        align-content: flex-start;
+      }
+
+      .seq-chip {
+        display: inline-flex;
+        align-items: center;
+        cursor: default;
+      }
+
+      .seq-x {
+        margin-left: 0.45rem;
+        background: none;
+        border: 0;
+        color: var(--faint);
+        font-size: 0.95rem;
+        line-height: 1;
+        padding: 0;
+        cursor: pointer;
+      }
+
+      .seq-x:hover {
+        color: var(--rec);
+      }
+
+      /* ---------- setlist ---------- */
+      .setlist-wrap {
+        margin-top: clamp(2rem, 5vh, 3rem);
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        color: #c3cad2;
+      }
+
+      .rec-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--rec);
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .rec-dot {
+          animation: none;
+        }
+      }
+
+      .track {
+        display: grid;
+        grid-template-columns: 2.6rem 1fr auto 1.4rem;
+        gap: 1rem;
+        align-items: baseline;
+        padding: 1rem 0.9rem;
+        border-top: 1px solid var(--line);
+        color: inherit;
+        text-decoration: none;
+        transition: background-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .track:last-of-type {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .track-no {
+        color: var(--faint);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        transition: color 0.15s ease;
+      }
+
+      .track-name {
+        font-size: 1rem;
+        color: var(--text);
+      }
+
+      .track-name small {
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .track-meta {
+        color: var(--faint);
+        font-size: 0.78rem;
+        font-family: var(--mono);
+        text-align: right;
+      }
+
+      .track-arrow {
+        color: var(--faint);
+        text-align: right;
+        transition: transform 0.15s ease;
+      }
+
+      a.track:hover {
+        background: rgba(255, 255, 255, 0.03);
+        box-shadow: inset 2px 0 0 var(--amber);
+      }
+
+      a.track:hover .track-no {
+        color: var(--amber);
+      }
+
+      a.track:hover .track-arrow {
+        color: var(--amber);
+        transform: translate(2px, -2px);
+      }
+
+      .track-self .track-arrow {
+        color: var(--rec);
+        font-size: 0.6rem;
+        align-self: center;
+      }
+
+      .cta {
+        margin: 1.6rem 0 0;
+      }
+
+      .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        background: linear-gradient(115deg, var(--amber), var(--amber2));
+        color: #191104;
+        border-radius: 999px;
+        padding: 0.85rem 1.6rem;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        box-shadow: 0 10px 34px -14px rgba(245, 182, 70, 0.6);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+      }
+
+      .cta-btn:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.07);
+        box-shadow: 0 14px 40px -14px rgba(245, 182, 70, 0.75);
+      }
+
+      .cta-btn strong {
+        font-weight: 700;
+      }
+
+      /* ---------- footer ---------- */
+      .site-footer {
+        margin-top: auto;
+        padding: 1.5rem 0 0.5rem;
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.5rem;
+        align-items: center;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      .foot-note {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--faint);
+      }
+
+      @media (max-width: 560px) {
+        .track {
+          grid-template-columns: 1.8rem 1fr;
+          row-gap: 0.15rem;
+        }
+
+        .track-meta {
+          grid-column: 2;
+          text-align: left;
+        }
+
+        .track-arrow {
+          display: none;
+        }
+
+        .foot-note {
+          margin-left: 0;
+          width: 100%;
+        }
+
+        .cta-btn {
+          width: 100%;
+          flex-wrap: wrap;
+          justify-content: center;
+          row-gap: 0.1rem;
+          text-align: center;
+        }
+
+        .cta-btn strong {
+          width: 100%;
+        }
+
+        .tuner-display {
+          grid-template-columns: 1fr;
+        }
+
+        .cents-track,
+        .cents-labels {
+          grid-column: 1;
+          grid-row: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="site-header">
+        <a class="wordmark" href="/">scottbronder<span class="tld">.com</span></a>
+        <nav aria-label="Site">
+          <a href="/">home</a>
+          <a href="https://github.com/bronder" rel="noopener">github</a>
+          <a href="mailto:hello@scottbronder.com">hello@</a>
+        </nav>
+      </header>
+
+      <main>
+        <div class="hero">
+          <div class="eyebrow-row">
+            <p class="eyebrow">Scott Bronder · the toolbench</p>
+            <p class="chip"><span class="chip-dot" aria-hidden="true"></span>more tools coming</p>
+          </div>
+          <h1>
+            <span class="day">Guitar tools,</span>
+            <span class="shred">hand-built.</span>
+          </h1>
+          <p class="sub">
+            A tuner, a metronome, a chord drone, and a song builder — all running
+            entirely in your browser. No apps, no sign-ups, no waiting.
+          </p>
+        </div>
+
+        <div class="rig-divider" aria-hidden="true">
+          <svg viewBox="0 0 1000 84" preserveAspectRatio="none">
+            <g stroke="#cfd6e0" stroke-linecap="round" fill="none">
+              <line x1="0" y1="8"  x2="1000" y2="8"  stroke-width="1.1" stroke-opacity="0.32"/>
+              <line x1="0" y1="22" x2="1000" y2="22" stroke-width="1.35" stroke-opacity="0.38"/>
+              <line x1="0" y1="36" x2="1000" y2="36" stroke-width="1.7" stroke-opacity="0.45"/>
+              <line x1="0" y1="50" x2="1000" y2="50" stroke-width="2.15" stroke-opacity="0.52"/>
+              <line x1="0" y1="64" x2="1000" y2="64" stroke-width="2.6" stroke-opacity="0.6"/>
+              <line x1="0" y1="78" x2="1000" y2="78" stroke-width="3.1" stroke-opacity="0.7"/>
+            </g>
+            <circle cx="712" cy="29" r="4" fill="#f5b646"/>
+          </svg>
+        </div>
+
+        <section aria-label="Guitar tools">
+          <div class="tool-tabs" role="tablist" aria-label="Tools">
+            <button class="tool-tab active" type="button" role="tab" aria-selected="true" data-tool="tuner">tuner</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="metronome">metronome</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="drone">drone</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="song-builder">song builder</button>
+          </div>
+
+          <div class="tools-panels">
+            <div class="tool-panel" data-tool="tuner">
+            <!-- ===================== tuner ===================== -->
+            <div class="tool-card">
+              <div class="tool-head">
+                <h3 class="tool-title">Tuner</h3>
+                <span class="tool-meta">reference tones · mic detection</span>
+              </div>
+
+              <div class="tuner-display">
+                <div class="tuner-note" id="tuner-note">—</div>
+                <div class="tuner-hz" id="tuner-hz">click a string for a reference tone</div>
+                <div class="cents-track" aria-hidden="true">
+                  <div class="cents-rail"></div>
+                  <div class="cents-notch"></div>
+                  <div class="cents-needle" id="cents-needle"></div>
+                </div>
+                <div class="cents-labels" aria-hidden="true">
+                  <span>−50¢</span><span>0</span><span>+50¢</span>
+                </div>
+              </div>
+
+              <div class="string-btns" role="group" aria-label="Reference tones">
+                <button class="string-btn" type="button" data-freq="82.41" data-note="E" data-oct="2">E<small>82.41</small></button>
+                <button class="string-btn" type="button" data-freq="110" data-note="A" data-oct="2">A<small>110.00</small></button>
+                <button class="string-btn" type="button" data-freq="146.83" data-note="D" data-oct="3">D<small>146.83</small></button>
+                <button class="string-btn" type="button" data-freq="196" data-note="G" data-oct="3">G<small>196.00</small></button>
+                <button class="string-btn" type="button" data-freq="246.94" data-note="B" data-oct="3">B<small>246.94</small></button>
+                <button class="string-btn" type="button" data-freq="329.63" data-note="e" data-oct="4">e<small>329.63</small></button>
+              </div>
+
+              <div class="tool-row">
+                <button class="ghost-btn" id="mic-btn" type="button" aria-pressed="false">🎙 enable mic tuner</button>
+              </div>
+              <p class="tool-status" id="tuner-status" aria-live="polite">
+                mic mode listens to your guitar and shows how far off you are
+              </p>
+            </div>
+
+            </div>
+
+            <div class="tool-panel" data-tool="metronome" hidden>
+            <!-- ===================== metronome ===================== -->
+            <div class="tool-card">
+              <div class="tool-head">
+                <h3 class="tool-title">Metronome</h3>
+                <span class="tool-meta">tap tempo · accent on 1</span>
+              </div>
+
+              <div class="beat-dots" id="beat-dots" aria-hidden="true"></div>
+
+              <div class="bpm-row">
+                <button class="step-btn" id="bpm-down" type="button" aria-label="Decrease tempo">−</button>
+                <div class="bpm-value"><span id="bpm-num">100</span><small>BPM</small></div>
+                <button class="step-btn" id="bpm-up" type="button" aria-label="Increase tempo">+</button>
+                <input
+                  class="bpm-slider"
+                  id="bpm-slider"
+                  type="range"
+                  min="30"
+                  max="240"
+                  step="1"
+                  value="100"
+                  aria-label="Tempo in beats per minute"
+                />
+              </div>
+
+              <div class="metro-controls">
+                <select class="time-sig" id="time-sig" aria-label="Time signature">
+                  <option value="4">4/4</option>
+                  <option value="3">3/4</option>
+                  <option value="2">2/4</option>
+                  <option value="6">6/8</option>
+                </select>
+                <div class="tool-row">
+                  <button class="ghost-btn" id="tap-btn" type="button">tap tempo</button>
+                  <button class="play-btn" id="metro-btn" type="button" aria-pressed="false">▶ start</button>
+                </div>
+              </div>
+              <p class="tool-status" id="metro-status" aria-live="polite">30–240 bpm · tap tempo needs at least two taps</p>
+            </div>
+
+            </div>
+
+            <div class="tool-panel" data-tool="drone" hidden>
+            <!-- ===================== drone ===================== -->
+            <div class="tool-card wide">
+              <div class="tool-head">
+                <h3 class="tool-title">Drone</h3>
+                <span class="tool-meta">practice backing · sustains until you stop it</span>
+              </div>
+
+              <div class="drone-block">
+                <p class="drone-label" id="drone-roots-label">root</p>
+                <div class="string-btns" id="drone-roots" role="group" aria-labelledby="drone-roots-label"></div>
+              </div>
+
+              <div class="drone-block">
+                <p class="drone-label" id="drone-quals-label">chord</p>
+                <div class="qual-row" id="drone-quals" role="group" aria-labelledby="drone-quals-label"></div>
+              </div>
+
+              <div class="metro-controls">
+                <p class="tool-status" id="drone-status" aria-live="polite"></p>
+                <button class="play-btn" id="drone-btn" type="button" aria-pressed="false">▶ start drone</button>
+              </div>
+            </div>
+
+            </div>
+
+            <div class="tool-panel" data-tool="song-builder" hidden>
+            <!-- ============= song builder (with chord reference) ============= -->
+            <div class="tool-card wide">
+              <div class="tool-head">
+                <h3 class="tool-title">Song builder</h3>
+                <span class="tool-meta">pick a key · click chords · loop until stopped</span>
+              </div>
+
+              <div class="drone-block">
+                <p class="drone-label" id="ref-roots-label">key</p>
+                <div class="ref-key-row">
+                  <div class="qual-row" id="ref-roots" role="group" aria-labelledby="ref-roots-label"></div>
+                  <div class="tool-row">
+                    <button class="ghost-btn" id="ref-major" type="button" aria-pressed="true">major</button>
+                    <button class="ghost-btn" id="ref-minor" type="button" aria-pressed="false">minor</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="drone-block">
+                <div class="ref-key-row">
+                  <p class="drone-label" id="ref-chords-label">chords in key — click to add to the sequence</p>
+                  <div class="tool-row">
+                    <p class="drone-label">new chords</p>
+                    <select class="time-sig" id="beats-per-chord" aria-label="Default beats for newly added chords">
+                      <option value="1">1 beat</option>
+                      <option value="2">2 beats</option>
+                      <option value="4" selected>4 beats</option>
+                      <option value="8">8 beats</option>
+                      <option value="12">12 beats</option>
+                      <option value="16">16 beats</option>
+                    </select>
+                  </div>
+                </div>
+                <p class="tool-status" id="ref-scale" aria-live="polite"></p>
+                <div class="qual-row" id="ref-chords"></div>
+              </div>
+
+              <div class="drone-block">
+                <p class="drone-label" id="seq-label">sequence — click a chord to change its length</p>
+                <div class="seq-area" id="seq-area"></div>
+              </div>
+
+              <div class="metro-controls">
+                <div class="bpm-row">
+                  <div class="bpm-value"><span id="song-bpm-num">80</span><small>BPM</small></div>
+                  <input
+                    class="bpm-slider"
+                    id="song-bpm"
+                    type="range"
+                    min="60"
+                    max="200"
+                    step="1"
+                    value="80"
+                    aria-label="Song tempo in beats per minute"
+                  />
+                </div>
+                <button class="ghost-btn" id="song-tap" type="button">tap tempo</button>
+                <button class="play-btn" id="song-btn" type="button" aria-pressed="false">▶ play loop</button>
+              </div>
+              <p class="tool-status" id="song-status" aria-live="polite">no chords yet — click chords from above</p>
+            </div>
+            </div>
+          </div>
+        </section>
+
+        
+      </main>
+
+      <footer class="site-footer">
+        <a href="mailto:hello@scottbronder.com">hello@scottbronder.com</a>
+        <a href="https://github.com/bronder" rel="noopener">github.com/bronder</a>
+        <span class="foot-note">tuned to A = 440 Hz</span>
+      </footer>
+    </div>
+
+    <script>
+      (() => {
+        "use strict";
+
+        /* ---------- shared audio ---------- */
+
+        let audioCtx = null;
+        let masterGain = null;
+
+        function ensureAudio() {
+          if (audioCtx) return audioCtx;
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return null;
+          try {
+            audioCtx = new AC();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.5;
+            const comp = audioCtx.createDynamicsCompressor();
+            comp.threshold.value = -18;
+            comp.knee.value = 12;
+            comp.ratio.value = 4;
+            comp.attack.value = 0.003;
+            comp.release.value = 0.15;
+            masterGain.connect(comp);
+            comp.connect(audioCtx.destination);
+          } catch (err) {
+            audioCtx = null;
+          }
+          return audioCtx;
+        }
+
+        /* ===================== TUNER ===================== */
+
+        const tunerNote = document.getElementById("tuner-note");
+        const tunerHz = document.getElementById("tuner-hz");
+        const tunerStatus = document.getElementById("tuner-status");
+        const centsNeedle = document.getElementById("cents-needle");
+        const micBtn = document.getElementById("mic-btn");
+
+        const NOTE_NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+        const STRING_FREQS = [
+          { f: 82.41, label: "E" },
+          { f: 110, label: "A" },
+          { f: 146.83, label: "D" },
+          { f: 196, label: "G" },
+          { f: 246.94, label: "B" },
+          { f: 329.63, label: "e" },
+        ];
+
+        let refOsc = null;
+        let refGain = null;
+
+        function stopRefTone() {
+          if (refOsc) {
+            try {
+              refGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.03);
+              refOsc.stop(audioCtx.currentTime + 0.15);
+            } catch (err) {}
+            refOsc = null;
+            refGain = null;
+          }
+          document.querySelectorAll(".string-btn.active").forEach((b) => {
+            b.classList.remove("active");
+            b.removeAttribute("aria-pressed");
+          });
+        }
+
+        function setTunerDisplay(note, oct, hzText, cents, live) {
+          tunerNote.innerHTML = note + (oct ? '<span class="oct">' + oct + "</span>" : "");
+          tunerNote.classList.toggle("in-tune", !!live && Math.abs(cents) <= 5);
+          tunerHz.textContent = hzText;
+          const clamped = Math.max(-50, Math.min(50, cents || 0));
+          centsNeedle.style.left = 50 + (clamped / 50) * 50 + "%";
+          centsNeedle.classList.toggle("in-tune", !!live && Math.abs(cents) <= 5);
+        }
+
+        function resetTunerDisplay() {
+          tunerNote.textContent = "—";
+          tunerNote.classList.remove("in-tune");
+          tunerHz.textContent = "click a string for a reference tone";
+          centsNeedle.style.left = "50%";
+          centsNeedle.classList.remove("in-tune");
+        }
+
+        document.querySelectorAll(".string-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const ctx = ensureAudio();
+            if (!ctx) {
+              tunerStatus.textContent = "(audio is unavailable in this browser)";
+              return;
+            }
+            ctx.resume();
+            const wasActive = btn.classList.contains("active");
+            stopRefTone();
+            if (wasActive) {
+              resetTunerDisplay();
+              return;
+            }
+            const freq = parseFloat(btn.dataset.freq);
+            btn.classList.add("active");
+            btn.setAttribute("aria-pressed", "true");
+            refOsc = ctx.createOscillator();
+            refOsc.type = "triangle";
+            refOsc.frequency.value = freq;
+            refGain = ctx.createGain();
+            refGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+            refGain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.03);
+            refOsc.connect(refGain);
+            refGain.connect(masterGain);
+            refOsc.start();
+            setTunerDisplay(btn.dataset.note, btn.dataset.oct, freq.toFixed(2) + " Hz · reference", 0, true);
+            tunerStatus.textContent = "reference tone — tune your string to it, click again to stop";
+          });
+        });
+
+        /* ---------- mic pitch detection ---------- */
+
+        let micStream = null;
+        let micAnalyser = null;
+        let micBuf = null;
+        let micRaf = null;
+
+        function autoCorrelate(buf, sampleRate) {
+          const SIZE = buf.length;
+          let rms = 0;
+          for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+          rms = Math.sqrt(rms / SIZE);
+          if (rms < 0.006) return -1;
+
+          let r1 = 0;
+          let r2 = SIZE - 1;
+          for (let i = 0; i < SIZE / 2; i++) {
+            if (Math.abs(buf[i]) < 0.2) { r1 = i; break; }
+          }
+          for (let i = 1; i < SIZE / 2; i++) {
+            if (Math.abs(buf[SIZE - i]) < 0.2) { r2 = SIZE - i; break; }
+          }
+          const b = buf.slice(r1, r2);
+          const N = b.length;
+          if (N < 256) return -1;
+          const c = new Float32Array(N).fill(0);
+          const minLag = Math.floor(sampleRate / 600);
+          const maxLag = Math.min(N - 1, Math.ceil(sampleRate / 60));
+          for (let lag = minLag; lag < maxLag; lag++) {
+            let sum = 0;
+            for (let i = 0; i < N - lag; i++) sum += b[i] * b[i + lag];
+            c[lag] = sum;
+          }
+          let d = minLag;
+          while (d < maxLag - 1 && c[d] > c[d + 1]) d++;
+          let maxval = -1;
+          let maxpos = -1;
+          for (let i = d; i < maxLag; i++) {
+            if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+          }
+          if (maxpos <= 0) return -1;
+          let T0 = maxpos;
+          const x1 = c[T0 - 1] || 0;
+          const x2 = c[T0];
+          const x3 = c[T0 + 1] || 0;
+          const a = (x1 + x3 - 2 * x2) / 2;
+          const bb = (x3 - x1) / 2;
+          if (a) T0 = T0 - bb / (2 * a);
+          return sampleRate / T0;
+        }
+
+        function noteFromFreq(f) {
+          const midi = Math.round(69 + 12 * Math.log2(f / 440));
+          const name = NOTE_NAMES[((midi % 12) + 12) % 12];
+          const oct = Math.floor(midi / 12) - 1;
+          const exact = 440 * Math.pow(2, (midi - 69) / 12);
+          const cents = Math.round(1200 * Math.log2(f / exact));
+          return { name, oct, cents };
+        }
+
+        function nearestString(f) {
+          let best = STRING_FREQS[0];
+          let bestD = Infinity;
+          for (const s of STRING_FREQS) {
+            const d = Math.abs(12 * Math.log2(f / s.f));
+            if (d < bestD) { bestD = d; best = s; }
+          }
+          return best.label;
+        }
+
+        function micLoop() {
+          micRaf = requestAnimationFrame(micLoop);
+          const now = performance.now();
+          if (now - (micLoop.last || 0) < 66) return;
+          micLoop.last = now;
+          micAnalyser.getFloatTimeDomainData(micBuf);
+          const f = autoCorrelate(micBuf, audioCtx.sampleRate);
+          if (f <= 0) return;
+          const { name, oct, cents } = noteFromFreq(f);
+          setTunerDisplay(name, oct, f.toFixed(1) + " Hz · closest string " + nearestString(f), cents, true);
+        }
+
+        async function toggleMic() {
+          if (micStream) {
+            cancelAnimationFrame(micRaf);
+            micStream.getTracks().forEach((t) => t.stop());
+            micStream = null;
+            micAnalyser = null;
+            micBtn.setAttribute("aria-pressed", "false");
+            micBtn.textContent = "🎙 enable mic tuner";
+            tunerStatus.textContent = "mic off — click a string for a reference tone";
+            resetTunerDisplay();
+            return;
+          }
+          const ctx = ensureAudio();
+          if (!ctx || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            tunerStatus.textContent = "(mic not available here — use the reference tones)";
+            return;
+          }
+          try {
+            micStream = await navigator.mediaDevices.getUserMedia({
+              audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+            });
+          } catch (err) {
+            tunerStatus.textContent = "(mic permission denied — use the reference tones)";
+            return;
+          }
+          await ctx.resume();
+          const src = ctx.createMediaStreamSource(micStream);
+          micAnalyser = ctx.createAnalyser();
+          micAnalyser.fftSize = 2048;
+          src.connect(micAnalyser);
+          micBuf = new Float32Array(micAnalyser.fftSize);
+          micBtn.setAttribute("aria-pressed", "true");
+          micBtn.textContent = "🎙 mic on — click to stop";
+          tunerStatus.textContent = "listening — play a string and watch the needle";
+          micLoop();
+        }
+
+        micBtn.addEventListener("click", toggleMic);
+
+        /* ===================== METRONOME ===================== */
+
+        const bpmNum = document.getElementById("bpm-num");
+        const bpmSlider = document.getElementById("bpm-slider");
+        const bpmDown = document.getElementById("bpm-down");
+        const bpmUp = document.getElementById("bpm-up");
+        const tapBtn = document.getElementById("tap-btn");
+        const metroBtn = document.getElementById("metro-btn");
+        const metroStatus = document.getElementById("metro-status");
+        const timeSig = document.getElementById("time-sig");
+        const beatDots = document.getElementById("beat-dots");
+
+        let bpm = 100;
+        let beatsPerBar = 4;
+        let playing = false;
+        let currentBeat = 0;
+        let nextBeatTime = 0;
+        let schedulerId = null;
+        const visualTimeouts = [];
+
+        const SCHEDULE_AHEAD = 0.12;
+        const TICK_MS = 25;
+
+        function buildDots() {
+          beatDots.innerHTML = "";
+          for (let i = 0; i < beatsPerBar; i++) {
+            const d = document.createElement("span");
+            d.className = "beat-dot" + (i === 0 ? " down" : "");
+            beatDots.appendChild(d);
+          }
+        }
+
+        function setBpm(v) {
+          bpm = Math.max(30, Math.min(240, Math.round(v)));
+          bpmNum.textContent = bpm;
+          bpmSlider.value = bpm;
+        }
+
+        function lightBeat(i) {
+          const dots = beatDots.children;
+          for (const d of dots) d.classList.remove("on");
+          if (dots[i]) dots[i].classList.add("on");
+        }
+
+        function clearVisuals() {
+          visualTimeouts.forEach(clearTimeout);
+          visualTimeouts.length = 0;
+          [...beatDots.children].forEach((d) => d.classList.remove("on"));
+        }
+
+        function scheduleBeat(i, t) {
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          const accent = i === 0;
+          osc.type = "square";
+          osc.frequency.value = accent ? 1568 : 1046;
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.linearRampToValueAtTime(accent ? 0.28 : 0.16, t + 0.002);
+          g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+          osc.connect(g);
+          g.connect(masterGain);
+          osc.start(t);
+          osc.stop(t + 0.1);
+          visualTimeouts.push(setTimeout(() => lightBeat(i), Math.max(0, (t - audioCtx.currentTime) * 1000)));
+        }
+
+        function scheduler() {
+          while (nextBeatTime < audioCtx.currentTime + SCHEDULE_AHEAD) {
+            scheduleBeat(currentBeat, nextBeatTime);
+            nextBeatTime += 60 / bpm;
+            currentBeat = (currentBeat + 1) % beatsPerBar;
+          }
+        }
+
+        function startMetro() {
+          const ctx = ensureAudio();
+          if (!ctx) {
+            metroStatus.textContent = "(audio is unavailable in this browser)";
+            return;
+          }
+          ctx.resume().then(() => {
+            playing = true;
+            currentBeat = 0;
+            nextBeatTime = ctx.currentTime + 0.08;
+            schedulerId = setInterval(scheduler, TICK_MS);
+            metroBtn.setAttribute("aria-pressed", "true");
+            metroBtn.textContent = "■ stop";
+            metroStatus.textContent = "clicking at " + bpm + " bpm — " + beatsPerBar + " beats per bar";
+          });
+        }
+
+        function stopMetro() {
+          playing = false;
+          clearInterval(schedulerId);
+          clearVisuals();
+          metroBtn.setAttribute("aria-pressed", "false");
+          metroBtn.textContent = "▶ start";
+          metroStatus.textContent = "30–240 bpm · tap tempo needs at least two taps";
+        }
+
+        metroBtn.addEventListener("click", () => (playing ? stopMetro() : startMetro()));
+        bpmSlider.addEventListener("input", () => setBpm(parseFloat(bpmSlider.value)));
+        bpmDown.addEventListener("click", () => setBpm(bpm - 1));
+        bpmUp.addEventListener("click", () => setBpm(bpm + 1));
+
+        timeSig.addEventListener("change", () => {
+          beatsPerBar = parseInt(timeSig.value, 10);
+          buildDots();
+          metroStatus.textContent = playing
+            ? "clicking at " + bpm + " bpm — " + beatsPerBar + " beats per bar"
+            : metroStatus.textContent;
+        });
+
+        let taps = [];
+        tapBtn.addEventListener("click", () => {
+          const now = performance.now();
+          taps = taps.filter((t) => now - t < 3000);
+          taps.push(now);
+          if (taps.length > 5) taps.shift();
+          if (taps.length < 2) {
+            metroStatus.textContent = "keep tapping…";
+            return;
+          }
+          let sum = 0;
+          for (let i = 1; i < taps.length; i++) sum += taps[i] - taps[i - 1];
+          setBpm(60000 / (sum / (taps.length - 1)));
+          metroStatus.textContent = "tempo set from " + taps.length + " taps";
+        });
+
+        buildDots();
+
+        /* ===================== DRONE ===================== */
+
+        const DRONE_ROOTS = [];
+        for (let i = 0; i < 12; i++) {
+          const midi = 40 + i; // E2 up to D#3
+          DRONE_ROOTS.push({
+            midi,
+            name: NOTE_NAMES[midi % 12],
+            freq: 440 * Math.pow(2, (midi - 69) / 12),
+          });
+        }
+
+        const CHORDS = {
+          "5": [0, 7],
+          maj: [0, 4, 7],
+          min: [0, 3, 7],
+          "7": [0, 4, 7, 10],
+          maj7: [0, 4, 7, 11],
+          m7: [0, 3, 7, 10],
+          sus4: [0, 5, 7],
+          sus2: [0, 2, 7],
+          dim: [0, 3, 6],
+          aug: [0, 4, 8],
+        };
+        const CHORD_SUFFIX = {
+          "5": "5",
+          maj: "",
+          min: "m",
+          "7": "7",
+          maj7: "maj7",
+          m7: "m7",
+          sus4: "sus4",
+          sus2: "sus2",
+          dim: "dim",
+          aug: "aug",
+        };
+
+        const droneRootsEl = document.getElementById("drone-roots");
+        const droneQualsEl = document.getElementById("drone-quals");
+        const droneStatus = document.getElementById("drone-status");
+        const droneBtn = document.getElementById("drone-btn");
+
+        let droneRoot = 0; // E
+        let droneQuality = "5";
+        let dronePlaying = false;
+        let droneVoices = [];
+        let droneIn = null;
+
+        function ensureDrone() {
+          const ctx = ensureAudio();
+          if (!ctx) return null;
+          if (!droneIn) {
+            const filter = ctx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.value = 1800;
+            filter.Q.value = 0.6;
+            // slow sweep so the pad breathes instead of sitting static
+            const lfo = ctx.createOscillator();
+            lfo.type = "sine";
+            lfo.frequency.value = 0.13;
+            const lfoDepth = ctx.createGain();
+            lfoDepth.gain.value = 450;
+            lfo.connect(lfoDepth);
+            lfoDepth.connect(filter.frequency);
+            lfo.start();
+            filter.connect(masterGain);
+            droneIn = filter;
+          }
+          return droneIn;
+        }
+
+        function chordLabel() {
+          return DRONE_ROOTS[droneRoot].name + CHORD_SUFFIX[droneQuality];
+        }
+
+        function chordNotesText() {
+          const root = DRONE_ROOTS[droneRoot];
+          return CHORDS[droneQuality]
+            .map((s) => NOTE_NAMES[(root.midi + s) % 12])
+            .join(" · ");
+        }
+
+        function updateDroneStatus() {
+          droneStatus.textContent =
+            chordLabel() + " — " + chordNotesText() + (dronePlaying ? " · droning" : "");
+        }
+
+        function buildVoices(rootIdx, quality) {
+          const ctx = audioCtx;
+          const root = DRONE_ROOTS[rootIdx];
+          const now = ctx.currentTime;
+          // voicing: sub-octave root for body, every chord tone doubled an
+          // octave up, and the root two octaves up as a quiet sheen
+          const specs = [{ f: root.freq / 2, level: 0.08 }];
+          CHORDS[quality].forEach((s) => {
+            const f = root.freq * Math.pow(2, s / 12);
+            specs.push({ f, level: 0.1 }, { f: f * 2, level: 0.045 });
+          });
+          specs.push({ f: root.freq * 4, level: 0.028 });
+          return specs.map(({ f, level }) => {
+            const vgain = ctx.createGain();
+            vgain.gain.setValueAtTime(0.0001, now);
+            vgain.gain.linearRampToValueAtTime(level, now + 0.6);
+            vgain.connect(droneIn);
+            // two slightly detuned saws per note = a warm string-pad drone
+            const oscs = [-6, 6].map((cents) => {
+              const o = ctx.createOscillator();
+              o.type = "sawtooth";
+              o.frequency.value = f;
+              o.detune.value = cents;
+              o.connect(vgain);
+              o.start();
+              return o;
+            });
+            return { vgain, oscs };
+          });
+        }
+
+        function releaseVoices(voices) {
+          if (!voices.length || !audioCtx) return;
+          const now = audioCtx.currentTime;
+          voices.forEach((v) => {
+            v.vgain.gain.cancelScheduledValues(now);
+            v.vgain.gain.setValueAtTime(Math.max(0.0001, v.vgain.gain.value), now);
+            v.vgain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+            v.oscs.forEach((o) => o.stop(now + 0.7));
+          });
+        }
+
+        function startDrone() {
+          const ctx = ensureAudio();
+          if (!ctx) {
+            droneStatus.textContent = "(audio is unavailable in this browser)";
+            return;
+          }
+          ctx.resume().then(() => {
+            ensureDrone();
+            droneVoices = buildVoices(droneRoot, droneQuality);
+            dronePlaying = true;
+            droneBtn.setAttribute("aria-pressed", "true");
+            droneBtn.textContent = "■ stop drone";
+            updateDroneStatus();
+          });
+        }
+
+        function stopDrone() {
+          dronePlaying = false;
+          releaseVoices(droneVoices);
+          droneVoices = [];
+          droneBtn.setAttribute("aria-pressed", "false");
+          droneBtn.textContent = "▶ start drone";
+          updateDroneStatus();
+        }
+
+        droneBtn.addEventListener("click", () => (dronePlaying ? stopDrone() : startDrone()));
+
+        DRONE_ROOTS.forEach((r, i) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "string-btn" + (i === droneRoot ? " active" : "");
+          b.innerHTML = r.name + "<small>" + r.freq.toFixed(2) + "</small>";
+          b.setAttribute("aria-label", "Root " + r.name);
+          b.addEventListener("click", () => {
+            droneRoot = i;
+            [...droneRootsEl.children].forEach((c, j) => c.classList.toggle("active", j === i));
+            if (dronePlaying) {
+              releaseVoices(droneVoices);
+              droneVoices = buildVoices(droneRoot, droneQuality);
+            }
+            updateDroneStatus();
+          });
+          droneRootsEl.appendChild(b);
+        });
+
+        Object.keys(CHORDS).forEach((q, i) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "qual-btn" + (q === droneQuality ? " active" : "");
+          b.textContent = q === "5" ? "5 (power)" : q;
+          b.addEventListener("click", () => {
+            droneQuality = q;
+            [...droneQualsEl.children].forEach((c, j) =>
+              c.classList.toggle("active", Object.keys(CHORDS)[j] === q)
+            );
+            if (dronePlaying) {
+              releaseVoices(droneVoices);
+              droneVoices = buildVoices(droneRoot, droneQuality);
+            }
+            updateDroneStatus();
+          });
+          droneQualsEl.appendChild(b);
+        });
+
+        updateDroneStatus();
+
+        /* ============ CHORD REFERENCE + SONG BUILDER ============ */
+
+        const DEGREES = {
+          major: [
+            { s: 0, q: "maj", r: "I" },
+            { s: 2, q: "min", r: "ii" },
+            { s: 4, q: "min", r: "iii" },
+            { s: 5, q: "maj", r: "IV" },
+            { s: 7, q: "maj", r: "V" },
+            { s: 9, q: "min", r: "vi" },
+            { s: 11, q: "dim", r: "vii°" },
+          ],
+          minor: [
+            { s: 0, q: "min", r: "i" },
+            { s: 2, q: "dim", r: "ii°" },
+            { s: 3, q: "maj", r: "III" },
+            { s: 5, q: "min", r: "iv" },
+            { s: 7, q: "min", r: "v" },
+            { s: 8, q: "maj", r: "VI" },
+            { s: 10, q: "maj", r: "VII" },
+          ],
+        };
+
+        const refRootsEl = document.getElementById("ref-roots");
+        const refChordsEl = document.getElementById("ref-chords");
+        const refScaleEl = document.getElementById("ref-scale");
+        const refMajorBtn = document.getElementById("ref-major");
+        const refMinorBtn = document.getElementById("ref-minor");
+        const seqArea = document.getElementById("seq-area");
+        const songBtn = document.getElementById("song-btn");
+        const songStatus = document.getElementById("song-status");
+        const songBpmSlider = document.getElementById("song-bpm");
+        const songBpmNum = document.getElementById("song-bpm-num");
+        const beatsSel = document.getElementById("beats-per-chord");
+
+        let refRoot = 8; // C
+        let refMode = "major";
+        let seq = [];
+        let songPlaying = false;
+        let songIdx = 0;
+        let songVoices = [];
+        let songTimer = null;
+
+        function chordName(root, quality) {
+          return DRONE_ROOTS[root].name + CHORD_SUFFIX[quality];
+        }
+
+        function renderRef() {
+          [...refRootsEl.children].forEach((c, j) =>
+            c.classList.toggle("active", j === refRoot)
+          );
+          refMajorBtn.setAttribute("aria-pressed", String(refMode === "major"));
+          refMinorBtn.setAttribute("aria-pressed", String(refMode === "minor"));
+          const degs = DEGREES[refMode];
+          refScaleEl.textContent =
+            refMode + " scale in " + DRONE_ROOTS[refRoot].name + " — " +
+            degs.map((d) => NOTE_NAMES[(40 + refRoot + d.s) % 12]).join(" ");
+          refChordsEl.innerHTML = "";
+          degs.forEach((d) => {
+            const rootIdx = (refRoot + d.s) % 12;
+            const name = chordName(rootIdx, d.q);
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "qual-btn";
+            b.innerHTML = name + '<span class="numeral">' + d.r + "</span>";
+            b.setAttribute("aria-label", "Add " + name + " to the sequence");
+            b.addEventListener("click", () => addChip(rootIdx, d.q));
+            refChordsEl.appendChild(b);
+          });
+        }
+
+        DRONE_ROOTS.forEach((r, i) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "qual-btn";
+          b.textContent = r.name;
+          b.addEventListener("click", () => {
+            refRoot = i;
+            renderRef();
+          });
+          refRootsEl.appendChild(b);
+        });
+
+        refMajorBtn.addEventListener("click", () => {
+          refMode = "major";
+          renderRef();
+        });
+        refMinorBtn.addEventListener("click", () => {
+          refMode = "minor";
+          renderRef();
+        });
+
+        /* ---------- song builder ---------- */
+
+        const BEAT_STEPS = [1, 2, 4, 8, 12, 16];
+
+        function renderSeq() {
+          seqArea.innerHTML = "";
+          if (!seq.length) {
+            const p = document.createElement("p");
+            p.className = "tool-status";
+            p.textContent = "no chords yet — click chords from above";
+            seqArea.appendChild(p);
+            return;
+          }
+          seq.forEach((c, i) => {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "qual-btn seq-chip" + (songPlaying && i === songIdx ? " active" : "");
+            chip.textContent = chordName(c.root, c.quality) + " · " + c.beats;
+            chip.title = "click to change this chord's length (beats)";
+            chip.setAttribute(
+              "aria-label",
+              chordName(c.root, c.quality) + ", " + c.beats + " beats — click to change length"
+            );
+            chip.addEventListener("click", () => {
+              c.beats = BEAT_STEPS[(BEAT_STEPS.indexOf(c.beats) + 1) % BEAT_STEPS.length];
+              renderSeq();
+            });
+            const rm = document.createElement("button");
+            rm.type = "button";
+            rm.className = "seq-x";
+            rm.textContent = "×";
+            rm.setAttribute("aria-label", "Remove " + chordName(c.root, c.quality));
+            rm.addEventListener("click", (e) => {
+              e.stopPropagation();
+              seq.splice(i, 1);
+              if (songPlaying && !seq.length) stopSong();
+              else {
+                if (songPlaying && songIdx >= seq.length) songIdx = 0;
+                renderSeq();
+              }
+              if (!songPlaying) {
+                songStatus.textContent = seq.length
+                  ? seq.length + " chord" + (seq.length > 1 ? "s" : "") + " in the sequence"
+                  : "no chords yet — click chords from above";
+              }
+            });
+            chip.appendChild(rm);
+            seqArea.appendChild(chip);
+          });
+        }
+
+        function addChip(root, quality) {
+          seq.push({ root, quality, beats: parseInt(beatsSel.value, 10) });
+          renderSeq();
+          if (!songPlaying) {
+            songStatus.textContent =
+              seq.length + " chord" + (seq.length > 1 ? "s" : "") + " in the sequence";
+          }
+        }
+
+        function playChord(i) {
+          releaseVoices(songVoices);
+          songIdx = i;
+          songVoices = buildVoices(seq[i].root, seq[i].quality);
+          renderSeq();
+          songStatus.textContent =
+            "playing " + chordName(seq[i].root, seq[i].quality) +
+            " · " + seq[i].beats + " beats" +
+            " (" + (i + 1) + " of " + seq.length + ") · looping";
+          const ms = (seq[i].beats * 60000) / parseInt(songBpmSlider.value, 10);
+          songTimer = setTimeout(() => playChord((songIdx + 1) % seq.length), ms);
+        }
+
+        function playSong() {
+          if (!seq.length) {
+            songStatus.textContent = "add some chords first — click them from the chords in key";
+            return;
+          }
+          const ctx = ensureAudio();
+          if (!ctx) {
+            songStatus.textContent = "(audio is unavailable in this browser)";
+            return;
+          }
+          ctx.resume().then(() => {
+            ensureDrone();
+            songPlaying = true;
+            songBtn.setAttribute("aria-pressed", "true");
+            songBtn.textContent = "■ stop loop";
+            playChord(0);
+          });
+        }
+
+        function stopSong() {
+          songPlaying = false;
+          clearTimeout(songTimer);
+          releaseVoices(songVoices);
+          songVoices = [];
+          songBtn.setAttribute("aria-pressed", "false");
+          songBtn.textContent = "▶ play loop";
+          renderSeq();
+          songStatus.textContent = seq.length
+            ? "stopped — " + seq.length + " chord" + (seq.length > 1 ? "s" : "") + " in the sequence"
+            : "no chords yet — click chords from above";
+        }
+
+        songBtn.addEventListener("click", () => (songPlaying ? stopSong() : playSong()));
+
+        songBpmSlider.addEventListener("input", () => {
+          songBpmNum.textContent = songBpmSlider.value;
+        });
+
+        let songTaps = [];
+        document.getElementById("song-tap").addEventListener("click", () => {
+          const now = performance.now();
+          songTaps = songTaps.filter((t) => now - t < 3000);
+          songTaps.push(now);
+          if (songTaps.length > 5) songTaps.shift();
+          if (songTaps.length < 2) {
+            songStatus.textContent = "keep tapping…";
+            return;
+          }
+          let sum = 0;
+          for (let i = 1; i < songTaps.length; i++) sum += songTaps[i] - songTaps[i - 1];
+          const bpm = Math.max(60, Math.min(200, Math.round(60000 / (sum / (songTaps.length - 1)))));
+          songBpmSlider.value = bpm;
+          songBpmNum.textContent = bpm;
+          songStatus.textContent = "tempo set from " + songTaps.length + " taps";
+        });
+
+        renderRef();
+        renderSeq();
+
+        /* ---------- tool tabs (hash deep-links) ---------- */
+
+        const TOOL_NAMES = ["tuner", "metronome", "drone", "song-builder"];
+        const tabBtns = document.querySelectorAll(".tool-tab");
+
+        function activateTool(name) {
+          if (!TOOL_NAMES.includes(name)) name = "tuner";
+          tabBtns.forEach((b) => {
+            const on = b.dataset.tool === name;
+            b.classList.toggle("active", on);
+            b.setAttribute("aria-selected", String(on));
+          });
+          document.querySelectorAll(".tool-panel").forEach((p) => {
+            p.hidden = p.dataset.tool !== name;
+          });
+        }
+
+        tabBtns.forEach((b) =>
+          b.addEventListener("click", () => {
+            history.replaceState(null, "", "#" + b.dataset.tool);
+            activateTool(b.dataset.tool);
+          })
+        );
+        window.addEventListener("hashchange", () => activateTool(location.hash.slice(1)));
+        activateTool(location.hash.slice(1));
+      })();
+    </script>
+  </body>
+</html>
