@@ -571,6 +571,53 @@
         font-weight: 600;
       }
 
+      /* ---------- drone ---------- */
+      .tool-card.wide {
+        grid-column: 1 / -1;
+      }
+
+      .drone-label {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin: 0 0 0.45rem;
+      }
+
+      .drone-block + .drone-block {
+        margin-top: 0.9rem;
+      }
+
+      .qual-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+      }
+
+      .qual-btn {
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--muted);
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .qual-btn:hover {
+        border-color: rgba(245, 182, 70, 0.5);
+        color: var(--text);
+      }
+
+      .qual-btn.active {
+        border-color: var(--amber);
+        color: var(--amber);
+        background: rgba(245, 182, 70, 0.08);
+      }
+
       /* ---------- setlist ---------- */
       .setlist-wrap {
         margin-top: clamp(2rem, 5vh, 3rem);
@@ -817,7 +864,7 @@
         <section aria-label="Guitar tools">
           <div class="section-head">
             <h2 class="section-title"><b>01</b> — the toolbench</h2>
-            <p class="head-meta">tuner · metronome — more to come</p>
+            <p class="head-meta">tuner · metronome · drone — more to come</p>
           </div>
 
           <div class="tools-grid">
@@ -896,6 +943,29 @@
                 </div>
               </div>
               <p class="tool-status" id="metro-status" aria-live="polite">30–240 bpm · tap tempo needs at least two taps</p>
+            </div>
+
+            <!-- ===================== drone ===================== -->
+            <div class="tool-card wide">
+              <div class="tool-head">
+                <h3 class="tool-title">Drone</h3>
+                <span class="tool-meta">practice backing · sustains until you stop it</span>
+              </div>
+
+              <div class="drone-block">
+                <p class="drone-label" id="drone-roots-label">root</p>
+                <div class="string-btns" id="drone-roots" role="group" aria-labelledby="drone-roots-label"></div>
+              </div>
+
+              <div class="drone-block">
+                <p class="drone-label" id="drone-quals-label">chord</p>
+                <div class="qual-row" id="drone-quals" role="group" aria-labelledby="drone-quals-label"></div>
+              </div>
+
+              <div class="metro-controls">
+                <p class="tool-status" id="drone-status" aria-live="polite"></p>
+                <button class="play-btn" id="drone-btn" type="button" aria-pressed="false">▶ start drone</button>
+              </div>
             </div>
           </div>
         </section>
@@ -1311,6 +1381,188 @@
         });
 
         buildDots();
+
+        /* ===================== DRONE ===================== */
+
+        const DRONE_ROOTS = [];
+        for (let i = 0; i < 12; i++) {
+          const midi = 40 + i; // E2 up to D#3
+          DRONE_ROOTS.push({
+            midi,
+            name: NOTE_NAMES[midi % 12],
+            freq: 440 * Math.pow(2, (midi - 69) / 12),
+          });
+        }
+
+        const CHORDS = {
+          "5": [0, 7],
+          maj: [0, 4, 7],
+          min: [0, 3, 7],
+          "7": [0, 4, 7, 10],
+          maj7: [0, 4, 7, 11],
+          m7: [0, 3, 7, 10],
+          sus4: [0, 5, 7],
+          sus2: [0, 2, 7],
+          dim: [0, 3, 6],
+          aug: [0, 4, 8],
+        };
+        const CHORD_SUFFIX = {
+          "5": "5",
+          maj: "",
+          min: "m",
+          "7": "7",
+          maj7: "maj7",
+          m7: "m7",
+          sus4: "sus4",
+          sus2: "sus2",
+          dim: "dim",
+          aug: "aug",
+        };
+
+        const droneRootsEl = document.getElementById("drone-roots");
+        const droneQualsEl = document.getElementById("drone-quals");
+        const droneStatus = document.getElementById("drone-status");
+        const droneBtn = document.getElementById("drone-btn");
+
+        let droneRoot = 0; // E
+        let droneQuality = "5";
+        let dronePlaying = false;
+        let droneVoices = [];
+        let droneIn = null;
+
+        function ensureDrone() {
+          const ctx = ensureAudio();
+          if (!ctx) return null;
+          if (!droneIn) {
+            const filter = ctx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.value = 2200;
+            filter.Q.value = 0.5;
+            filter.connect(masterGain);
+            droneIn = filter;
+          }
+          return droneIn;
+        }
+
+        function chordLabel() {
+          return DRONE_ROOTS[droneRoot].name + CHORD_SUFFIX[droneQuality];
+        }
+
+        function chordNotesText() {
+          const root = DRONE_ROOTS[droneRoot];
+          return CHORDS[droneQuality]
+            .map((s) => NOTE_NAMES[(root.midi + s) % 12])
+            .join(" · ");
+        }
+
+        function updateDroneStatus() {
+          droneStatus.textContent =
+            chordLabel() + " — " + chordNotesText() + (dronePlaying ? " · droning" : "");
+        }
+
+        function buildVoices() {
+          const ctx = audioCtx;
+          const root = DRONE_ROOTS[droneRoot];
+          const now = ctx.currentTime;
+          // chord tones plus the root an octave up, quietly, for fullness
+          const freqs = CHORDS[droneQuality].map((s) => root.freq * Math.pow(2, s / 12));
+          freqs.push(root.freq * 2);
+          return freqs.map((f, i) => {
+            const level = i === freqs.length - 1 ? 0.05 : 0.11;
+            const vgain = ctx.createGain();
+            vgain.gain.setValueAtTime(0.0001, now);
+            vgain.gain.linearRampToValueAtTime(level, now + 0.5);
+            vgain.connect(droneIn);
+            // two slightly detuned saws per note = a warm string-pad drone
+            const oscs = [-6, 6].map((cents) => {
+              const o = ctx.createOscillator();
+              o.type = "sawtooth";
+              o.frequency.value = f;
+              o.detune.value = cents;
+              o.connect(vgain);
+              o.start();
+              return o;
+            });
+            return { vgain, oscs };
+          });
+        }
+
+        function releaseVoices(voices) {
+          if (!voices.length || !audioCtx) return;
+          const now = audioCtx.currentTime;
+          voices.forEach((v) => {
+            v.vgain.gain.cancelScheduledValues(now);
+            v.vgain.gain.setValueAtTime(Math.max(0.0001, v.vgain.gain.value), now);
+            v.vgain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+            v.oscs.forEach((o) => o.stop(now + 0.7));
+          });
+        }
+
+        function startDrone() {
+          const ctx = ensureAudio();
+          if (!ctx) {
+            droneStatus.textContent = "(audio is unavailable in this browser)";
+            return;
+          }
+          ctx.resume().then(() => {
+            ensureDrone();
+            droneVoices = buildVoices();
+            dronePlaying = true;
+            droneBtn.setAttribute("aria-pressed", "true");
+            droneBtn.textContent = "■ stop drone";
+            updateDroneStatus();
+          });
+        }
+
+        function stopDrone() {
+          dronePlaying = false;
+          releaseVoices(droneVoices);
+          droneVoices = [];
+          droneBtn.setAttribute("aria-pressed", "false");
+          droneBtn.textContent = "▶ start drone";
+          updateDroneStatus();
+        }
+
+        droneBtn.addEventListener("click", () => (dronePlaying ? stopDrone() : startDrone()));
+
+        DRONE_ROOTS.forEach((r, i) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "string-btn" + (i === droneRoot ? " active" : "");
+          b.innerHTML = r.name + "<small>" + r.freq.toFixed(2) + "</small>";
+          b.setAttribute("aria-label", "Root " + r.name);
+          b.addEventListener("click", () => {
+            droneRoot = i;
+            [...droneRootsEl.children].forEach((c, j) => c.classList.toggle("active", j === i));
+            if (dronePlaying) {
+              releaseVoices(droneVoices);
+              droneVoices = buildVoices();
+            }
+            updateDroneStatus();
+          });
+          droneRootsEl.appendChild(b);
+        });
+
+        Object.keys(CHORDS).forEach((q, i) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "qual-btn" + (q === droneQuality ? " active" : "");
+          b.textContent = q === "5" ? "5 (power)" : q;
+          b.addEventListener("click", () => {
+            droneQuality = q;
+            [...droneQualsEl.children].forEach((c, j) =>
+              c.classList.toggle("active", Object.keys(CHORDS)[j] === q)
+            );
+            if (dronePlaying) {
+              releaseVoices(droneVoices);
+              droneVoices = buildVoices();
+            }
+            updateDroneStatus();
+          });
+          droneQualsEl.appendChild(b);
+        });
+
+        updateDroneStatus();
       })();
     </script>
   </body>
