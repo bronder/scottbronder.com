@@ -1619,9 +1619,12 @@
                 scheduleClick(nextBeatTime + (k * beatSec) / b.subdiv, 1, true);
               }
             }
+            // capture the index — currentBeat is mutated below and the
+            // closure would otherwise highlight one block ahead
+            const beatIndex = currentBeat;
             visualTimeouts.push(
               setTimeout(
-                () => lightBeat(currentBeat),
+                () => lightBeat(beatIndex),
                 Math.max(0, (nextBeatTime - audioCtx.currentTime) * 1000)
               )
             );
