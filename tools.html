@@ -590,18 +590,11 @@
         margin-bottom: 1.1rem;
       }
 
-      .bpm-jumps {
-        display: flex;
-        gap: 0.4rem;
-        justify-content: center;
-        margin-top: 0.45rem;
-      }
-
-      .bpm-jumps button {
+      .jump-btn {
         font-family: var(--mono);
         font-size: 0.7rem;
-        padding: 0.22rem 0.55rem;
-        border-radius: 999px;
+        padding: 0.35rem 0.5rem;
+        border-radius: 8px;
         border: 1px solid var(--line);
         background: rgba(255, 255, 255, 0.02);
         color: var(--faint);
@@ -609,7 +602,7 @@
         transition: color 0.15s ease, border-color 0.15s ease;
       }
 
-      .bpm-jumps button:hover {
+      .jump-btn:hover {
         color: var(--amber);
         border-color: rgba(245, 182, 70, 0.5);
       }
@@ -1141,7 +1134,11 @@
                 <input class="bpm-input" id="bpm-input" type="number" min="40" max="300" value="100" aria-label="Tempo in beats per minute" />
                 <small class="bpm-label">BPM</small>
                 <div class="bpm-row">
-                  <button class="step-btn" id="bpm-down" type="button" aria-label="Decrease tempo">−</button>
+                  <div class="tool-row">
+                    <button type="button" class="jump-btn" data-d="-10">−10</button>
+                    <button type="button" class="jump-btn" data-d="-5">−5</button>
+                    <button class="step-btn" id="bpm-down" type="button" aria-label="Decrease tempo">−</button>
+                  </div>
                   <input
                     class="bpm-slider"
                     id="bpm-slider"
@@ -1152,13 +1149,11 @@
                     value="100"
                     aria-label="Tempo slider"
                   />
-                  <button class="step-btn" id="bpm-up" type="button" aria-label="Increase tempo">+</button>
-                </div>
-                <div class="bpm-jumps" role="group" aria-label="Quick tempo jumps">
-                  <button type="button" data-d="-10">−10</button>
-                  <button type="button" data-d="-5">−5</button>
-                  <button type="button" data-d="5">+5</button>
-                  <button type="button" data-d="10">+10</button>
+                  <div class="tool-row">
+                    <button class="step-btn" id="bpm-up" type="button" aria-label="Increase tempo">+</button>
+                    <button type="button" class="jump-btn" data-d="5">+5</button>
+                    <button type="button" class="jump-btn" data-d="10">+10</button>
+                  </div>
                 </div>
               </div>
 
@@ -2258,7 +2253,7 @@
           songBpmNum.textContent = songBpmSlider.value;
         });
 
-        document.querySelectorAll(".bpm-jumps button").forEach((btn) =>
+        document.querySelectorAll(".jump-btn").forEach((btn) =>
           btn.addEventListener("click", () => setBpm(bpm + Number(btn.dataset.d)))
         );
 
