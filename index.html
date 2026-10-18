@@ -627,6 +627,19 @@
         justify-content: space-between;
       }
 
+      .seq-head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem 1.25rem;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.45rem;
+      }
+
+      .seq-head .drone-label {
+        margin: 0;
+      }
+
       .numeral {
         color: var(--faint);
         font-size: 0.72rem;
@@ -1040,18 +1053,23 @@
               </div>
 
               <div class="drone-block">
-                <p class="drone-label" id="seq-label">sequence — click a chord to change its length</p>
+                <div class="seq-head">
+                  <p class="drone-label" id="seq-label">sequence — click a chord to change its length</p>
+                  <div class="tool-row">
+                    <p class="drone-label">new chords</p>
+                    <select class="time-sig" id="beats-per-chord" aria-label="Default beats for newly added chords">
+                      <option value="1">1 beat</option>
+                      <option value="2">2 beats</option>
+                      <option value="4" selected>4 beats</option>
+                      <option value="8">8 beats</option>
+                      <option value="16">16 beats</option>
+                    </select>
+                  </div>
+                </div>
                 <div class="seq-area" id="seq-area"></div>
               </div>
 
               <div class="metro-controls">
-                <select class="time-sig" id="beats-per-chord" aria-label="Default beats for newly added chords">
-                  <option value="1">1 beat</option>
-                  <option value="2">2 beats</option>
-                  <option value="4" selected>4 beats</option>
-                  <option value="8">8 beats</option>
-                  <option value="16">16 beats</option>
-                </select>
                 <div class="bpm-row">
                   <div class="bpm-value"><span id="song-bpm-num">80</span><small>BPM</small></div>
                   <input
