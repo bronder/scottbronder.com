@@ -475,55 +475,136 @@
       }
 
       /* ---------- metronome ---------- */
-      .beat-dots {
+      .beat-blocks {
         display: flex;
-        gap: 0.6rem;
-        justify-content: center;
-        padding: 0.4rem 0;
+        gap: 0.5rem;
+        margin-bottom: 1.1rem;
       }
 
-      .beat-dot {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        border: 1px solid rgba(255, 255, 255, 0.18);
+      .beat-block-wrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .beat-block {
+        height: 64px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
         background: rgba(255, 255, 255, 0.03);
-        transition: background-color 0.06s ease, box-shadow 0.06s ease, border-color 0.06s ease;
+        cursor: pointer;
+        padding: 0;
+        transition: transform 0.08s ease, box-shadow 0.08s ease,
+          background-color 0.15s ease, border-color 0.15s ease;
       }
 
-      .beat-dot.on {
-        border-color: var(--blue);
-        background: var(--blue);
-        box-shadow: 0 0 10px rgba(122, 162, 247, 0.7);
+      .beat-block.accent {
+        background: linear-gradient(160deg, var(--amber), var(--amber2));
+        border-color: transparent;
+        box-shadow: 0 0 14px rgba(245, 182, 70, 0.35);
       }
 
-      .beat-dot.down.on {
-        border-color: var(--amber);
-        background: var(--amber);
-        box-shadow: 0 0 12px rgba(245, 182, 70, 0.8);
+      .beat-block.normal {
+        background: rgba(122, 162, 247, 0.25);
+        border-color: rgba(122, 162, 247, 0.4);
+      }
+
+      .beat-block.rest {
+        background: transparent;
+        border-style: dashed;
+      }
+
+      .beat-block.current {
+        transform: translateY(-3px);
+      }
+
+      .beat-block.accent.current {
+        box-shadow: 0 0 20px rgba(245, 182, 70, 0.7);
+      }
+
+      .beat-block.normal.current {
+        box-shadow: 0 0 14px rgba(122, 162, 247, 0.6);
+      }
+
+      .beat-block.rest.current {
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+      }
+
+      .sub-btn {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        padding: 0.2rem 0;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--faint);
+        cursor: pointer;
+        transition: color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .sub-btn:hover {
+        color: var(--text);
+        border-color: rgba(245, 182, 70, 0.5);
+      }
+
+      .bpm-input-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1;
+      }
+
+      .bpm-input {
+        width: 5.4ch;
+        font-family: var(--mono);
+        font-size: 2rem;
+        font-weight: 600;
+        text-align: center;
+        background: transparent;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        color: var(--text);
+        outline: none;
+        padding: 0;
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+
+      .bpm-input::-webkit-outer-spin-button,
+      .bpm-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      .bpm-input:focus {
+        border-bottom-color: var(--amber);
+      }
+
+      .bpm-input-wrap small {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--faint);
+        letter-spacing: 0.12em;
+        margin-top: 0.2rem;
+      }
+
+      .time-slash {
+        font-family: var(--mono);
+        color: var(--faint);
       }
 
       .bpm-row {
         display: flex;
         align-items: center;
         gap: 0.9rem;
+        flex-wrap: wrap;
       }
 
-      .bpm-value {
-        font-family: var(--mono);
-        font-size: 2rem;
-        font-weight: 600;
-        min-width: 3.4ch;
-        text-align: center;
-        line-height: 1;
-      }
-
-      .bpm-value small {
-        font-size: 0.72rem;
-        font-weight: 400;
-        color: var(--faint);
-        display: block;
-        letter-spacing: 0.1em;
+      .bpm-slider {
+        flex: 1;
+        accent-color: var(--amber);
+        min-width: 8rem;
       }
 
       .step-btn {
@@ -975,45 +1056,70 @@
 
             <div class="tool-panel" data-tool="metronome" hidden>
             <!-- ===================== metronome ===================== -->
+            <div class="tool-panel" data-tool="metronome" hidden>
             <div class="tool-card">
               <div class="tool-head">
                 <h3 class="tool-title">Metronome</h3>
-                <span class="tool-meta">tap tempo · accent on 1</span>
+                <span class="tool-meta">click blocks to accent · 1x adds subdivisions</span>
               </div>
 
-              <div class="beat-dots" id="beat-dots" aria-hidden="true"></div>
+              <div class="beat-blocks" id="beat-blocks" role="group" aria-label="Beats — click a block to cycle accent, normal, rest"></div>
 
               <div class="bpm-row">
                 <button class="step-btn" id="bpm-down" type="button" aria-label="Decrease tempo">−</button>
-                <div class="bpm-value"><span id="bpm-num">100</span><small>BPM</small></div>
+                <div class="bpm-input-wrap">
+                  <input class="bpm-input" id="bpm-input" type="number" min="40" max="300" value="100" aria-label="Tempo in beats per minute" />
+                  <small>BPM</small>
+                </div>
                 <button class="step-btn" id="bpm-up" type="button" aria-label="Increase tempo">+</button>
                 <input
                   class="bpm-slider"
                   id="bpm-slider"
                   type="range"
-                  min="30"
-                  max="240"
+                  min="40"
+                  max="300"
                   step="1"
                   value="100"
-                  aria-label="Tempo in beats per minute"
+                  aria-label="Tempo slider"
                 />
               </div>
 
               <div class="metro-controls">
-                <select class="time-sig" id="time-sig" aria-label="Time signature">
-                  <option value="4">4/4</option>
-                  <option value="3">3/4</option>
-                  <option value="2">2/4</option>
-                  <option value="6">6/8</option>
-                </select>
                 <div class="tool-row">
+                  <select class="time-sig" id="top-number" aria-label="Beats per measure">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4" selected>4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                  </select>
+                  <span class="time-slash">/</span>
+                  <select class="time-sig" id="bottom-number" aria-label="Note value">
+                    <option value="2">2</option>
+                    <option value="4" selected>4</option>
+                    <option value="8">8</option>
+                  </select>
+                </div>
+                <div class="tool-row">
+                  <select class="time-sig" id="sound-style" aria-label="Sound style">
+                    <option value="click" selected>click</option>
+                    <option value="beep">beep</option>
+                    <option value="wood">woodblock</option>
+                    <option value="snap">snap</option>
+                  </select>
                   <button class="ghost-btn" id="tap-btn" type="button">tap tempo</button>
                   <button class="play-btn" id="metro-btn" type="button" aria-pressed="false">▶ start</button>
                 </div>
               </div>
-              <p class="tool-status" id="metro-status" aria-live="polite">30–240 bpm · tap tempo needs at least two taps</p>
+              <p class="tool-status" id="metro-status" aria-live="polite">40–300 bpm · click a block to cycle accent → normal → rest · 1x adds subdivisions</p>
             </div>
-
             </div>
 
             <div class="tool-panel" data-tool="drone" hidden>
@@ -1356,75 +1462,171 @@
 
         /* ===================== METRONOME ===================== */
 
-        const bpmNum = document.getElementById("bpm-num");
+        const beatBlocksEl = document.getElementById("beat-blocks");
+        const bpmInput = document.getElementById("bpm-input");
         const bpmSlider = document.getElementById("bpm-slider");
         const bpmDown = document.getElementById("bpm-down");
         const bpmUp = document.getElementById("bpm-up");
         const tapBtn = document.getElementById("tap-btn");
         const metroBtn = document.getElementById("metro-btn");
         const metroStatus = document.getElementById("metro-status");
-        const timeSig = document.getElementById("time-sig");
-        const beatDots = document.getElementById("beat-dots");
+        const topSel = document.getElementById("top-number");
+        const bottomSel = document.getElementById("bottom-number");
+        const soundSel = document.getElementById("sound-style");
 
         let bpm = 100;
-        let beatsPerBar = 4;
+        let bottom = 4;
         let playing = false;
         let currentBeat = 0;
         let nextBeatTime = 0;
         let schedulerId = null;
+        let soundStyle = "click";
+        let noiseBuf = null;
+        let beats = []; // per beat: { level: 2 accent | 1 normal | 0 rest, subdiv: 1|2|3 }
         const visualTimeouts = [];
 
         const SCHEDULE_AHEAD = 0.12;
         const TICK_MS = 25;
 
-        function buildDots() {
-          beatDots.innerHTML = "";
-          for (let i = 0; i < beatsPerBar; i++) {
-            const d = document.createElement("span");
-            d.className = "beat-dot" + (i === 0 ? " down" : "");
-            beatDots.appendChild(d);
-          }
+        function defaultBeat(i) {
+          return { level: i === 0 ? 2 : 1, subdiv: 1 };
+        }
+
+        function rebuildBeats() {
+          const n = parseInt(topSel.value, 10);
+          beats = Array.from({ length: n }, (_, i) => beats[i] || defaultBeat(i));
+          beats.length = n;
+          renderBlocks();
+        }
+
+        function renderBlocks() {
+          beatBlocksEl.innerHTML = "";
+          beats.forEach((b, i) => {
+            const wrap = document.createElement("div");
+            wrap.className = "beat-block-wrap";
+            const blk = document.createElement("button");
+            blk.type = "button";
+            blk.className =
+              "beat-block " +
+              (b.level === 2 ? "accent" : b.level === 1 ? "normal" : "rest") +
+              (playing && i === currentBeat ? " current" : "");
+            blk.setAttribute(
+              "aria-label",
+              "Beat " + (i + 1) + ": " +
+              (b.level === 2 ? "accented" : b.level === 1 ? "normal" : "rest") +
+              " — click to change"
+            );
+            blk.addEventListener("click", () => {
+              b.level = (b.level + 2) % 3;
+              renderBlocks();
+            });
+            wrap.appendChild(blk);
+            const sub = document.createElement("button");
+            sub.type = "button";
+            sub.className = "sub-btn";
+            sub.textContent = b.subdiv + "x";
+            sub.title = "subdivisions for this beat";
+            sub.setAttribute("aria-label", "Subdivisions for beat " + (i + 1));
+            sub.addEventListener("click", () => {
+              b.subdiv = b.subdiv === 3 ? 1 : b.subdiv + 1;
+              sub.textContent = b.subdiv + "x";
+            });
+            wrap.appendChild(sub);
+            beatBlocksEl.appendChild(wrap);
+          });
         }
 
         function setBpm(v) {
-          bpm = Math.max(30, Math.min(240, Math.round(v)));
-          bpmNum.textContent = bpm;
+          bpm = Math.max(40, Math.min(300, Math.round(v)));
+          bpmInput.value = bpm;
           bpmSlider.value = bpm;
         }
 
+        function getNoise(ctx) {
+          if (!noiseBuf) {
+            noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.15), ctx.sampleRate);
+            const d = noiseBuf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          }
+          return noiseBuf;
+        }
+
+        function scheduleClick(t, level, isSub) {
+          const vol = (level === 2 ? 1 : 0.62) * (isSub ? 0.55 : 1);
+          if (soundStyle === "snap") {
+            const src = audioCtx.createBufferSource();
+            src.buffer = getNoise(audioCtx);
+            const hp = audioCtx.createBiquadFilter();
+            hp.type = "highpass";
+            hp.frequency.value = 2500;
+            const g = audioCtx.createGain();
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.linearRampToValueAtTime(0.5 * vol, t + 0.002);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+            src.connect(hp);
+            hp.connect(g);
+            g.connect(masterGain);
+            src.start(t);
+            return;
+          }
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          let decay = 0.07;
+          if (soundStyle === "beep") {
+            osc.type = "sine";
+            osc.frequency.value = level === 2 ? 880 : 660;
+            decay = 0.1;
+          } else if (soundStyle === "wood") {
+            osc.type = "triangle";
+            const f = level === 2 ? 1000 : 780;
+            osc.frequency.setValueAtTime(f, t);
+            osc.frequency.exponentialRampToValueAtTime(f * 0.6, t + 0.06);
+            decay = 0.07;
+          } else {
+            osc.type = "square";
+            osc.frequency.value = level === 2 ? 1568 : 1046;
+          }
+          if (isSub) osc.frequency.value *= 0.75;
+          const peak = vol * (soundStyle === "wood" ? 0.4 : 0.3);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.linearRampToValueAtTime(peak, t + 0.002);
+          g.gain.exponentialRampToValueAtTime(0.001, t + decay);
+          osc.connect(g);
+          g.connect(masterGain);
+          osc.start(t);
+          osc.stop(t + decay + 0.05);
+        }
+
         function lightBeat(i) {
-          const dots = beatDots.children;
-          for (const d of dots) d.classList.remove("on");
-          if (dots[i]) dots[i].classList.add("on");
+          [...beatBlocksEl.children].forEach((w, j) =>
+            w.firstElementChild.classList.toggle("current", j === i)
+          );
         }
 
         function clearVisuals() {
           visualTimeouts.forEach(clearTimeout);
           visualTimeouts.length = 0;
-          [...beatDots.children].forEach((d) => d.classList.remove("on"));
-        }
-
-        function scheduleBeat(i, t) {
-          const osc = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          const accent = i === 0;
-          osc.type = "square";
-          osc.frequency.value = accent ? 1568 : 1046;
-          g.gain.setValueAtTime(0.0001, t);
-          g.gain.linearRampToValueAtTime(accent ? 0.28 : 0.16, t + 0.002);
-          g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
-          osc.connect(g);
-          g.connect(masterGain);
-          osc.start(t);
-          osc.stop(t + 0.1);
-          visualTimeouts.push(setTimeout(() => lightBeat(i), Math.max(0, (t - audioCtx.currentTime) * 1000)));
+          lightBeat(-1);
         }
 
         function scheduler() {
+          const beatSec = (60 / bpm) * (4 / bottom);
           while (nextBeatTime < audioCtx.currentTime + SCHEDULE_AHEAD) {
-            scheduleBeat(currentBeat, nextBeatTime);
-            nextBeatTime += 60 / bpm;
-            currentBeat = (currentBeat + 1) % beatsPerBar;
+            const b = beats[currentBeat] || defaultBeat(currentBeat);
+            if (b.level > 0) {
+              scheduleClick(nextBeatTime, b.level, false);
+              for (let k = 1; k < b.subdiv; k++) {
+                scheduleClick(nextBeatTime + (k * beatSec) / b.subdiv, 1, true);
+              }
+            }
+            visualTimeouts.push(
+              setTimeout(
+                () => lightBeat(currentBeat),
+                Math.max(0, (nextBeatTime - audioCtx.currentTime) * 1000)
+              )
+            );
+            nextBeatTime += beatSec;
+            currentBeat = (currentBeat + 1) % beats.length;
           }
         }
 
@@ -1441,7 +1643,8 @@
             schedulerId = setInterval(scheduler, TICK_MS);
             metroBtn.setAttribute("aria-pressed", "true");
             metroBtn.textContent = "■ stop";
-            metroStatus.textContent = "clicking at " + bpm + " bpm — " + beatsPerBar + " beats per bar";
+            metroStatus.textContent =
+              beats.length + " beats of 1/" + bottom + " at " + bpm + " bpm";
           });
         }
 
@@ -1451,20 +1654,28 @@
           clearVisuals();
           metroBtn.setAttribute("aria-pressed", "false");
           metroBtn.textContent = "▶ start";
-          metroStatus.textContent = "30–240 bpm · tap tempo needs at least two taps";
+          metroStatus.textContent = "40–300 bpm · click a block to cycle accent → normal → rest · 1x adds subdivisions";
         }
 
         metroBtn.addEventListener("click", () => (playing ? stopMetro() : startMetro()));
         bpmSlider.addEventListener("input", () => setBpm(parseFloat(bpmSlider.value)));
+        bpmInput.addEventListener("input", () => {
+          const v = parseFloat(bpmInput.value);
+          if (!isNaN(v)) setBpm(v);
+        });
         bpmDown.addEventListener("click", () => setBpm(bpm - 1));
         bpmUp.addEventListener("click", () => setBpm(bpm + 1));
 
-        timeSig.addEventListener("change", () => {
-          beatsPerBar = parseInt(timeSig.value, 10);
-          buildDots();
-          metroStatus.textContent = playing
-            ? "clicking at " + bpm + " bpm — " + beatsPerBar + " beats per bar"
-            : metroStatus.textContent;
+        topSel.addEventListener("change", () => {
+          rebuildBeats();
+          if (playing) metroStatus.textContent = beats.length + " beats of 1/" + bottom + " at " + bpm + " bpm";
+        });
+        bottomSel.addEventListener("change", () => {
+          bottom = parseInt(bottomSel.value, 10);
+          if (playing) metroStatus.textContent = beats.length + " beats of 1/" + bottom + " at " + bpm + " bpm";
+        });
+        soundSel.addEventListener("change", () => {
+          soundStyle = soundSel.value;
         });
 
         let taps = [];
@@ -1483,7 +1694,7 @@
           metroStatus.textContent = "tempo set from " + taps.length + " taps";
         });
 
-        buildDots();
+        rebuildBeats();
 
         /* ===================== DRONE ===================== */
 
