@@ -590,6 +590,30 @@
         margin-bottom: 1.1rem;
       }
 
+      .bpm-jumps {
+        display: flex;
+        gap: 0.4rem;
+        justify-content: center;
+        margin-top: 0.45rem;
+      }
+
+      .bpm-jumps button {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        padding: 0.22rem 0.55rem;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--faint);
+        cursor: pointer;
+        transition: color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .bpm-jumps button:hover {
+        color: var(--amber);
+        border-color: rgba(245, 182, 70, 0.5);
+      }
+
       .bpm-stack .bpm-row {
         width: 100%;
         max-width: 28rem;
@@ -1129,6 +1153,12 @@
                     aria-label="Tempo slider"
                   />
                   <button class="step-btn" id="bpm-up" type="button" aria-label="Increase tempo">+</button>
+                </div>
+                <div class="bpm-jumps" role="group" aria-label="Quick tempo jumps">
+                  <button type="button" data-d="-10">−10</button>
+                  <button type="button" data-d="-5">−5</button>
+                  <button type="button" data-d="5">+5</button>
+                  <button type="button" data-d="10">+10</button>
                 </div>
               </div>
 
@@ -2227,6 +2257,10 @@
         songBpmSlider.addEventListener("input", () => {
           songBpmNum.textContent = songBpmSlider.value;
         });
+
+        document.querySelectorAll(".bpm-jumps button").forEach((btn) =>
+          btn.addEventListener("click", () => setBpm(bpm + Number(btn.dataset.d)))
+        );
 
         let songTaps = [];
         document.getElementById("song-tap").addEventListener("click", () => {
