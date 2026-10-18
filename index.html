@@ -636,7 +636,8 @@
         margin-bottom: 0.45rem;
       }
 
-      .seq-head .drone-label {
+      .seq-head .drone-label,
+      .ref-key-row .drone-label {
         margin: 0;
       }
 
@@ -1047,14 +1048,8 @@
               </div>
 
               <div class="drone-block">
-                <p class="drone-label" id="ref-chords-label">chords in key — click to add to the sequence</p>
-                <p class="tool-status" id="ref-scale" aria-live="polite"></p>
-                <div class="qual-row" id="ref-chords"></div>
-              </div>
-
-              <div class="drone-block">
-                <div class="seq-head">
-                  <p class="drone-label" id="seq-label">sequence — click a chord to change its length</p>
+                <div class="ref-key-row">
+                  <p class="drone-label" id="ref-chords-label">chords in key — click to add to the sequence</p>
                   <div class="tool-row">
                     <p class="drone-label">new chords</p>
                     <select class="time-sig" id="beats-per-chord" aria-label="Default beats for newly added chords">
@@ -1066,6 +1061,12 @@
                     </select>
                   </div>
                 </div>
+                <p class="tool-status" id="ref-scale" aria-live="polite"></p>
+                <div class="qual-row" id="ref-chords"></div>
+              </div>
+
+              <div class="drone-block">
+                <p class="drone-label" id="seq-label">sequence — click a chord to change its length</p>
                 <div class="seq-area" id="seq-area"></div>
               </div>
 
