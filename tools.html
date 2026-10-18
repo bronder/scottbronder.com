@@ -1060,7 +1060,7 @@
             <div class="tool-card">
               <div class="tool-head">
                 <h3 class="tool-title">Metronome</h3>
-                <span class="tool-meta">click blocks to accent · 1x adds subdivisions</span>
+                <span class="tool-meta">click blocks to accent · 1x–4x adds subdivisions</span>
               </div>
 
               <div class="beat-blocks" id="beat-blocks" role="group" aria-label="Beats — click a block to cycle accent, normal, rest"></div>
@@ -1528,7 +1528,8 @@
             sub.title = "subdivisions for this beat";
             sub.setAttribute("aria-label", "Subdivisions for beat " + (i + 1));
             sub.addEventListener("click", () => {
-              b.subdiv = b.subdiv === 3 ? 1 : b.subdiv + 1;
+              const steps = [1, 2, 3, 4];
+              b.subdiv = steps[(steps.indexOf(b.subdiv) + 1) % steps.length];
               sub.textContent = b.subdiv + "x";
             });
             wrap.appendChild(sub);
