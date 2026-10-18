@@ -1436,8 +1436,17 @@
           if (!droneIn) {
             const filter = ctx.createBiquadFilter();
             filter.type = "lowpass";
-            filter.frequency.value = 2200;
-            filter.Q.value = 0.5;
+            filter.frequency.value = 1800;
+            filter.Q.value = 0.6;
+            // slow sweep so the pad breathes instead of sitting static
+            const lfo = ctx.createOscillator();
+            lfo.type = "sine";
+            lfo.frequency.value = 0.13;
+            const lfoDepth = ctx.createGain();
+            lfoDepth.gain.value = 450;
+            lfo.connect(lfoDepth);
+            lfoDepth.connect(filter.frequency);
+            lfo.start();
             filter.connect(masterGain);
             droneIn = filter;
           }
@@ -1464,14 +1473,18 @@
           const ctx = audioCtx;
           const root = DRONE_ROOTS[droneRoot];
           const now = ctx.currentTime;
-          // chord tones plus the root an octave up, quietly, for fullness
-          const freqs = CHORDS[droneQuality].map((s) => root.freq * Math.pow(2, s / 12));
-          freqs.push(root.freq * 2);
-          return freqs.map((f, i) => {
-            const level = i === freqs.length - 1 ? 0.05 : 0.11;
+          // voicing: sub-octave root for body, every chord tone doubled an
+          // octave up, and the root two octaves up as a quiet sheen
+          const specs = [{ f: root.freq / 2, level: 0.08 }];
+          CHORDS[droneQuality].forEach((s) => {
+            const f = root.freq * Math.pow(2, s / 12);
+            specs.push({ f, level: 0.1 }, { f: f * 2, level: 0.045 });
+          });
+          specs.push({ f: root.freq * 4, level: 0.028 });
+          return specs.map(({ f, level }) => {
             const vgain = ctx.createGain();
             vgain.gain.setValueAtTime(0.0001, now);
-            vgain.gain.linearRampToValueAtTime(level, now + 0.5);
+            vgain.gain.linearRampToValueAtTime(level, now + 0.6);
             vgain.connect(droneIn);
             // two slightly detuned saws per note = a warm string-pad drone
             const oscs = [-6, 6].map((cents) => {
