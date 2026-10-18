@@ -1,7 +1,9 @@
 # scottbronder.com
 
-A simple "coming soon" page, built as a static site for Cloudflare Pages.
-There is no build step — the site is just `index.html` plus a `_headers` file.
+A playable single-page site for Cloudflare Pages — six synthesized guitar
+strings you can actually strum, plus a setlist of recent work.
+There is no build step — the site is just `index.html` plus a `_headers` file,
+with zero external requests (fonts, icons, and audio are all inline/generated).
 
 ## Deploying to Cloudflare Pages
 
