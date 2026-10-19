@@ -1244,7 +1244,6 @@
                 <div class="seq-head">
                   <p class="drone-label" id="seq-label">sequence — drag a chord's right edge to resize · drag a chord to move it</p>
                   <div class="tool-row">
-                    <button type="button" class="song-jump" id="seq-reset" title="clear the sequence and start over">⟲ start over</button>
                     <p class="drone-label">beats / measure</p>
                     <select class="time-sig" id="beats-per-measure" aria-label="Beats per measure">
                       <option value="2">2</option>
@@ -1279,6 +1278,7 @@
                   <button type="button" class="song-jump" data-song-d="5">+5</button>
                   <button type="button" class="song-jump" data-song-d="10">+10</button>
                 </div>
+                <button class="ghost-btn" id="seq-reset" type="button" title="clear the sequence and start over">⟲ start over</button>
                 <button class="ghost-btn" id="song-tap" type="button">tap tempo</button>
                 <button class="play-btn" id="song-btn" type="button" aria-pressed="false">▶ play loop</button>
               </div>
