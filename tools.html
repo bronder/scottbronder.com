@@ -590,6 +590,23 @@
         margin-bottom: 1.1rem;
       }
 
+      .song-jump {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        padding: 0.35rem 0.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--faint);
+        cursor: pointer;
+        transition: color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .song-jump:hover {
+        color: var(--amber);
+        border-color: rgba(245, 182, 70, 0.5);
+      }
+
       .jump-btn {
         font-family: var(--mono);
         font-size: 0.7rem;
@@ -1243,6 +1260,8 @@
 
               <div class="metro-controls">
                 <div class="bpm-row">
+                  <button type="button" class="song-jump" data-song-d="-10">−10</button>
+                  <button type="button" class="song-jump" data-song-d="-5">−5</button>
                   <div class="bpm-value"><span id="song-bpm-num">80</span><small>BPM</small></div>
                   <input
                     class="bpm-slider"
@@ -1254,6 +1273,8 @@
                     value="80"
                     aria-label="Song tempo in beats per minute"
                   />
+                  <button type="button" class="song-jump" data-song-d="5">+5</button>
+                  <button type="button" class="song-jump" data-song-d="10">+10</button>
                 </div>
                 <button class="ghost-btn" id="song-tap" type="button">tap tempo</button>
                 <button class="play-btn" id="song-btn" type="button" aria-pressed="false">▶ play loop</button>
@@ -2392,6 +2413,17 @@
         songBpmSlider.addEventListener("input", () => {
           songBpmNum.textContent = songBpmSlider.value;
         });
+
+        document.querySelectorAll(".song-jump").forEach((btn) =>
+          btn.addEventListener("click", () => {
+            const v = Math.max(
+              60,
+              Math.min(200, parseInt(songBpmSlider.value, 10) + Number(btn.dataset.songD))
+            );
+            songBpmSlider.value = v;
+            songBpmNum.textContent = v;
+          })
+        );
 
         document.querySelectorAll(".jump-btn").forEach((btn) =>
           btn.addEventListener("click", () => setBpm(bpm + Number(btn.dataset.d)))
