@@ -1244,6 +1244,7 @@
                 <div class="seq-head">
                   <p class="drone-label" id="seq-label">sequence — drag a chord's right edge to resize · drag a chord to move it</p>
                   <div class="tool-row">
+                    <button type="button" class="song-jump" id="seq-reset" title="clear the sequence and start over">⟲ start over</button>
                     <p class="drone-label">beats / measure</p>
                     <select class="time-sig" id="beats-per-measure" aria-label="Beats per measure">
                       <option value="2">2</option>
@@ -2497,6 +2498,15 @@
         }
 
         songBtn.addEventListener("click", () => (songPlaying ? stopSong() : playSong()));
+
+        document.getElementById("seq-reset").addEventListener("click", () => {
+          if (!seq.length) return;
+          if (!confirm("Clear the sequence and start over?")) return;
+          if (songPlaying) stopSong();
+          seq = [];
+          renderGrid();
+          updateIdleStatus();
+        });
 
         if (store.song && store.song.bpm) {
           songBpmSlider.value = store.song.bpm;
