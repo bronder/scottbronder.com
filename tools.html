@@ -1301,7 +1301,7 @@
                       id="echo-amount"
                       type="range"
                       min="0"
-                      max="50"
+                      max="60"
                       step="1"
                       value="0"
                       aria-label="Echo amount"
@@ -2022,10 +2022,25 @@
 
         let songEcho = null; // delay send level, 0..0.5
 
+        function songDelayTime() {
+          const bpmv = parseInt(songBpmSlider.value, 10) || 80;
+          return Math.min(1.1, (60 / bpmv) * 1.5);
+        }
+
+        function updateSongDelayTime() {
+          if (droneFilterCtl) {
+            droneFilterCtl.delay.delayTime.setTargetAtTime(
+              songDelayTime(),
+              audioCtx.currentTime,
+              0.1
+            );
+          }
+        }
+
         function applySongSound() {
           if (!droneFilterCtl) return;
           if (songEcho === null) {
-            songEcho = songSound === "synthwave" ? 0.24 : 0;
+            songEcho = songSound === "synthwave" ? 0.35 : 0;
             const es = document.getElementById("echo-amount");
             if (es) es.value = Math.round(songEcho * 100);
           }
@@ -2057,16 +2072,16 @@
             lfoDepth.connect(filter.frequency);
             lfo.start();
 
-            // parallel echo send — the synthwave shimmer
+            // parallel echo send — tempo-synced dotted-eighth shimmer
             const delaySend = ctx.createGain();
             delaySend.gain.value = 0;
-            const delay = ctx.createDelay(1.0);
-            delay.delayTime.value = 0.29;
+            const delay = ctx.createDelay(1.2);
+            delay.delayTime.value = songDelayTime();
             const fb = ctx.createGain();
-            fb.gain.value = 0.38;
+            fb.gain.value = 0.45;
             const delayTone = ctx.createBiquadFilter();
             delayTone.type = "lowpass";
-            delayTone.frequency.value = 2400;
+            delayTone.frequency.value = 5200;
             filter.connect(delaySend);
             delaySend.connect(delay);
             delay.connect(delayTone);
@@ -2076,7 +2091,7 @@
 
             filter.connect(masterGain);
             droneIn = filter;
-            droneFilterCtl = { filter, lfoDepth, delaySend };
+            droneFilterCtl = { filter, lfoDepth, delaySend, delay };
             applySongSound();
           }
           return droneIn;
@@ -2646,6 +2661,7 @@
           const song = loadStore().song || {};
           song.bpm = v;
           saveStore({ song });
+          updateSongDelayTime();
         }
 
         songBpmSlider.addEventListener("input", () => {
@@ -2714,7 +2730,7 @@
 
         const echoSliderEl = document.getElementById("echo-amount");
         if (store.song && typeof store.song.echo === "number") {
-          songEcho = Math.max(0, Math.min(0.5, store.song.echo));
+          songEcho = Math.max(0, Math.min(0.6, store.song.echo));
           echoSliderEl.value = Math.round(songEcho * 100);
         }
         echoSliderEl.addEventListener("input", () => {
