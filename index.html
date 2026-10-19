@@ -6,12 +6,12 @@
     <title>Scott Bronder — Code by day. Shred by night.</title>
     <meta
       name="description"
-      content="Scott Bronder is a software engineer who builds fast, real-world websites — and a guitarist. The new site is on the way; meanwhile, the guitar tuner and metronome below actually work."
+      content="Scott Bronder is a software engineer building fast, hand-tuned websites for real people and businesses — and a lifelong guitarist sharing free browser tools: a tuner, metronome, chord drone, and song builder."
     />
     <meta property="og:title" content="Scott Bronder — Code by day. Shred by night." />
     <meta
       property="og:description"
-      content="Software engineer &amp; guitarist. The new site is on the way — try the tuner and metronome."
+      content="Software engineer &amp; guitarist. Fast, hand-tuned websites for real people and businesses — plus free browser guitar tools: tuner, metronome, chord drone, and song builder."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://scottbronder.com/" />
@@ -28,8 +28,9 @@
         --panel: #10141b;
         --text: #eef0f3;
         --muted: #9aa3ad;
-        --faint: #6b7480;
+        --faint: #7d8791;
         --line: rgba(255, 255, 255, 0.07);
+        --sect: clamp(2.25rem, 4vw, 3.25rem);
         --blue: #7aa2f7;
         --amber: #f5b646;
         --amber2: #ff8e3c;
@@ -42,6 +43,10 @@
       * {
         margin: 0;
         box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
       }
 
       ::selection {
@@ -107,23 +112,33 @@
         color: var(--text);
       }
 
-      /* ---------- hero ---------- */
-      .hero {
-        padding: clamp(2.5rem, 7vh, 5rem) 0 clamp(2rem, 5vh, 3.5rem);
+      .site-header a:not(.wordmark) {
+        padding: 0.35rem 0.1rem;
       }
 
-      .eyebrow-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem 1.5rem;
-        flex-wrap: wrap;
+      .site-header a[aria-current="page"] {
+        color: var(--text);
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--amber);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+
+      a.track:focus-visible {
+        outline-offset: -2px;
+      }
+
+      /* ---------- hero ---------- */
+      .hero {
+        padding: clamp(2.5rem, 5vw, 4.5rem) 0 var(--sect);
       }
 
       .eyebrow {
         font-family: var(--mono);
         font-size: 0.8rem;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--blue);
       }
@@ -152,7 +167,7 @@
 
       h1 {
         margin-top: 1.1rem;
-        font-size: clamp(2.8rem, 8vw, 5.4rem);
+        font-size: clamp(2.55rem, 8vw, 5.4rem);
         font-weight: 700;
         letter-spacing: -0.025em;
         line-height: 1.03;
@@ -169,6 +184,8 @@
         font-weight: 600;
         letter-spacing: -0.01em;
         padding-right: 0.12em;
+        padding-bottom: 0.18em;
+        margin-bottom: -0.18em;
         background: linear-gradient(100deg, var(--amber) 10%, var(--amber2) 55%, var(--amber) 95%);
         -webkit-background-clip: text;
         background-clip: text;
@@ -177,13 +194,65 @@
 
       .sub {
         margin-top: 1.2rem;
-        max-width: 58ch;
+        max-width: 52ch;
         color: var(--muted);
         font-size: clamp(1rem, 2.5vw, 1.12rem);
+        text-wrap: pretty;
+      }
+
+      .hero-actions {
+        margin-top: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.7rem 1rem;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: linear-gradient(115deg, var(--amber), var(--amber2));
+        color: #191104;
+        border-radius: 999px;
+        padding: 0.7rem 1.35rem;
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 500;
+        box-shadow: 0 4px 16px -8px rgba(245, 182, 70, 0.55);
+        transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .btn:hover,
+      .btn:focus-visible {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
+        box-shadow: 0 6px 20px -8px rgba(245, 182, 70, 0.65);
+      }
+
+      .btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 999px;
+        padding: 0.7rem 1.25rem;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.92rem;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .btn-ghost:hover,
+      .btn-ghost:focus-visible {
+        border-color: rgba(245, 182, 70, 0.5);
+        color: var(--text);
+        background: rgba(245, 182, 70, 0.05);
       }
 
       .stats {
-        margin-top: 1.6rem;
+        margin-top: 1.25rem;
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem 1.6rem;
@@ -193,7 +262,7 @@
       }
 
       .stats b {
-        color: var(--amber);
+        color: var(--muted);
         font-weight: 500;
       }
 
@@ -210,7 +279,7 @@
       .section-title {
         font-family: var(--mono);
         font-size: 0.8rem;
-        letter-spacing: 0.16em;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--muted);
         font-weight: 500;
@@ -232,9 +301,8 @@
       .toolbench-link {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem 1.25rem;
-        align-items: baseline;
-        justify-content: space-between;
+        align-items: center;
+        gap: 0.6rem 1.5rem;
         border: 1px solid rgba(255, 255, 255, 0.09);
         border-radius: 12px;
         background: var(--panel);
@@ -243,36 +311,61 @@
         transition: border-color 0.15s ease, background-color 0.15s ease;
       }
 
-      .toolbench-link:hover {
+      .toolbench-link:hover,
+      .toolbench-link:focus-visible {
         border-color: rgba(245, 182, 70, 0.55);
         background: rgba(245, 182, 70, 0.04);
       }
 
-      .toolbench-link .tb-name {
+      .tb-main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        margin-right: auto;
+      }
+
+      .tb-name {
         font-family: var(--mono);
-        font-size: 0.95rem;
-        letter-spacing: 0.04em;
+        font-size: 1rem;
+        letter-spacing: 0.03em;
         color: var(--text);
       }
 
-      .toolbench-link .tb-note {
+      .tb-desc {
         color: var(--muted);
-        font-size: 0.85rem;
+        font-size: 0.9rem;
       }
 
-      .toolbench-link .tb-arrow {
-        color: var(--faint);
-        font-size: 1.15rem;
+      .tb-side {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.25rem;
+      }
+
+      .tb-note {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+
+      .tb-action {
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        color: var(--muted);
+        white-space: nowrap;
         transition: color 0.15s ease;
       }
 
-      .toolbench-link:hover .tb-arrow {
+      .toolbench-link:hover .tb-action,
+      .toolbench-link:focus-visible .tb-action {
         color: var(--amber);
       }
 
       /* ---------- setlist ---------- */
       .setlist-wrap {
-        margin-top: clamp(2rem, 5vh, 3rem);
+        margin-top: var(--sect);
       }
 
       .status {
@@ -303,17 +396,32 @@
       }
 
       @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
         .rec-dot {
           animation: none;
+        }
+
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+        }
+
+        .btn:hover,
+        a.track:hover .track-arrow {
+          transform: none;
         }
       }
 
       .track {
         display: grid;
-        grid-template-columns: 2.6rem 1fr auto 1.4rem;
+        grid-template-columns: 2rem minmax(0, 1fr) auto 1rem;
         gap: 1rem;
         align-items: baseline;
-        padding: 1rem 0.9rem;
+        padding: 1.05rem 0.9rem;
         border-top: 1px solid var(--line);
         color: inherit;
         text-decoration: none;
@@ -331,20 +439,29 @@
         transition: color 0.15s ease;
       }
 
+      .track-main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+      }
+
       .track-name {
-        font-size: 1rem;
+        font-size: 1.05rem;
         color: var(--text);
       }
 
-      .track-name small {
+      .track-desc {
+        font-size: 0.875rem;
         color: var(--muted);
-        font-weight: 400;
       }
 
       .track-meta {
-        color: var(--faint);
-        font-size: 0.78rem;
+        color: var(--muted);
+        font-size: 0.72rem;
         font-family: var(--mono);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
         text-align: right;
       }
 
@@ -354,59 +471,35 @@
         transition: transform 0.15s ease;
       }
 
-      a.track:hover {
+      a.track:hover,
+      a.track:focus-visible {
         background: rgba(255, 255, 255, 0.03);
         box-shadow: inset 2px 0 0 var(--amber);
       }
 
-      a.track:hover .track-no {
+      a.track:hover .track-no,
+      a.track:focus-visible .track-no {
         color: var(--amber);
       }
 
-      a.track:hover .track-arrow {
+      a.track:hover .track-arrow,
+      a.track:focus-visible .track-arrow {
         color: var(--amber);
         transform: translate(2px, -2px);
       }
 
-      .track-self .track-arrow {
-        color: var(--rec);
-        font-size: 0.6rem;
-        align-self: center;
-      }
-
       .cta {
-        margin: 1.6rem 0 0;
+        margin: 1.75rem 0 0;
       }
 
-      .cta-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.6rem;
-        background: linear-gradient(115deg, var(--amber), var(--amber2));
-        color: #191104;
-        border-radius: 999px;
-        padding: 0.85rem 1.6rem;
-        text-decoration: none;
-        font-size: 0.95rem;
-        font-weight: 500;
-        box-shadow: 0 10px 34px -14px rgba(245, 182, 70, 0.6);
-        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-      }
-
-      .cta-btn:hover {
-        transform: translateY(-1px);
-        filter: brightness(1.07);
-        box-shadow: 0 14px 40px -14px rgba(245, 182, 70, 0.75);
-      }
-
-      .cta-btn strong {
-        font-weight: 700;
+      main {
+        padding-bottom: var(--sect);
       }
 
       /* ---------- footer ---------- */
       .site-footer {
         margin-top: auto;
-        padding: 1.5rem 0 0.5rem;
+        padding: 1.75rem 0 0.5rem;
         border-top: 1px solid var(--line);
         display: flex;
         flex-wrap: wrap;
@@ -424,18 +517,43 @@
       }
 
       @media (max-width: 560px) {
+        .site-header {
+          gap: 0.75rem;
+        }
+
+        .site-header nav {
+          gap: 1rem;
+        }
+
+        .hero-actions .btn,
+        .hero-actions .btn-ghost {
+          flex: 1 1 auto;
+        }
+
+        .toolbench-link {
+          gap: 0.5rem 1rem;
+        }
+
+        .tb-main {
+          flex-basis: 100%;
+        }
+
         .track {
-          grid-template-columns: 1.8rem 1fr;
-          row-gap: 0.15rem;
+          grid-template-columns: 1.6rem minmax(0, 1fr) 1rem;
+          row-gap: 0.1rem;
         }
 
         .track-meta {
           grid-column: 2;
+          grid-row: 2;
           text-align: left;
+          margin-top: 0.35rem;
         }
 
         .track-arrow {
-          display: none;
+          grid-column: 3;
+          grid-row: 1;
+          align-self: start;
         }
 
         .foot-note {
@@ -443,15 +561,7 @@
           width: 100%;
         }
 
-        .cta-btn {
-          width: 100%;
-          flex-wrap: wrap;
-          justify-content: center;
-          row-gap: 0.1rem;
-          text-align: center;
-        }
-
-        .cta-btn strong {
+        .cta .btn {
           width: 100%;
         }
 
@@ -470,32 +580,31 @@
   <body>
     <div class="page">
       <header class="site-header">
-        <a class="wordmark" href="/">scottbronder<span class="tld">.com</span></a>
+        <a class="wordmark" href="/" aria-current="page">scottbronder<span class="tld">.com</span></a>
         <nav aria-label="Site">
-          <a href="tools.html">tools</a>
-          <a href="https://github.com/bronder" rel="noopener">github</a>
-          <a href="mailto:hello@scottbronder.com">hello@</a>
+          <a href="tools.html">Tools</a>
+          <a href="https://github.com/bronder" rel="noopener">GitHub</a>
+          <a href="mailto:hello@scottbronder.com">Contact</a>
         </nav>
       </header>
 
       <main>
         <div class="hero">
-          <div class="eyebrow-row">
-            <p class="eyebrow">Scott Bronder · software engineer &amp; guitarist</p>
-            <p class="chip"><span class="chip-dot" aria-hidden="true"></span>booking new projects</p>
-          </div>
+          <p class="eyebrow">Scott Bronder · software engineer &amp; guitarist</p>
           <h1>
             <span class="day">Code by day.</span>
             <span class="shred">Shred by night.</span>
           </h1>
           <p class="sub">
-            I design and build fast, hand-tuned websites for real people and
-            businesses — a custom guitar luthier, a shred guitarist, an auto body shop.
-            Through the decades I've never put the guitar down — still playing every
-            week and teaching shred to students — and that same hands-on care goes
-            into every build. The new scottbronder.com is on the way — and the guitar
-            toolbench already works.
+            I build fast, hand-tuned websites for real people and businesses.
+            Software engineer, lifelong guitarist, and shred teacher—bringing
+            the same hands-on care to every build.
           </p>
+          <div class="hero-actions">
+            <a class="btn" href="mailto:hello@scottbronder.com">Let’s talk</a>
+            <a class="btn-ghost" href="#selected-work">View selected work ↓</a>
+            <span class="chip"><span class="chip-dot" aria-hidden="true"></span>booking new projects</span>
+          </div>
           <p class="stats">
             <span><b>3</b> client sites shipped</span>
             <span><b>1</b> domain, finally</span>
@@ -508,13 +617,18 @@
             <h2 class="section-title"><b>01</b> — the toolbench</h2>
           </div>
           <a class="toolbench-link" href="tools.html">
-            <span class="tb-name">tuner · metronome · chord drone · song builder</span>
-            <span class="tb-note">free guitar tools, straight in your browser</span>
-            <span class="tb-arrow">→</span>
+            <span class="tb-main">
+              <span class="tb-name">Guitar toolbench</span>
+              <span class="tb-desc">Tuner, metronome, chord drone, and song builder.</span>
+            </span>
+            <span class="tb-side">
+              <span class="tb-note">Free tools, right in your browser.</span>
+              <span class="tb-action">Open tools →</span>
+            </span>
           </a>
         </section>
 
-        <section class="setlist-wrap" aria-label="Recent work">
+        <section class="setlist-wrap" id="selected-work" aria-label="Recent work">
           <div class="section-head">
             <h2 class="section-title"><b>02</b> — the setlist so far</h2>
             <p class="status">
@@ -523,43 +637,52 @@
           </div>
           <a class="track" href="https://dccustomguitars.com" target="_blank" rel="noopener">
             <span class="track-no">01</span>
-            <span class="track-name">DC Custom Guitars USA <small>— hand-built guitars &amp; fretboard scalloping</small></span>
-            <span class="track-meta">client work · dccustomguitars.com</span>
+            <span class="track-main">
+              <span class="track-name">DC Custom Guitars USA</span>
+              <span class="track-desc">Hand-built guitars &amp; fretboard scalloping</span>
+            </span>
+            <span class="track-meta">Client work</span>
             <span class="track-arrow">↗</span>
           </a>
           <a class="track" href="https://dccustomguitars.com/builder-v2/" target="_blank" rel="noopener">
             <span class="track-no">02</span>
-            <span class="track-name">DC Custom Guitars Guitar Builder <small>— interactive custom guitar builder</small></span>
-            <span class="track-meta">client work · dccustomguitars.com/builder-v2</span>
+            <span class="track-main">
+              <span class="track-name">DC Custom Guitars Guitar Builder</span>
+              <span class="track-desc">Interactive custom guitar builder</span>
+            </span>
+            <span class="track-meta">Client work</span>
             <span class="track-arrow">↗</span>
           </a>
           <a class="track" href="https://deancascione.com" target="_blank" rel="noopener">
             <span class="track-no">03</span>
-            <span class="track-name">Dean Cascione <small>— EPK for a neoclassical shred guitarist</small></span>
-            <span class="track-meta">client work · deancascione.com</span>
+            <span class="track-main">
+              <span class="track-name">Dean Cascione</span>
+              <span class="track-desc">EPK for a neoclassical shred guitarist</span>
+            </span>
+            <span class="track-meta">Client work</span>
             <span class="track-arrow">↗</span>
           </a>
           <a class="track" href="https://belloautomotive.com" target="_blank" rel="noopener">
             <span class="track-no">04</span>
-            <span class="track-name">Bello Automotive LLC <small>— collision, custom paint &amp; fabrication</small></span>
-            <span class="track-meta">client work · belloautomotive.com</span>
+            <span class="track-main">
+              <span class="track-name">Bello Automotive LLC</span>
+              <span class="track-desc">Collision, custom paint &amp; fabrication</span>
+            </span>
+            <span class="track-meta">Client work</span>
             <span class="track-arrow">↗</span>
           </a>
           <a class="track" href="https://retirement.scottbronder.com" target="_blank" rel="noopener">
             <span class="track-no">05</span>
-            <span class="track-name">Retire Me Off <small>— privacy-first retirement planner, runs in your browser</small></span>
-            <span class="track-meta">side project · retirement.scottbronder.com</span>
+            <span class="track-main">
+              <span class="track-name">Retire Me Off</span>
+              <span class="track-desc">Privacy-first retirement planner, runs in your browser</span>
+            </span>
+            <span class="track-meta">Side project</span>
             <span class="track-arrow">↗</span>
           </a>
-          <p class="track track-self">
-            <span class="track-no">06</span>
-            <span class="track-name">scottbronder.com <small>— the page you're on</small></span>
-            <span class="track-meta">shipping soon</span>
-            <span class="track-arrow" aria-hidden="true">●</span>
-          </p>
 
           <p class="cta">
-            <a class="cta-btn" href="mailto:hello@scottbronder.com">Want a site like these? <strong>hello@scottbronder.com</strong></a>
+            <a class="btn" href="mailto:hello@scottbronder.com">Have a project in mind? Let’s talk →</a>
           </p>
         </section>
       </main>
