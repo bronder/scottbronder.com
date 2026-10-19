@@ -630,6 +630,23 @@
         flex-wrap: nowrap;
       }
 
+      .tempo-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .tempo-col .bpm-row {
+        width: 100%;
+      }
+
+      .tempo-col #song-tap {
+        width: 100%;
+        max-width: 14rem;
+      }
+
       .bpm-input {
         width: 7ch;
         font-family: var(--mono);
@@ -1283,6 +1300,7 @@
               </div>
 
               <div class="metro-controls">
+                <div class="tempo-col">
                 <div class="bpm-row">
                   <button type="button" class="song-jump" data-song-d="-10">−10</button>
                   <button type="button" class="song-jump" data-song-d="-5">−5</button>
@@ -1303,6 +1321,7 @@
                   <button type="button" class="song-jump" data-song-d="10">+10</button>
                 </div>
                 <button class="ghost-btn" id="song-tap" type="button">tap tempo</button>
+                </div>
                 <div class="play-col">
                   <button class="play-btn" id="song-btn" type="button" aria-pressed="false">▶ play loop</button>
                   <button class="danger-btn" id="seq-reset" type="button" title="clear the sequence and start over">⟲ start over</button>
@@ -2548,6 +2567,25 @@
         songBpmSlider.addEventListener("input", () => {
           songBpmNum.textContent = songBpmSlider.value;
           saveSongBpm(parseInt(songBpmSlider.value, 10) || 80);
+        });
+
+        let songTaps = [];
+        document.getElementById("song-tap").addEventListener("click", () => {
+          const now = performance.now();
+          songTaps = songTaps.filter((t) => now - t < 3000);
+          songTaps.push(now);
+          if (songTaps.length > 5) songTaps.shift();
+          if (songTaps.length < 2) {
+            songStatus.textContent = "keep tapping…";
+            return;
+          }
+          let sum = 0;
+          for (let i = 1; i < songTaps.length; i++) sum += songTaps[i] - songTaps[i - 1];
+          const v = Math.max(60, Math.min(200, Math.round(60000 / (sum / (songTaps.length - 1)))));
+          songBpmSlider.value = v;
+          songBpmNum.textContent = v;
+          saveSongBpm(v);
+          songStatus.textContent = "tempo set from " + songTaps.length + " taps";
         });
 
         document.querySelectorAll(".song-jump").forEach((btn) =>
