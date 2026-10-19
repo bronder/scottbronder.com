@@ -1940,7 +1940,7 @@
             chordLabel() + " — " + chordNotesText() + (dronePlaying ? " · droning" : "");
         }
 
-        function buildVoices(rootIdx, quality) {
+        function buildVoices(rootIdx, quality, attack = 0.6) {
           const ctx = audioCtx;
           const root = DRONE_ROOTS[rootIdx];
           const now = ctx.currentTime;
@@ -1955,7 +1955,7 @@
           return specs.map(({ f, level }) => {
             const vgain = ctx.createGain();
             vgain.gain.setValueAtTime(0.0001, now);
-            vgain.gain.linearRampToValueAtTime(level, now + 0.6);
+            vgain.gain.linearRampToValueAtTime(level, now + attack);
             vgain.connect(droneIn);
             // two slightly detuned saws per note = a warm string-pad drone
             const oscs = [-6, 6].map((cents) => {
@@ -1977,8 +1977,10 @@
           voices.forEach((v) => {
             v.vgain.gain.cancelScheduledValues(now);
             v.vgain.gain.setValueAtTime(Math.max(0.0001, v.vgain.gain.value), now);
-            v.vgain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
-            v.oscs.forEach((o) => o.stop(now + 0.7));
+            // smooth tail — setTargetAtTime avoids the fast initial drop that
+            // made chord changes sound like a hard switch
+            v.vgain.gain.setTargetAtTime(0.0001, now, 0.25);
+            v.oscs.forEach((o) => o.stop(now + 1.2));
           });
         }
 
@@ -2363,17 +2365,30 @@
           updateIdleStatus();
         }
 
+        const CHORD_XFADE_MS = 350; // new chord swells in over the last part of the previous one
+
         function playChord(i) {
           releaseVoices(songVoices);
           songIdx = i;
-          songVoices = buildVoices(seq[i].root, seq[i].quality);
+          // swell in — combined with the old chord's smooth tail there is no dip
+          songVoices = buildVoices(seq[i].root, seq[i].quality, 0.35);
           renderGrid();
-          songStatus.textContent =
-            "playing " + chordName(seq[i].root, seq[i].quality) +
-            " · " + seq[i].beats + " beats" +
-            " (" + (i + 1) + " of " + seq.length + ") · looping";
+
           const ms = (seq[i].beats * 60000) / parseInt(songBpmSlider.value, 10);
-          songTimer = setTimeout(() => playChord((songIdx + 1) % seq.length), ms);
+          const anticipate = Math.max(150, ms - CHORD_XFADE_MS);
+
+          // highlight + status land exactly on the audible boundary
+          setTimeout(() => {
+            if (!songPlaying) return;
+            renderGrid();
+            songStatus.textContent =
+              "playing " + chordName(seq[i].root, seq[i].quality) +
+              " · " + seq[i].beats + " beats" +
+              " (" + (i + 1) + " of " + seq.length + ") · looping";
+          }, anticipate);
+
+          // chain fires early so the crossfade is centered on the boundary
+          songTimer = setTimeout(() => playChord((songIdx + 1) % seq.length), ms - CHORD_XFADE_MS);
         }
 
         function playSong() {
