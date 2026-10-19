@@ -1285,6 +1285,11 @@
                 <div class="seq-head">
                   <p class="drone-label" id="seq-label">sequence — drag a chord's right edge to resize · drag a chord to move it</p>
                   <div class="tool-row">
+                    <p class="drone-label">sound</p>
+                    <select class="time-sig" id="song-sound" aria-label="Sound style">
+                      <option value="pad">warm pad</option>
+                      <option value="synthwave">synthwave</option>
+                    </select>
                     <p class="drone-label">beats / measure</p>
                     <select class="time-sig" id="beats-per-measure" aria-label="Beats per measure">
                       <option value="2">2</option>
@@ -1997,6 +2002,21 @@
         let dronePlaying = false;
         let droneVoices = [];
         let droneIn = null;
+        let droneFilterCtl = null; // { filter, lfoDepth, delaySend }
+
+        function applySongSound() {
+          if (!droneFilterCtl) return;
+          if (songSound === "synthwave") {
+            // bright + wide + echo: the 80s
+            droneFilterCtl.filter.frequency.value = 3600;
+            droneFilterCtl.lfoDepth.gain.value = 700;
+            droneFilterCtl.delaySend.gain.value = 0.24;
+          } else {
+            droneFilterCtl.filter.frequency.value = 1800;
+            droneFilterCtl.lfoDepth.gain.value = 450;
+            droneFilterCtl.delaySend.gain.value = 0;
+          }
+        }
 
         function ensureDrone() {
           const ctx = ensureAudio();
@@ -2015,8 +2035,28 @@
             lfo.connect(lfoDepth);
             lfoDepth.connect(filter.frequency);
             lfo.start();
+
+            // parallel echo send — the synthwave shimmer
+            const delaySend = ctx.createGain();
+            delaySend.gain.value = 0;
+            const delay = ctx.createDelay(1.0);
+            delay.delayTime.value = 0.29;
+            const fb = ctx.createGain();
+            fb.gain.value = 0.38;
+            const delayTone = ctx.createBiquadFilter();
+            delayTone.type = "lowpass";
+            delayTone.frequency.value = 2400;
+            filter.connect(delaySend);
+            delaySend.connect(delay);
+            delay.connect(delayTone);
+            delayTone.connect(fb);
+            fb.connect(delay);
+            delayTone.connect(masterGain);
+
             filter.connect(masterGain);
             droneIn = filter;
+            droneFilterCtl = { filter, lfoDepth, delaySend };
+            applySongSound();
           }
           return droneIn;
         }
@@ -2038,7 +2078,7 @@
             chordLabel() + " — " + chordNotesText() + (dronePlaying ? " · droning" : "");
         }
 
-        function buildVoices(rootIdx, quality, attack = 0.6) {
+        function buildVoices(rootIdx, quality, attack = 0.6, style = "pad") {
           const ctx = audioCtx;
           const root = DRONE_ROOTS[rootIdx];
           const now = ctx.currentTime;
@@ -2050,18 +2090,37 @@
             specs.push({ f, level: 0.1 }, { f: f * 2, level: 0.045 });
           });
           specs.push({ f: root.freq * 4, level: 0.028 });
+          // pad: two slightly detuned saws = a warm string drone
+          // synthwave: wider detune + an octave-up square sparkle per note
+          const layers =
+            style === "synthwave"
+              ? [
+                  { type: "sawtooth", cents: -14, g: 1 },
+                  { type: "sawtooth", cents: 14, g: 1 },
+                  { type: "square", mult: 2, cents: 0, g: 0.3 },
+                ]
+              : [
+                  { type: "sawtooth", cents: -6, g: 1 },
+                  { type: "sawtooth", cents: 6, g: 1 },
+                ];
           return specs.map(({ f, level }) => {
             const vgain = ctx.createGain();
             vgain.gain.setValueAtTime(0.0001, now);
             vgain.gain.linearRampToValueAtTime(level, now + attack);
             vgain.connect(droneIn);
-            // two slightly detuned saws per note = a warm string-pad drone
-            const oscs = [-6, 6].map((cents) => {
+            const oscs = layers.map((L) => {
               const o = ctx.createOscillator();
-              o.type = "sawtooth";
-              o.frequency.value = f;
-              o.detune.value = cents;
-              o.connect(vgain);
+              o.type = L.type;
+              o.frequency.value = L.mult ? f * L.mult : f;
+              o.detune.value = L.cents;
+              if (L.g !== 1) {
+                const og = ctx.createGain();
+                og.gain.value = L.g;
+                o.connect(og);
+                og.connect(vgain);
+              } else {
+                o.connect(vgain);
+              }
               o.start();
               return o;
             });
@@ -2199,6 +2258,7 @@
         let songIdx = 0;
         let songVoices = [];
         let songTimer = null;
+        let songSound = (store.song && store.song.sound) || "pad";
 
         function chordName(root, quality) {
           return DRONE_ROOTS[root].name + CHORD_SUFFIX[quality];
@@ -2259,6 +2319,7 @@
           store.song && [2, 3, 4, 6].includes(store.song.beatsPerMeasure)
             ? store.song.beatsPerMeasure
             : 4;
+        if (store.song && store.song.sound === "synthwave") songSound = "synthwave";
         if (beatsPerMeasure !== 4) measureSel.value = String(beatsPerMeasure);
 
         function totalBeats() {
@@ -2320,6 +2381,7 @@
               seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
               bpm: parseInt(songBpmSlider.value, 10) || 80,
               beatsPerMeasure,
+              sound: songSound,
             },
           });
         }
@@ -2490,7 +2552,7 @@
           releaseVoices(songVoices);
           songIdx = i;
           // swell in — combined with the old chord's smooth tail there is no dip
-          songVoices = buildVoices(seq[i].root, seq[i].quality, 0.35);
+          songVoices = buildVoices(seq[i].root, seq[i].quality, 0.35, songSound);
           renderGrid();
 
           const ms = (seq[i].beats * 60000) / parseInt(songBpmSlider.value, 10);
@@ -2607,6 +2669,24 @@
         measureSel.addEventListener("change", () => {
           beatsPerMeasure = parseInt(measureSel.value, 10);
           renderGrid();
+        });
+
+        const soundSelEl = document.getElementById("song-sound");
+        soundSelEl.value = songSound;
+        soundSelEl.addEventListener("change", () => {
+          songSound = soundSelEl.value;
+          saveStore({
+            song: {
+              seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
+              bpm: parseInt(songBpmSlider.value, 10) || 80,
+              beatsPerMeasure,
+              sound: songSound,
+            },
+          });
+          ensureDrone();
+          applySongSound();
+          songStatus.textContent =
+            songSound === "synthwave" ? "synthwave — bright saws + echo" : "warm pad — smooth and round";
         });
 
         renderRef();
