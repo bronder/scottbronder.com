@@ -1328,6 +1328,29 @@
           return audioCtx;
         }
 
+        /* ---------- persistence ---------- */
+
+        const STORE_KEY = "scottbronder-toolbench-v1";
+
+        function loadStore() {
+          try {
+            return JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+          } catch (err) {
+            return {};
+          }
+        }
+
+        function saveStore(patch) {
+          try {
+            const s = Object.assign(loadStore(), patch);
+            localStorage.setItem(STORE_KEY, JSON.stringify(s));
+          } catch (err) {
+            /* private mode / quota — persistence is best-effort */
+          }
+        }
+
+        const store = loadStore();
+
         /* ===================== TUNER ===================== */
 
         const tunerNote = document.getElementById("tuner-note");
@@ -1548,16 +1571,24 @@
         const soundSel = document.getElementById("sound-style");
         const subAllEl = document.getElementById("sub-all");
         const SVG_NS = "http://www.w3.org/2000/svg";
+        if (store.metro) {
+          if (store.metro.top) topSel.value = String(store.metro.top);
+          if (store.metro.bottom) bottomSel.value = String(store.metro.bottom);
+          if (store.metro.style) soundSel.value = store.metro.style;
+        }
 
-        let bpm = 100;
-        let bottom = 4;
+        let bpm = (store.metro && store.metro.bpm) || 100;
+        let bottom = (store.metro && store.metro.bottom) || 4;
         let playing = false;
         let currentBeat = 0;
         let nextBeatTime = 0;
         let schedulerId = null;
-        let soundStyle = "click";
+        let soundStyle = (store.metro && store.metro.style) || "click";
         let noiseBuf = null;
-        let beats = []; // per beat: { level: 2 accent | 1 normal | 0 rest, subdiv: 1|2|3 }
+        // per beat: { level: 2 accent | 1 normal | 0 rest, subdiv: 1|2|3|4 }
+        let beats = ((store.metro && store.metro.beats) || [])
+          .filter((b) => b && [0, 1, 2].includes(b.level) && [1, 2, 3, 4].includes(b.subdiv))
+          .map((b) => ({ level: b.level, subdiv: b.subdiv }));
         const visualTimeouts = [];
 
         const SCHEDULE_AHEAD = 0.12;
@@ -1690,12 +1721,24 @@
             beatBlocksEl.appendChild(wrap);
           });
           updateSubAllActive();
+          saveStore({ metro: metroState() });
+        }
+
+        function metroState() {
+          return {
+            bpm,
+            top: parseInt(topSel.value, 10),
+            bottom,
+            style: soundStyle,
+            beats: beats.map((b) => ({ level: b.level, subdiv: b.subdiv })),
+          };
         }
 
         function setBpm(v) {
           bpm = Math.max(40, Math.min(300, Math.round(v)));
           bpmInput.value = bpm;
           bpmSlider.value = bpm;
+          saveStore({ metro: metroState() });
         }
 
         function getNoise(ctx) {
@@ -1831,10 +1874,12 @@
         });
         bottomSel.addEventListener("change", () => {
           bottom = parseInt(bottomSel.value, 10);
+          saveStore({ metro: metroState() });
           if (playing) metroStatus.textContent = beats.length + " beats of 1/" + bottom + " at " + bpm + " bpm";
         });
         soundSel.addEventListener("change", () => {
           soundStyle = soundSel.value;
+          saveStore({ metro: metroState() });
         });
 
         let taps = [];
@@ -1854,6 +1899,7 @@
         });
 
         rebuildBeats();
+        setBpm(bpm);
 
         /* ===================== DRONE ===================== */
 
@@ -1897,8 +1943,11 @@
         const droneStatus = document.getElementById("drone-status");
         const droneBtn = document.getElementById("drone-btn");
 
-        let droneRoot = 0; // E
-        let droneQuality = "5";
+        let droneRoot = store.drone && Number.isInteger(store.drone.root)
+          ? ((store.drone.root % 12) + 12) % 12
+          : 0; // E
+        let droneQuality =
+          store.drone && CHORDS[store.drone.quality] ? store.drone.quality : "5";
         let dronePlaying = false;
         let droneVoices = [];
         let droneIn = null;
@@ -1938,6 +1987,7 @@
         }
 
         function updateDroneStatus() {
+          saveStore({ drone: { root: droneRoot, quality: droneQuality } });
           droneStatus.textContent =
             chordLabel() + " — " + chordNotesText() + (dronePlaying ? " · droning" : "");
         }
@@ -2089,7 +2139,16 @@
 
         let refRoot = 8; // C
         let refMode = "major";
-        let seq = [];
+        let seq = ((store.song && store.song.seq) || []).filter(
+          (c) =>
+            c &&
+            Number.isInteger(c.root) &&
+            c.root >= 0 &&
+            c.root < 12 &&
+            CHORDS[c.quality] &&
+            Number.isInteger(c.beats) &&
+            c.beats >= 1
+        ).map((c) => ({ root: c.root, quality: c.quality, beats: Math.min(64, c.beats) }));
         let songPlaying = false;
         let songIdx = 0;
         let songVoices = [];
@@ -2150,7 +2209,11 @@
         const gridScroll = document.getElementById("grid-scroll");
         const gridTrack = document.getElementById("grid-track");
         const measureSel = document.getElementById("beats-per-measure");
-        let beatsPerMeasure = 4;
+        let beatsPerMeasure =
+          store.song && [2, 3, 4, 6].includes(store.song.beatsPerMeasure)
+            ? store.song.beatsPerMeasure
+            : 4;
+        if (beatsPerMeasure !== 4) measureSel.value = String(beatsPerMeasure);
 
         function totalBeats() {
           return seq.reduce((s, c) => s + c.beats, 0);
@@ -2205,6 +2268,14 @@
             slot.style.width = seq[move.idx].beats * PX_BEAT - 2 + "px";
             gridTrack.appendChild(slot);
           }
+
+          saveStore({
+            song: {
+              seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
+              bpm: parseInt(songBpmSlider.value, 10) || 80,
+              beatsPerMeasure,
+            },
+          });
         }
 
         function renderBlock(c, i, startBeat, move) {
@@ -2427,8 +2498,20 @@
 
         songBtn.addEventListener("click", () => (songPlaying ? stopSong() : playSong()));
 
+        if (store.song && store.song.bpm) {
+          songBpmSlider.value = store.song.bpm;
+          songBpmNum.textContent = store.song.bpm;
+        }
+
+        function saveSongBpm(v) {
+          const song = loadStore().song || {};
+          song.bpm = v;
+          saveStore({ song });
+        }
+
         songBpmSlider.addEventListener("input", () => {
           songBpmNum.textContent = songBpmSlider.value;
+          saveSongBpm(parseInt(songBpmSlider.value, 10) || 80);
         });
 
         document.querySelectorAll(".song-jump").forEach((btn) =>
@@ -2439,6 +2522,7 @@
             );
             songBpmSlider.value = v;
             songBpmNum.textContent = v;
+            saveSongBpm(v);
           })
         );
 
@@ -2461,6 +2545,7 @@
 
         function activateTool(name) {
           if (!TOOL_NAMES.includes(name)) name = "tuner";
+          saveStore({ tool: name });
           tabBtns.forEach((b) => {
             const on = b.dataset.tool === name;
             b.classList.toggle("active", on);
@@ -2478,7 +2563,7 @@
           })
         );
         window.addEventListener("hashchange", () => activateTool(location.hash.slice(1)));
-        activateTool(location.hash.slice(1));
+        activateTool(location.hash.slice(1) || store.tool || "tuner");
       })();
     </script>
   </body>
