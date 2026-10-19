@@ -509,6 +509,11 @@
         fill: currentColor;
       }
 
+      .echo-slider {
+        width: 7rem;
+        accent-color: var(--amber);
+      }
+
       .beat-blocks {
         display: flex;
         gap: 0.5rem;
@@ -1290,6 +1295,17 @@
                       <option value="pad">warm pad</option>
                       <option value="synthwave">synthwave</option>
                     </select>
+                    <p class="drone-label">echo</p>
+                    <input
+                      class="echo-slider"
+                      id="echo-amount"
+                      type="range"
+                      min="0"
+                      max="50"
+                      step="1"
+                      value="0"
+                      aria-label="Echo amount"
+                    />
                     <p class="drone-label">beats / measure</p>
                     <select class="time-sig" id="beats-per-measure" aria-label="Beats per measure">
                       <option value="2">2</option>
@@ -2004,18 +2020,23 @@
         let droneIn = null;
         let droneFilterCtl = null; // { filter, lfoDepth, delaySend }
 
+        let songEcho = null; // delay send level, 0..0.5
+
         function applySongSound() {
           if (!droneFilterCtl) return;
+          if (songEcho === null) {
+            songEcho = songSound === "synthwave" ? 0.24 : 0;
+            const es = document.getElementById("echo-amount");
+            if (es) es.value = Math.round(songEcho * 100);
+          }
           if (songSound === "synthwave") {
-            // bright + wide + echo: the 80s
             droneFilterCtl.filter.frequency.value = 3600;
             droneFilterCtl.lfoDepth.gain.value = 700;
-            droneFilterCtl.delaySend.gain.value = 0.24;
           } else {
             droneFilterCtl.filter.frequency.value = 1800;
             droneFilterCtl.lfoDepth.gain.value = 450;
-            droneFilterCtl.delaySend.gain.value = 0;
           }
+          droneFilterCtl.delaySend.gain.value = songEcho;
         }
 
         function ensureDrone() {
@@ -2382,6 +2403,7 @@
               bpm: parseInt(songBpmSlider.value, 10) || 80,
               beatsPerMeasure,
               sound: songSound,
+              echo: songEcho,
             },
           });
         }
@@ -2675,6 +2697,7 @@
         soundSelEl.value = songSound;
         soundSelEl.addEventListener("change", () => {
           songSound = soundSelEl.value;
+          songEcho = null; // adopt the new style's default echo
           saveStore({
             song: {
               seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
@@ -2687,6 +2710,26 @@
           applySongSound();
           songStatus.textContent =
             songSound === "synthwave" ? "synthwave — bright saws + echo" : "warm pad — smooth and round";
+        });
+
+        const echoSliderEl = document.getElementById("echo-amount");
+        if (store.song && typeof store.song.echo === "number") {
+          songEcho = Math.max(0, Math.min(0.5, store.song.echo));
+          echoSliderEl.value = Math.round(songEcho * 100);
+        }
+        echoSliderEl.addEventListener("input", () => {
+          songEcho = parseInt(echoSliderEl.value, 10) / 100;
+          ensureDrone();
+          applySongSound();
+          saveStore({
+            song: {
+              seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
+              bpm: parseInt(songBpmSlider.value, 10) || 80,
+              beatsPerMeasure,
+              sound: songSound,
+              echo: songEcho,
+            },
+          });
         });
 
         renderRef();
