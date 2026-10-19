@@ -954,6 +954,30 @@
         box-sizing: border-box;
       }
 
+      .play-col {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.45rem;
+      }
+
+      .danger-btn {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 95, 86, 0.4);
+        background: rgba(255, 95, 86, 0.06);
+        color: var(--red);
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .danger-btn:hover {
+        background: rgba(255, 95, 86, 0.16);
+        border-color: var(--red);
+      }
+
       /* ---------- footer ---------- */
       .site-footer {
         margin-top: auto;
@@ -1278,9 +1302,11 @@
                   <button type="button" class="song-jump" data-song-d="5">+5</button>
                   <button type="button" class="song-jump" data-song-d="10">+10</button>
                 </div>
-                <button class="ghost-btn" id="seq-reset" type="button" title="clear the sequence and start over">⟲ start over</button>
                 <button class="ghost-btn" id="song-tap" type="button">tap tempo</button>
-                <button class="play-btn" id="song-btn" type="button" aria-pressed="false">▶ play loop</button>
+                <div class="play-col">
+                  <button class="play-btn" id="song-btn" type="button" aria-pressed="false">▶ play loop</button>
+                  <button class="danger-btn" id="seq-reset" type="button" title="clear the sequence and start over">⟲ start over</button>
+                </div>
               </div>
               <p class="tool-status" id="song-status" aria-live="polite">no chords yet — click chords from above</p>
             </div>
