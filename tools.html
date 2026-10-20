@@ -64,9 +64,9 @@
 
       .page {
         width: 100%;
-        max-width: 74rem;
+        max-width: 70rem;
         margin: 0 auto;
-        padding: clamp(1.25rem, 4vw, 3rem);
+        padding: clamp(1rem, 3vw, 1.5rem);
         display: flex;
         flex-direction: column;
         flex: 1;
@@ -124,12 +124,7 @@
 
       /* ---------- tool band (slim app shell) ---------- */
       .toolband {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem 1.5rem;
-        flex-wrap: wrap;
-        padding: 1.1rem 0 1.35rem;
+        padding: 1.1rem 0 0.9rem;
       }
 
       .toolband h1 {
@@ -137,31 +132,9 @@
         font-family: var(--mono);
         font-size: 0.8rem;
         font-weight: 500;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--muted);
-      }
-
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-family: var(--mono);
-        font-size: 0.74rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--green);
-        border: 1px solid rgba(52, 211, 153, 0.3);
-        border-radius: 999px;
-        padding: 0.32rem 0.8rem;
-      }
-
-      .chip-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--green);
-        box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
       }
 
       /* ---------- section heads ---------- */
@@ -198,33 +171,42 @@
       /* ---------- toolbench ---------- */
       .tool-tabs {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.25rem;
+        border-bottom: 1px solid var(--line);
+        overflow-x: auto;
+        scrollbar-width: none;
+        margin-bottom: 1.1rem;
+      }
+
+      .tool-tabs::-webkit-scrollbar {
+        display: none;
       }
 
       .tool-tab {
         font-family: var(--mono);
-        font-size: 0.85rem;
-        letter-spacing: 0.08em;
+        font-size: 0.82rem;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        padding: 0.55rem 1.15rem;
-        border-radius: 999px;
-        border: 1px solid var(--line);
+        padding: 0.55rem 0.9rem 0.6rem;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        border-radius: 6px 6px 0 0;
         background: transparent;
         color: var(--muted);
         cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
         transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
       }
 
       .tool-tab:hover {
         color: var(--text);
-        border-color: rgba(245, 182, 70, 0.5);
       }
 
       .tool-tab.active {
-        border-color: var(--amber);
+        border-bottom-color: var(--amber);
         color: var(--amber);
-        background: rgba(245, 182, 70, 0.08);
+        background: rgba(245, 182, 70, 0.06);
       }
 
       .tool-panel[hidden] {
@@ -235,7 +217,6 @@
         max-width: 47rem;
       }
 
-      .tool-panel[data-tool="drone"],
       .tool-panel[data-tool="song-builder"] {
         max-width: 64rem;
       }
@@ -273,48 +254,109 @@
       }
 
       /* ---------- tuner ---------- */
+      .mic-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        padding: 0.5rem 0.95rem;
+        border-radius: 999px;
+        border: 1px solid var(--amber);
+        background: rgba(245, 182, 70, 0.14);
+        color: var(--amber);
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
+      }
+
+      .mic-btn svg {
+        width: 14px;
+        height: 14px;
+        fill: currentColor;
+        flex-shrink: 0;
+      }
+
+      .mic-btn:hover {
+        background: rgba(245, 182, 70, 0.26);
+      }
+
+      .mic-btn[aria-pressed="true"] {
+        background: var(--amber);
+        color: #191104;
+        font-weight: 600;
+      }
+
       .tuner-display {
         border: 1px solid var(--line);
         border-radius: 10px;
-        background: #0c0f15;
-        padding: 1rem 1.1rem;
-        display: grid;
-        grid-template-columns: auto 1fr;
+        background: #0d1117;
+        padding: 1.6rem 1.25rem 1.4rem;
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 0.3rem 1.1rem;
+        gap: 0.5rem;
+        text-align: center;
+        min-height: 15.5rem;
       }
 
       .tuner-note {
         font-family: var(--mono);
-        font-size: 2.6rem;
+        font-size: clamp(4rem, 11vw, 5.75rem);
         font-weight: 600;
         line-height: 1;
         color: var(--text);
-        min-width: 2.2ch;
+        transition: color 0.15s ease;
       }
 
       .tuner-note .oct {
-        font-size: 1.1rem;
+        font-size: 0.35em;
         color: var(--muted);
       }
 
-      .tuner-note.in-tune {
-        color: var(--green);
-      }
-
-      .tuner-hz {
-        grid-column: 1;
-        font-family: var(--mono);
-        font-size: 0.75rem;
+      .tuner-note.dim {
         color: var(--faint);
       }
 
+      .tuner-display.in-tune .tuner-note {
+        color: var(--green);
+      }
+
+      .tuner-freq {
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .tuner-hint {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--faint);
+        min-height: 1.2rem;
+      }
+
+      .tuner-hint.ok {
+        color: var(--green);
+      }
+
+      .tuner-hint.warn {
+        color: var(--amber);
+      }
+
+      .cents-meter {
+        width: 100%;
+        max-width: 26rem;
+        margin-top: 0.9rem;
+      }
+
       .cents-track {
-        grid-column: 2;
-        grid-row: 1 / span 2;
         position: relative;
         height: 34px;
-        align-self: center;
+        transition: opacity 0.2s ease;
+      }
+
+      .tuner-display[data-state="idle"] .cents-track,
+      .tuner-display[data-state="listening"] .cents-track {
+        opacity: 0.35;
       }
 
       .cents-rail {
@@ -325,7 +367,7 @@
         height: 3px;
         transform: translateY(-50%);
         border-radius: 2px;
-        background: linear-gradient(90deg, rgba(245, 182, 70, 0.15), rgba(52, 211, 153, 0.4) 42% 58%, rgba(245, 182, 70, 0.15));
+        background: rgba(255, 255, 255, 0.12);
       }
 
       .cents-notch {
@@ -335,7 +377,7 @@
         width: 2px;
         height: 16px;
         transform: translate(-50%, -50%);
-        background: rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.4);
       }
 
       .cents-needle {
@@ -346,23 +388,89 @@
         height: 11px;
         border-radius: 50%;
         transform: translate(-50%, -50%);
+        background: var(--faint);
+        transition: left 0.08s linear, background-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .tuner-display[data-state="live"] .cents-needle {
         background: var(--amber);
-        box-shadow: 0 0 10px rgba(245, 182, 70, 0.7);
-        transition: left 0.08s linear, background-color 0.15s ease;
+        box-shadow: 0 0 10px rgba(245, 182, 70, 0.6);
+      }
+
+      .tuner-display[data-state="ref"] .cents-needle {
+        background: var(--amber);
       }
 
       .cents-needle.in-tune {
-        background: var(--green);
-        box-shadow: 0 0 12px rgba(52, 211, 153, 0.9);
+        background: var(--green) !important;
+        box-shadow: 0 0 12px rgba(52, 211, 153, 0.8) !important;
       }
 
       .cents-labels {
-        grid-column: 2;
         display: flex;
         justify-content: space-between;
         font-family: var(--mono);
         font-size: 0.62rem;
         color: var(--faint);
+        margin-top: 0.2rem;
+      }
+
+      .tuner-strings {
+        margin-top: 0.25rem;
+      }
+
+      .ref-btn {
+        font-family: var(--mono);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.1rem;
+        padding: 0.65rem 0 0.55rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text);
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .ref-btn .str-num {
+        font-size: 0.62rem;
+        letter-spacing: 0.1em;
+        color: var(--faint);
+      }
+
+      .ref-btn .str-note {
+        font-size: 1.9rem;
+        font-weight: 600;
+        line-height: 1.15;
+      }
+
+      .ref-btn .str-freq {
+        font-size: 0.66rem;
+        color: var(--faint);
+      }
+
+      .ref-btn:hover {
+        border-color: rgba(245, 182, 70, 0.5);
+      }
+
+      .ref-btn.active {
+        border-color: var(--amber);
+        background: rgba(245, 182, 70, 0.1);
+        color: var(--amber);
+      }
+
+      .ref-btn.active .str-num,
+      .ref-btn.active .str-freq {
+        color: var(--amber);
+        opacity: 0.75;
+      }
+
+      @media (max-width: 640px) {
+        .string-btns.ref-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
       }
 
       .string-btns {
@@ -439,73 +547,204 @@
       }
 
       /* ---------- metronome ---------- */
-      .glyph-row {
+      .run-state {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--faint);
+      }
+
+      .run-state.on {
+        color: var(--green);
+      }
+
+      .metro-tempo {
         display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem 2.25rem;
+        flex-wrap: wrap;
+        padding: 0.5rem 0 1.1rem;
+      }
+
+      .tempo-group {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+      }
+
+      .tempo-entry {
+        display: flex;
+        align-items: baseline;
+        gap: 0.45rem;
+      }
+
+      .tempo-input {
+        width: 4.2ch;
+        font-family: var(--mono);
+        font-size: 4rem;
+        font-weight: 700;
+        text-align: center;
+        background: transparent;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        color: var(--text);
+        outline: none;
+        padding: 0;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+
+      .tempo-input::-webkit-outer-spin-button,
+      .tempo-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      .tempo-input:focus {
+        border-bottom-color: var(--amber);
+      }
+
+      .tempo-unit {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
+        color: var(--faint);
+      }
+
+      .metro-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+
+      .metro-settings {
+        display: flex;
+        gap: 1rem 2.75rem;
+        flex-wrap: wrap;
+        padding: 0.85rem 0 0.4rem;
+        border-top: 1px solid var(--line);
+      }
+
+      .metro-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+      }
+
+      .metro-field .drone-label {
+        margin: 0;
+        letter-spacing: 0.08em;
+        text-transform: none;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .meter-pair {
+        display: flex;
+        align-items: center;
         gap: 0.4rem;
       }
 
-      .glyph-btn {
-        border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 8px;
-        padding: 0.3rem 0.5rem;
-        cursor: pointer;
-        color: var(--muted);
-        transition: border-color 0.15s ease, color 0.15s ease,
-          background-color 0.15s ease;
+      .meter-slash {
+        font-family: var(--mono);
+        color: var(--faint);
       }
 
-      .glyph-btn:hover {
+      .field-hint {
+        margin: 0;
+        font-size: 0.78rem;
+        color: var(--faint);
+      }
+
+      .sub-row {
+        display: flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+      }
+
+      .sub-opt {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.45rem 0.8rem 0.4rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--muted);
+        cursor: pointer;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .sub-opt svg {
+        width: 34px;
+        height: 20px;
+        display: block;
+        fill: currentColor;
+      }
+
+      .sub-opt:hover {
         border-color: rgba(245, 182, 70, 0.5);
         color: var(--text);
       }
 
-      .glyph-btn.active {
+      .sub-opt[aria-pressed="true"] {
         border-color: var(--amber);
         color: var(--amber);
         background: rgba(245, 182, 70, 0.08);
       }
 
-      .glyph-btn svg {
-        width: 34px;
-        height: 22px;
-        display: block;
-        fill: currentColor;
-      }
-
       .beat-blocks {
         display: flex;
+        flex-wrap: wrap;
         gap: 0.5rem;
-        margin-bottom: 1.1rem;
-      }
-
-      .beat-block-wrap {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
       }
 
       .beat-block {
-        height: 64px;
+        width: 4.6rem;
+        min-height: 3.4rem;
         border-radius: 10px;
         border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(255, 255, 255, 0.02);
         cursor: pointer;
-        padding: 0;
+        padding: 0.35rem 0.2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.1rem;
+        font-family: var(--mono);
+        color: var(--muted);
         transition: transform 0.08s ease, box-shadow 0.08s ease,
           background-color 0.15s ease, border-color 0.15s ease;
       }
 
-      .beat-block.accent {
-        background: linear-gradient(160deg, var(--amber), var(--amber2));
-        border-color: transparent;
-        box-shadow: 0 0 14px rgba(245, 182, 70, 0.35);
+      .beat-block .beat-num {
+        font-size: 1.05rem;
+        font-weight: 600;
+        line-height: 1.15;
+        color: var(--text);
       }
 
-      .beat-block.normal {
-        background: rgba(122, 162, 247, 0.25);
-        border-color: rgba(122, 162, 247, 0.4);
+      .beat-block .beat-state {
+        font-size: 0.62rem;
+        letter-spacing: 0.04em;
+      }
+
+      .beat-block.accent {
+        background: rgba(245, 182, 70, 0.14);
+        border-color: rgba(245, 182, 70, 0.55);
+      }
+
+      .beat-block.accent .beat-num,
+      .beat-block.accent .beat-state {
+        color: var(--amber);
       }
 
       .beat-block.rest {
@@ -513,45 +752,51 @@
         border-style: dashed;
       }
 
+      .beat-block.rest .beat-num,
+      .beat-block.rest .beat-state {
+        color: var(--faint);
+      }
+
       .beat-block.current {
-        transform: translateY(-3px);
+        transform: translateY(-2px);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
       }
 
-      .beat-block.accent.current {
-        box-shadow: 0 0 20px rgba(245, 182, 70, 0.7);
+      .beat-sub-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
       }
 
-      .beat-block.normal.current {
-        box-shadow: 0 0 14px rgba(122, 162, 247, 0.6);
+      .beat-sub-row {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.25rem 0;
       }
 
-      .beat-block.rest.current {
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
-      }
-
-      .sub-btn {
+      .beat-sub-row .who {
         font-family: var(--mono);
-        font-size: 0.68rem;
-        padding: 0.2rem 0;
+        font-size: 0.75rem;
+        color: var(--muted);
+        min-width: 4.25rem;
+      }
+
+      .beat-sub-row .sub-btn {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        padding: 0.3rem 0.7rem;
         border-radius: 6px;
         border: 1px solid var(--line);
         background: rgba(255, 255, 255, 0.02);
-        color: var(--faint);
+        color: var(--text);
         cursor: pointer;
         transition: color 0.15s ease, border-color 0.15s ease;
       }
 
-      .sub-btn:hover {
-        color: var(--text);
+      .beat-sub-row .sub-btn:hover {
+        color: var(--amber);
         border-color: rgba(245, 182, 70, 0.5);
-      }
-
-      .bpm-stack {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.15rem;
-        margin-bottom: 1.1rem;
       }
 
       .song-jump {
@@ -569,100 +814,6 @@
       .song-jump:hover {
         color: var(--amber);
         border-color: rgba(245, 182, 70, 0.5);
-      }
-
-      .jump-btn {
-        font-family: var(--mono);
-        font-size: 0.7rem;
-        padding: 0.35rem 0.5rem;
-        border-radius: 8px;
-        border: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.02);
-        color: var(--faint);
-        cursor: pointer;
-        transition: color 0.15s ease, border-color 0.15s ease;
-      }
-
-      .jump-btn:hover {
-        color: var(--amber);
-        border-color: rgba(245, 182, 70, 0.5);
-      }
-
-      .bpm-stack .bpm-row {
-        width: 100%;
-        max-width: 28rem;
-        flex-wrap: nowrap;
-      }
-
-      .tempo-col {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .tempo-col .bpm-row {
-        width: 100%;
-      }
-
-      .tempo-col #song-tap {
-        width: 100%;
-        max-width: 14rem;
-      }
-
-      .bpm-input {
-        width: 7ch;
-        font-family: var(--mono);
-        font-size: 3.4rem;
-        font-weight: 700;
-        text-align: center;
-        background: transparent;
-        border: 0;
-        border-bottom: 2px solid transparent;
-        color: var(--text);
-        outline: none;
-        padding: 0;
-        letter-spacing: -0.02em;
-        line-height: 1.1;
-        -moz-appearance: textfield;
-        appearance: textfield;
-      }
-
-      .bpm-input::-webkit-outer-spin-button,
-      .bpm-input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
-
-      .bpm-input:focus {
-        border-bottom-color: var(--amber);
-      }
-
-      .bpm-label {
-        font-family: var(--mono);
-        font-size: 0.7rem;
-        color: var(--faint);
-        letter-spacing: 0.18em;
-        margin-top: -0.35rem;
-      }
-
-      .time-slash {
-        font-family: var(--mono);
-        color: var(--faint);
-      }
-
-      .bpm-row {
-        display: flex;
-        align-items: center;
-        gap: 0.9rem;
-        flex-wrap: wrap;
-      }
-
-      .bpm-slider {
-        flex: 1;
-        accent-color: var(--amber);
-        min-width: 8rem;
       }
 
       .step-btn {
@@ -968,6 +1119,76 @@
         margin-top: 0.9rem;
       }
 
+      /* ---------- drone preview layout ---------- */
+      .note-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.45rem;
+        max-width: 27rem;
+      }
+
+      .note-btn {
+        font-family: var(--mono);
+        font-size: 0.92rem;
+        padding: 0.5rem 0;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text);
+        cursor: pointer;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .note-btn:hover {
+        border-color: rgba(245, 182, 70, 0.5);
+      }
+
+      .note-btn.active {
+        border-color: var(--amber);
+        color: var(--amber);
+        background: rgba(245, 182, 70, 0.1);
+      }
+
+      .drone-preview {
+        margin-top: 1.1rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #0d1117;
+        padding: 1.1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .drone-preview .dp-name {
+        font-family: var(--mono);
+        font-size: 2rem;
+        font-weight: 600;
+        line-height: 1.15;
+        color: var(--text);
+      }
+
+      .drone-preview .dp-notes {
+        font-family: var(--mono);
+        font-size: 0.95rem;
+        color: var(--muted);
+        margin-top: 0.2rem;
+      }
+
+      .drone-preview .dp-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.45rem;
+      }
+
+      .drone-more-wrap {
+        position: relative;
+        display: inline-block;
+      }
+
       .qual-row {
         display: flex;
         flex-wrap: wrap;
@@ -1210,14 +1431,19 @@
           width: 100%;
         }
 
-        .tuner-display {
-          grid-template-columns: 1fr;
+        .site-header nav {
+          gap: 1rem;
+          flex-wrap: wrap;
+          justify-content: flex-end;
         }
 
-        .cents-track,
-        .cents-labels {
-          grid-column: 1;
-          grid-row: auto;
+        .tuner-display {
+          min-height: 13rem;
+          padding: 1.25rem 1rem 1.1rem;
+        }
+
+        .tuner-note {
+          font-size: 4rem;
         }
       }
     </style>
@@ -1237,7 +1463,6 @@
       <main>
         <div class="toolband">
           <h1>the toolbench</h1>
-          <p class="chip"><span class="chip-dot" aria-hidden="true"></span>more tools coming</p>
         </div>
 
         <section aria-label="Guitar tools">
@@ -1253,38 +1478,42 @@
             <!-- ===================== tuner ===================== -->
             <div class="tool-card">
               <div class="tool-head">
-                <h3 class="tool-title">Tuner</h3>
-                <span class="tool-meta">reference tones · mic detection</span>
+                <h3 class="tool-title">Standard tuning</h3>
+                <button class="mic-btn" id="mic-btn" type="button" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 11a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.93V20H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.07A7 7 0 0 0 19 11Z"/></svg>
+                  <span id="mic-btn-label">Enable microphone</span>
+                </button>
               </div>
 
-              <div class="tuner-display">
-                <div class="tuner-note" id="tuner-note">—</div>
-                <div class="tuner-hz" id="tuner-hz">click a string for a reference tone</div>
-                <div class="cents-track" aria-hidden="true">
-                  <div class="cents-rail"></div>
-                  <div class="cents-notch"></div>
-                  <div class="cents-needle" id="cents-needle"></div>
+              <div class="tuner-display" id="tuner-display" data-state="idle">
+                <div class="tuner-note dim" id="tuner-note">—</div>
+                <div class="tuner-freq" id="tuner-hz">Ready to tune</div>
+                <div class="tuner-hint" id="tuner-hint">Enable your microphone or choose a reference tone.</div>
+                <div class="cents-meter">
+                  <div class="cents-track" aria-hidden="true">
+                    <div class="cents-rail"></div>
+                    <div class="cents-notch"></div>
+                    <div class="cents-needle" id="cents-needle"></div>
+                  </div>
+                  <div class="cents-labels" aria-hidden="true">
+                    <span>−50¢</span><span>0</span><span>+50¢</span>
+                  </div>
                 </div>
-                <div class="cents-labels" aria-hidden="true">
-                  <span>−50¢</span><span>0</span><span>+50¢</span>
+              </div>
+
+              <div class="tuner-strings">
+                <p class="drone-label">Reference tones · Standard tuning</p>
+                <div class="string-btns ref-grid" role="group" aria-label="Reference tones — standard tuning">
+                  <button class="ref-btn" type="button" data-freq="82.41" data-note="E" data-oct="2"><span class="str-num">6</span><span class="str-note">E</span><span class="str-freq">82.41 Hz</span></button>
+                  <button class="ref-btn" type="button" data-freq="110" data-note="A" data-oct="2"><span class="str-num">5</span><span class="str-note">A</span><span class="str-freq">110.00 Hz</span></button>
+                  <button class="ref-btn" type="button" data-freq="146.83" data-note="D" data-oct="3"><span class="str-num">4</span><span class="str-note">D</span><span class="str-freq">146.83 Hz</span></button>
+                  <button class="ref-btn" type="button" data-freq="196" data-note="G" data-oct="3"><span class="str-num">3</span><span class="str-note">G</span><span class="str-freq">196.00 Hz</span></button>
+                  <button class="ref-btn" type="button" data-freq="246.94" data-note="B" data-oct="3"><span class="str-num">2</span><span class="str-note">B</span><span class="str-freq">246.94 Hz</span></button>
+                  <button class="ref-btn" type="button" data-freq="329.63" data-note="e" data-oct="4"><span class="str-num">1</span><span class="str-note">e</span><span class="str-freq">329.63 Hz</span></button>
                 </div>
               </div>
 
-              <div class="string-btns" role="group" aria-label="Reference tones">
-                <button class="string-btn" type="button" data-freq="82.41" data-note="E" data-oct="2">E<small>82.41</small></button>
-                <button class="string-btn" type="button" data-freq="110" data-note="A" data-oct="2">A<small>110.00</small></button>
-                <button class="string-btn" type="button" data-freq="146.83" data-note="D" data-oct="3">D<small>146.83</small></button>
-                <button class="string-btn" type="button" data-freq="196" data-note="G" data-oct="3">G<small>196.00</small></button>
-                <button class="string-btn" type="button" data-freq="246.94" data-note="B" data-oct="3">B<small>246.94</small></button>
-                <button class="string-btn" type="button" data-freq="329.63" data-note="e" data-oct="4">e<small>329.63</small></button>
-              </div>
-
-              <div class="tool-row">
-                <button class="ghost-btn" id="mic-btn" type="button" aria-pressed="false">🎙 enable mic tuner</button>
-              </div>
-              <p class="tool-status" id="tuner-status" aria-live="polite">
-                mic mode listens to your guitar and shows how far off you are
-              </p>
+              <p class="tool-status" id="tuner-status" aria-live="polite"></p>
             </div>
 
             </div>
@@ -1294,103 +1523,115 @@
             <div class="tool-card">
               <div class="tool-head">
                 <h3 class="tool-title">Metronome</h3>
-                <span class="tool-meta">click blocks to accent · 1x–4x adds subdivisions</span>
+                <span class="run-state" id="metro-run-state">Stopped</span>
               </div>
 
-              <div class="seq-head">
-                <p class="drone-label">subdivide all</p>
-                <div class="glyph-row" id="sub-all" role="group" aria-label="Set subdivision for all beats"></div>
-              </div>
-
-              <div class="beat-blocks" id="beat-blocks" role="group" aria-label="Beats — click a block to cycle accent, normal, rest"></div>
-
-              <div class="bpm-stack">
-                <input class="bpm-input" id="bpm-input" type="number" min="40" max="300" value="100" aria-label="Tempo in beats per minute" />
-                <small class="bpm-label">BPM</small>
-                <div class="bpm-row">
-                  <div class="tool-row">
-                    <button type="button" class="jump-btn" data-d="-10">−10</button>
-                    <button type="button" class="jump-btn" data-d="-5">−5</button>
-                    <button class="step-btn" id="bpm-down" type="button" aria-label="Decrease tempo">−</button>
+              <div class="metro-tempo">
+                <div class="tempo-group">
+                  <button class="step-btn" id="bpm-down" type="button" aria-label="Slower by one BPM">−</button>
+                  <div class="tempo-entry">
+                    <input class="tempo-input" id="bpm-input" type="number" inputmode="numeric" min="40" max="300" value="100" aria-label="Tempo in beats per minute" />
+                    <span class="tempo-unit">BPM</span>
                   </div>
-                  <input
-                    class="bpm-slider"
-                    id="bpm-slider"
-                    type="range"
-                    min="40"
-                    max="300"
-                    step="1"
-                    value="100"
-                    aria-label="Tempo slider"
-                  />
-                  <div class="tool-row">
-                    <button class="step-btn" id="bpm-up" type="button" aria-label="Increase tempo">+</button>
-                    <button type="button" class="jump-btn" data-d="5">+5</button>
-                    <button type="button" class="jump-btn" data-d="10">+10</button>
-                  </div>
+                  <button class="step-btn" id="bpm-up" type="button" aria-label="Faster by one BPM">+</button>
+                </div>
+                <div class="metro-actions">
+                  <button class="play-btn" id="metro-btn" type="button" aria-pressed="false">Start</button>
+                  <button class="ghost-btn" id="tap-btn" type="button">Tap tempo</button>
                 </div>
               </div>
 
-              <div class="metro-controls">
-                <div class="tool-row">
-                  <select class="time-sig" id="top-number" aria-label="Beats per measure">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4" selected>4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                  </select>
-                  <span class="time-slash">/</span>
-                  <select class="time-sig" id="bottom-number" aria-label="Note value">
-                    <option value="2">2</option>
-                    <option value="4" selected>4</option>
-                    <option value="8">8</option>
+              <div class="metro-settings">
+                <div class="metro-field">
+                  <span class="drone-label" id="meter-label">Time signature</span>
+                  <div class="meter-pair" role="group" aria-labelledby="meter-label">
+                    <select class="time-sig" id="top-number" aria-label="Beats per measure">
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4" selected>4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7</option>
+                      <option value="8">8</option>
+                      <option value="9">9</option>
+                      <option value="10">10</option>
+                      <option value="11">11</option>
+                      <option value="12">12</option>
+                    </select>
+                    <span class="meter-slash" aria-hidden="true">/</span>
+                    <select class="time-sig" id="bottom-number" aria-label="Note value">
+                      <option value="2">2</option>
+                      <option value="4" selected>4</option>
+                      <option value="8">8</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="metro-field">
+                  <label class="drone-label" for="sound-style">Sound</label>
+                  <select class="time-sig" id="sound-style">
+                    <option value="click" selected>Click</option>
+                    <option value="beep">Beep</option>
+                    <option value="wood">Woodblock</option>
+                    <option value="snap">Snap</option>
                   </select>
                 </div>
-                <div class="tool-row">
-                  <select class="time-sig" id="sound-style" aria-label="Sound style">
-                    <option value="click" selected>click</option>
-                    <option value="beep">beep</option>
-                    <option value="wood">woodblock</option>
-                    <option value="snap">snap</option>
-                  </select>
-                  <button class="ghost-btn" id="tap-btn" type="button">tap tempo</button>
-                  <button class="play-btn" id="metro-btn" type="button" aria-pressed="false">▶ start</button>
+                <div class="metro-field">
+                  <span class="drone-label" id="subdiv-label">Subdivision</span>
+                  <div class="sub-row" id="sub-all" role="group" aria-labelledby="subdiv-label"></div>
+                  <p class="field-hint">Pulses per beat on every beat — note names assume 4/4.</p>
                 </div>
               </div>
-              <p class="tool-status" id="metro-status" aria-live="polite">40–300 bpm · click a block to cycle accent → normal → rest · 1x adds subdivisions</p>
+
+              <div class="metro-field">
+                <span class="drone-label">Beat pattern</span>
+                <div class="beat-blocks" id="beat-blocks" role="group" aria-label="Beat pattern — click a beat to cycle its emphasis"></div>
+                <p class="field-hint">Click a beat to cycle Accent → Normal → Rest. The white ring marks the beat now playing.</p>
+                <details class="sb-details" id="beat-settings">
+                  <summary>Beat settings<span id="beat-sub-summary"></span></summary>
+                  <div class="beat-sub-rows" id="beat-sub-rows"></div>
+                </details>
+              </div>
+
+              <p class="tool-status" id="metro-status" aria-live="polite"></p>
             </div>
             </div>
 
             <div class="tool-panel" data-tool="drone" hidden>
             <!-- ===================== drone ===================== -->
-            <div class="tool-card wide">
+            <div class="tool-card">
               <div class="tool-head">
                 <h3 class="tool-title">Drone</h3>
-                <span class="tool-meta">practice backing · sustains until you stop it</span>
+              </div>
+              <p class="field-hint">A sustained chord to practice against.</p>
+
+              <div class="drone-block">
+                <p class="drone-label" id="drone-roots-label">Root</p>
+                <div class="note-grid" id="drone-roots" role="group" aria-labelledby="drone-roots-label"></div>
               </div>
 
               <div class="drone-block">
-                <p class="drone-label" id="drone-roots-label">root</p>
-                <div class="string-btns" id="drone-roots" role="group" aria-labelledby="drone-roots-label"></div>
-              </div>
-
-              <div class="drone-block">
-                <p class="drone-label" id="drone-quals-label">chord</p>
+                <p class="drone-label" id="drone-quals-label">Chord type</p>
                 <div class="qual-row" id="drone-quals" role="group" aria-labelledby="drone-quals-label"></div>
               </div>
 
-              <div class="metro-controls">
-                <p class="tool-status" id="drone-status" aria-live="polite"></p>
-                <button class="play-btn" id="drone-btn" type="button" aria-pressed="false">▶ start drone</button>
+              <div class="drone-preview">
+                <div class="dp-info">
+                  <div class="dp-name" id="drone-name"></div>
+                  <div class="dp-notes" id="drone-notes"></div>
+                </div>
+                <div class="dp-actions">
+                  <span class="run-state" id="drone-run-state">Stopped</span>
+                  <button class="play-btn" id="drone-btn" type="button" aria-pressed="false">Start drone</button>
+                </div>
               </div>
+
+              <details class="sb-details">
+                <summary>Details</summary>
+                <p class="field-hint" id="drone-details"></p>
+              </details>
+
+              <p class="tool-status" id="drone-status" aria-live="polite"></p>
             </div>
 
             </div>
@@ -1579,21 +1820,18 @@
 
         /* ===================== TUNER ===================== */
 
+        const tunerDisplay = document.getElementById("tuner-display");
         const tunerNote = document.getElementById("tuner-note");
         const tunerHz = document.getElementById("tuner-hz");
+        const tunerHint = document.getElementById("tuner-hint");
         const tunerStatus = document.getElementById("tuner-status");
         const centsNeedle = document.getElementById("cents-needle");
         const micBtn = document.getElementById("mic-btn");
+        const micBtnLabel = document.getElementById("mic-btn-label");
 
         const NOTE_NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
-        const STRING_FREQS = [
-          { f: 82.41, label: "E" },
-          { f: 110, label: "A" },
-          { f: 146.83, label: "D" },
-          { f: 196, label: "G" },
-          { f: 246.94, label: "B" },
-          { f: 329.63, label: "e" },
-        ];
+
+        const IN_TUNE_CENTS = 5;
 
         let refOsc = null;
         let refGain = null;
@@ -1607,41 +1845,83 @@
             refOsc = null;
             refGain = null;
           }
-          document.querySelectorAll(".string-btn.active").forEach((b) => {
+          document.querySelectorAll(".ref-btn.active").forEach((b) => {
             b.classList.remove("active");
             b.removeAttribute("aria-pressed");
           });
         }
 
-        function setTunerDisplay(note, oct, hzText, cents, live) {
-          tunerNote.innerHTML = note + (oct ? '<span class="oct">' + oct + "</span>" : "");
-          tunerNote.classList.toggle("in-tune", !!live && Math.abs(cents) <= 5);
-          tunerHz.textContent = hzText;
+        function setMeter(cents, live) {
           const clamped = Math.max(-50, Math.min(50, cents || 0));
           centsNeedle.style.left = 50 + (clamped / 50) * 50 + "%";
-          centsNeedle.classList.toggle("in-tune", !!live && Math.abs(cents) <= 5);
+          centsNeedle.classList.toggle("in-tune", !!live && Math.abs(cents) <= IN_TUNE_CENTS);
         }
 
-        function resetTunerDisplay() {
+        function showIdle() {
+          tunerDisplay.dataset.state = "idle";
+          tunerDisplay.classList.remove("in-tune");
           tunerNote.textContent = "—";
-          tunerNote.classList.remove("in-tune");
-          tunerHz.textContent = "click a string for a reference tone";
-          centsNeedle.style.left = "50%";
-          centsNeedle.classList.remove("in-tune");
+          tunerNote.classList.add("dim");
+          tunerHz.textContent = "Ready to tune";
+          tunerHint.textContent = "Enable your microphone or choose a reference tone.";
+          tunerHint.className = "tuner-hint";
+          setMeter(0, false);
         }
 
-        document.querySelectorAll(".string-btn").forEach((btn) => {
+        function showListening() {
+          tunerDisplay.dataset.state = "listening";
+          tunerDisplay.classList.remove("in-tune");
+          tunerNote.textContent = "—";
+          tunerNote.classList.add("dim");
+          tunerHz.textContent = "Listening";
+          tunerHint.textContent = "Play one string at a time.";
+          tunerHint.className = "tuner-hint";
+          setMeter(0, false);
+        }
+
+        function showDetected(name, oct, freq, cents) {
+          tunerDisplay.dataset.state = "live";
+          const inTune = Math.abs(cents) <= IN_TUNE_CENTS;
+          tunerDisplay.classList.toggle("in-tune", inTune);
+          tunerNote.classList.remove("dim");
+          tunerNote.innerHTML = name + '<span class="oct">' + oct + "</span>";
+          tunerHz.textContent = freq.toFixed(1) + " Hz";
+          if (inTune) {
+            tunerHint.textContent = "in tune";
+            tunerHint.className = "tuner-hint ok";
+          } else {
+            const abs = Math.abs(Math.round(cents));
+            tunerHint.textContent =
+              abs + " cent" + (abs === 1 ? "" : "s") + " " + (cents < 0 ? "flat — tune slightly higher" : "sharp — tune slightly lower");
+            tunerHint.className = "tuner-hint warn";
+          }
+          setMeter(cents, true);
+        }
+
+        function showReference(freq, note, oct) {
+          tunerDisplay.dataset.state = "ref";
+          tunerDisplay.classList.remove("in-tune");
+          tunerNote.classList.remove("dim");
+          tunerNote.innerHTML = note + '<span class="oct">' + oct + "</span>";
+          tunerHz.textContent = freq.toFixed(2) + " Hz · reference";
+          tunerHint.textContent = "Tune your string to match.";
+          tunerHint.className = "tuner-hint";
+          setMeter(0, false);
+        }
+
+        document.querySelectorAll(".ref-btn").forEach((btn) => {
           btn.addEventListener("click", () => {
             const ctx = ensureAudio();
             if (!ctx) {
-              tunerStatus.textContent = "(audio is unavailable in this browser)";
+              tunerStatus.textContent = "Audio is unavailable in this browser.";
               return;
             }
             ctx.resume();
             const wasActive = btn.classList.contains("active");
             stopRefTone();
             if (wasActive) {
-              resetTunerDisplay();
+              showIdle();
+              tunerStatus.textContent = "";
               return;
             }
             const freq = parseFloat(btn.dataset.freq);
@@ -1656,8 +1936,8 @@
             refOsc.connect(refGain);
             refGain.connect(masterGain);
             refOsc.start();
-            setTunerDisplay(btn.dataset.note, btn.dataset.oct, freq.toFixed(2) + " Hz · reference", 0, true);
-            tunerStatus.textContent = "reference tone — tune your string to it, click again to stop";
+            showReference(freq, btn.dataset.note, btn.dataset.oct);
+            tunerStatus.textContent = "Reference tone — click the string again to stop it.";
           });
         });
 
@@ -1667,6 +1947,9 @@
         let micAnalyser = null;
         let micBuf = null;
         let micRaf = null;
+        let lastDetected = 0;
+        let micGeneration = 0;
+        let micState = "off"; // off | pending | on
 
         function autoCorrelate(buf, sampleRate) {
           const SIZE = buf.length;
@@ -1721,16 +2004,6 @@
           return { name, oct, cents };
         }
 
-        function nearestString(f) {
-          let best = STRING_FREQS[0];
-          let bestD = Infinity;
-          for (const s of STRING_FREQS) {
-            const d = Math.abs(12 * Math.log2(f / s.f));
-            if (d < bestD) { bestD = d; best = s; }
-          }
-          return best.label;
-        }
-
         function micLoop() {
           micRaf = requestAnimationFrame(micLoop);
           const now = performance.now();
@@ -1738,34 +2011,64 @@
           micLoop.last = now;
           micAnalyser.getFloatTimeDomainData(micBuf);
           const f = autoCorrelate(micBuf, audioCtx.sampleRate);
-          if (f <= 0) return;
+          if (f <= 0) {
+            // stale reading — fall back to the honest listening state
+            if (now - lastDetected > 1200 && tunerDisplay.dataset.state === "live") showListening();
+            return;
+          }
+          lastDetected = now;
           const { name, oct, cents } = noteFromFreq(f);
-          setTunerDisplay(name, oct, f.toFixed(1) + " Hz · closest string " + nearestString(f), cents, true);
+          showDetected(name, oct, f, cents);
+        }
+
+        function setMicBtn(mode) {
+          micBtn.setAttribute("aria-pressed", mode === "on" ? "true" : "false");
+          micBtnLabel.textContent =
+            mode === "on" ? "Stop microphone" : mode === "pending" ? "Waiting for permission…" : "Enable microphone";
+        }
+
+        function stopMic() {
+          micGeneration++;
+          if (micRaf) cancelAnimationFrame(micRaf);
+          micRaf = null;
+          if (micStream) micStream.getTracks().forEach((t) => t.stop());
+          micStream = null;
+          micAnalyser = null;
+          setMicBtn("off");
         }
 
         async function toggleMic() {
           if (micStream) {
-            cancelAnimationFrame(micRaf);
-            micStream.getTracks().forEach((t) => t.stop());
-            micStream = null;
-            micAnalyser = null;
-            micBtn.setAttribute("aria-pressed", "false");
-            micBtn.textContent = "🎙 enable mic tuner";
-            tunerStatus.textContent = "mic off — click a string for a reference tone";
-            resetTunerDisplay();
+            stopMic();
+            showIdle();
+            tunerStatus.textContent = "Microphone off.";
             return;
           }
           const ctx = ensureAudio();
           if (!ctx || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            tunerStatus.textContent = "(mic not available here — use the reference tones)";
+            tunerStatus.textContent = "Microphone isn't available in this browser — use the reference tones.";
             return;
           }
+          const gen = ++micGeneration;
+          micState = "pending";
+          setMicBtn("pending");
+          tunerStatus.textContent = "Waiting for microphone permission…";
           try {
             micStream = await navigator.mediaDevices.getUserMedia({
               audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
             });
           } catch (err) {
-            tunerStatus.textContent = "(mic permission denied — use the reference tones)";
+            micStream = null;
+            if (gen === micGeneration) {
+              setMicBtn("off");
+              tunerStatus.textContent = "Microphone permission denied — allow access in your browser and try again.";
+            }
+            return;
+          }
+          if (gen !== micGeneration) {
+            // user left the tuner (or toggled again) while permission was pending
+            micStream.getTracks().forEach((t) => t.stop());
+            micStream = null;
             return;
           }
           await ctx.resume();
@@ -1774,9 +2077,11 @@
           micAnalyser.fftSize = 2048;
           src.connect(micAnalyser);
           micBuf = new Float32Array(micAnalyser.fftSize);
-          micBtn.setAttribute("aria-pressed", "true");
-          micBtn.textContent = "🎙 mic on — click to stop";
-          tunerStatus.textContent = "listening — play a string and watch the needle";
+          setMicBtn("on");
+          micState = "on";
+          tunerStatus.textContent = "Listening — play one string at a time.";
+          showListening();
+          lastDetected = performance.now();
           micLoop();
         }
 
@@ -1786,17 +2091,21 @@
 
         const beatBlocksEl = document.getElementById("beat-blocks");
         const bpmInput = document.getElementById("bpm-input");
-        const bpmSlider = document.getElementById("bpm-slider");
         const bpmDown = document.getElementById("bpm-down");
         const bpmUp = document.getElementById("bpm-up");
         const tapBtn = document.getElementById("tap-btn");
         const metroBtn = document.getElementById("metro-btn");
         const metroStatus = document.getElementById("metro-status");
+        const metroRunState = document.getElementById("metro-run-state");
         const topSel = document.getElementById("top-number");
         const bottomSel = document.getElementById("bottom-number");
         const soundSel = document.getElementById("sound-style");
         const subAllEl = document.getElementById("sub-all");
+        const beatSubRows = document.getElementById("beat-sub-rows");
+        const beatSubSummary = document.getElementById("beat-sub-summary");
         const SVG_NS = "http://www.w3.org/2000/svg";
+        const BPM_MIN = 40;
+        const BPM_MAX = 300;
         if (store.metro) {
           if (store.metro.top) topSel.value = String(store.metro.top);
           if (store.metro.bottom) bottomSel.value = String(store.metro.bottom);
@@ -1886,23 +2195,38 @@
           return svg;
         }
 
-        function updateSubAllActive() {
-          const n = beats.length ? beats[0].subdiv : 0;
-          const all = beats.every((b) => b.subdiv === n);
+        const SUBDIV_NAMES = { 1: "Quarter", 2: "Eighths", 3: "Triplets", 4: "Sixteenths" };
+
+        function beatsAreUniform() {
+          return beats.every((b) => b.subdiv === (beats[0] ? beats[0].subdiv : 1));
+        }
+
+        function updateSubdivisionUI() {
+          const uniform = beatsAreUniform();
+          const n = uniform && beats.length ? beats[0].subdiv : 0;
           [...subAllEl.children].forEach((btn) =>
-            btn.classList.toggle("active", all && Number(btn.dataset.n) === n)
+            btn.setAttribute("aria-pressed", String(uniform && Number(btn.dataset.n) === n))
           );
+          beatSubSummary.textContent = uniform ? "" : " · custom subdivisions";
         }
 
         [1, 2, 3, 4].forEach((n) => {
           const btn = document.createElement("button");
           btn.type = "button";
-          btn.className = "glyph-btn";
+          btn.className = "sub-opt";
           btn.dataset.n = String(n);
+          btn.setAttribute("aria-pressed", "false");
+          const label = SUBDIV_NAMES[n];
           btn.title =
-            n === 1 ? "quarters" : n === 2 ? "eighths" : n === 3 ? "triplets" : "sixteenths";
-          btn.setAttribute("aria-label", "Subdivide all beats into " + n);
+            n + " pulse" + (n === 1 ? "" : "s") + " per beat — " + label.toLowerCase() + " in 4/4";
+          btn.setAttribute(
+            "aria-label",
+            "Subdivide every beat into " + n + " pulse" + (n === 1 ? "" : "s") + " per beat (" + label.toLowerCase() + " in 4/4)"
+          );
           btn.appendChild(noteGlyph(n));
+          const txt = document.createElement("span");
+          txt.textContent = label;
+          btn.appendChild(txt);
           btn.addEventListener("click", () => {
             beats.forEach((b) => (b.subdiv = n));
             renderBlocks();
@@ -1912,9 +2236,9 @@
 
         function renderBlocks() {
           beatBlocksEl.innerHTML = "";
+          beatSubRows.innerHTML = "";
           beats.forEach((b, i) => {
-            const wrap = document.createElement("div");
-            wrap.className = "beat-block-wrap";
+            const stateName = b.level === 2 ? "Accent" : b.level === 1 ? "Normal" : "Rest";
             const blk = document.createElement("button");
             blk.type = "button";
             blk.className =
@@ -1923,30 +2247,44 @@
               (playing && i === currentBeat ? " current" : "");
             blk.setAttribute(
               "aria-label",
-              "Beat " + (i + 1) + ": " +
-              (b.level === 2 ? "accented" : b.level === 1 ? "normal" : "rest") +
-              " — click to change"
+              "Beat " + (i + 1) + ": " + stateName.toLowerCase() + " — click to cycle emphasis"
             );
+            const num = document.createElement("span");
+            num.className = "beat-num";
+            num.textContent = String(i + 1);
+            const state = document.createElement("span");
+            state.className = "beat-state";
+            state.textContent = stateName;
+            blk.appendChild(num);
+            blk.appendChild(state);
             blk.addEventListener("click", () => {
               b.level = (b.level + 2) % 3;
               renderBlocks();
             });
-            wrap.appendChild(blk);
+            beatBlocksEl.appendChild(blk);
+
+            const row = document.createElement("div");
+            row.className = "beat-sub-row";
+            const who = document.createElement("span");
+            who.className = "who";
+            who.textContent = "Beat " + (i + 1);
             const sub = document.createElement("button");
             sub.type = "button";
             sub.className = "sub-btn";
-            sub.textContent = b.subdiv + "x";
-            sub.title = "subdivisions for this beat";
-            sub.setAttribute("aria-label", "Subdivisions for beat " + (i + 1));
+            sub.textContent =
+              b.subdiv + " pulse" + (b.subdiv === 1 ? "" : "s") + " · " + SUBDIV_NAMES[b.subdiv].toLowerCase();
+            sub.title = "Pulses in beat " + (i + 1) + " — click to change";
+            sub.setAttribute("aria-label", "Pulses in beat " + (i + 1));
             sub.addEventListener("click", () => {
               const steps = [1, 2, 3, 4];
               b.subdiv = steps[(steps.indexOf(b.subdiv) + 1) % steps.length];
-              sub.textContent = b.subdiv + "x";
+              renderBlocks();
             });
-            wrap.appendChild(sub);
-            beatBlocksEl.appendChild(wrap);
+            row.appendChild(who);
+            row.appendChild(sub);
+            beatSubRows.appendChild(row);
           });
-          updateSubAllActive();
+          updateSubdivisionUI();
           saveStore({ metro: metroState() });
         }
 
@@ -1958,13 +2296,6 @@
             style: soundStyle,
             beats: beats.map((b) => ({ level: b.level, subdiv: b.subdiv })),
           };
-        }
-
-        function setBpm(v) {
-          bpm = Math.max(40, Math.min(300, Math.round(v)));
-          bpmInput.value = bpm;
-          bpmSlider.value = bpm;
-          saveStore({ metro: metroState() });
         }
 
         function getNoise(ctx) {
@@ -2023,8 +2354,8 @@
         }
 
         function lightBeat(i) {
-          [...beatBlocksEl.children].forEach((w, j) =>
-            w.firstElementChild.classList.toggle("current", j === i)
+          [...beatBlocksEl.children].forEach((blk, j) =>
+            blk.classList.toggle("current", j === i)
           );
         }
 
@@ -2058,10 +2389,22 @@
           }
         }
 
+        function updateRunState() {
+          if (playing) {
+            metroRunState.textContent =
+              "Running · " + topSel.value + "/" + bottom + " · " + bpm + " BPM";
+            metroRunState.classList.add("on");
+          } else {
+            metroRunState.textContent = "Stopped";
+            metroRunState.classList.remove("on");
+          }
+        }
+
         function startMetro() {
+          if (playing) return; // one scheduler, ever
           const ctx = ensureAudio();
           if (!ctx) {
-            metroStatus.textContent = "(audio is unavailable in this browser)";
+            metroStatus.textContent = "Audio is unavailable in this browser.";
             return;
           }
           ctx.resume().then(() => {
@@ -2070,38 +2413,72 @@
             nextBeatTime = ctx.currentTime + 0.08;
             schedulerId = setInterval(scheduler, TICK_MS);
             metroBtn.setAttribute("aria-pressed", "true");
-            metroBtn.textContent = "■ stop";
-            metroStatus.textContent =
-              beats.length + " beats of 1/" + bottom + " at " + bpm + " bpm";
+            metroBtn.textContent = "Stop";
+            updateRunState();
           });
         }
 
         function stopMetro() {
           playing = false;
           clearInterval(schedulerId);
+          schedulerId = null;
           clearVisuals();
           metroBtn.setAttribute("aria-pressed", "false");
-          metroBtn.textContent = "▶ start";
-          metroStatus.textContent = "40–300 bpm · click a block to cycle accent → normal → rest · 1x adds subdivisions";
+          metroBtn.textContent = "Start";
+          metroStatus.textContent = "";
+          updateRunState();
         }
 
         metroBtn.addEventListener("click", () => (playing ? stopMetro() : startMetro()));
-        bpmSlider.addEventListener("input", () => setBpm(parseFloat(bpmSlider.value)));
+
+        function setBpm(v) {
+          bpm = Math.max(BPM_MIN, Math.min(BPM_MAX, Math.round(v)));
+          bpmInput.value = bpm;
+          saveStore({ metro: metroState() });
+          updateRunState();
+        }
+
+        // While typing, only accept in-range values silently — never rewrite
+        // the field (typing "5" on the way to "50" must not clamp to 40).
         bpmInput.addEventListener("input", () => {
-          const v = parseFloat(bpmInput.value);
-          if (!isNaN(v)) setBpm(v);
+          const raw = bpmInput.value.trim();
+          if (raw === "") return; // keep the last valid tempo for playback
+          const v = Number(raw);
+          if (Number.isFinite(v) && v >= BPM_MIN && v <= BPM_MAX) {
+            bpm = Math.round(v);
+            saveStore({ metro: metroState() });
+            updateRunState();
+          }
+        });
+
+        function commitBpm() {
+          const raw = bpmInput.value.trim();
+          const v = Number(raw);
+          if (raw === "" || !Number.isFinite(v)) {
+            bpmInput.value = bpm; // restore last valid tempo
+            return;
+          }
+          setBpm(v); // clamps and writes back the committed value
+        }
+
+        bpmInput.addEventListener("blur", commitBpm);
+        bpmInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            commitBpm();
+            bpmInput.blur();
+          }
         });
         bpmDown.addEventListener("click", () => setBpm(bpm - 1));
         bpmUp.addEventListener("click", () => setBpm(bpm + 1));
 
         topSel.addEventListener("change", () => {
           rebuildBeats();
-          if (playing) metroStatus.textContent = beats.length + " beats of 1/" + bottom + " at " + bpm + " bpm";
+          updateRunState();
         });
         bottomSel.addEventListener("change", () => {
           bottom = parseInt(bottomSel.value, 10);
           saveStore({ metro: metroState() });
-          if (playing) metroStatus.textContent = beats.length + " beats of 1/" + bottom + " at " + bpm + " bpm";
+          updateRunState();
         });
         soundSel.addEventListener("change", () => {
           soundStyle = soundSel.value;
@@ -2151,6 +2528,18 @@
           dim: [0, 3, 6],
           aug: [0, 4, 8],
         };
+        const CHORD_NAMES = {
+          "5": "power (5)",
+          maj: "major",
+          min: "minor",
+          "7": "dominant 7",
+          maj7: "major 7",
+          m7: "minor 7",
+          sus4: "sus4",
+          sus2: "sus2",
+          dim: "diminished",
+          aug: "augmented",
+        };
         const CHORD_SUFFIX = {
           "5": "5",
           maj: "",
@@ -2168,6 +2557,10 @@
         const droneQualsEl = document.getElementById("drone-quals");
         const droneStatus = document.getElementById("drone-status");
         const droneBtn = document.getElementById("drone-btn");
+        const droneNameEl = document.getElementById("drone-name");
+        const droneNotesEl = document.getElementById("drone-notes");
+        const droneRunState = document.getElementById("drone-run-state");
+        const droneDetails = document.getElementById("drone-details");
 
         let droneRoot = store.drone && Number.isInteger(store.drone.root)
           ? ((store.drone.root % 12) + 12) % 12
@@ -2458,6 +2851,10 @@
           return DRONE_ROOTS[droneRoot].name + CHORD_SUFFIX[droneQuality];
         }
 
+        function chordFullName() {
+          return DRONE_ROOTS[droneRoot].name + " " + CHORD_NAMES[droneQuality];
+        }
+
         function chordNotesText() {
           const root = DRONE_ROOTS[droneRoot];
           return CHORDS[droneQuality]
@@ -2465,10 +2862,19 @@
             .join(" · ");
         }
 
+        function updateDroneUI() {
+          droneNameEl.textContent = chordFullName();
+          droneNotesEl.textContent = chordNotesText() + "   ·   " + chordLabel();
+          droneRunState.textContent = dronePlaying ? "Playing" : "Stopped";
+          droneRunState.classList.toggle("on", dronePlaying);
+          droneDetails.textContent =
+            "Root frequency: " + DRONE_ROOTS[droneRoot].freq.toFixed(2) +
+            " Hz — the root note only, not the whole chord.";
+        }
+
         function updateDroneStatus() {
           saveStore({ drone: { root: droneRoot, quality: droneQuality } });
-          droneStatus.textContent =
-            chordLabel() + " — " + chordNotesText() + (dronePlaying ? " · droning" : "");
+          updateDroneUI();
         }
 
         function buildVoices(rootIdx, quality, attack = 0.6, style = "pad") {
@@ -2579,17 +2985,20 @@
         }
 
         function startDrone() {
+          if (dronePlaying) return; // one drone, ever
           const ctx = ensureAudio();
           if (!ctx) {
-            droneStatus.textContent = "(audio is unavailable in this browser)";
+            droneStatus.textContent = "Audio is unavailable in this browser.";
             return;
           }
           ctx.resume().then(() => {
+            if (dronePlaying) return;
             ensureDrone();
             droneVoices = buildVoices(droneRoot, droneQuality);
             dronePlaying = true;
             droneBtn.setAttribute("aria-pressed", "true");
-            droneBtn.textContent = "■ stop drone";
+            droneBtn.textContent = "Stop drone";
+            droneStatus.textContent = "Drone playing — it sustains until you stop it.";
             updateDroneStatus();
           });
         }
@@ -2599,7 +3008,8 @@
           releaseVoices(droneVoices);
           droneVoices = [];
           droneBtn.setAttribute("aria-pressed", "false");
-          droneBtn.textContent = "▶ start drone";
+          droneBtn.textContent = "Start drone";
+          droneStatus.textContent = "";
           updateDroneStatus();
         }
 
@@ -2608,12 +3018,16 @@
         DRONE_ROOTS.forEach((r, i) => {
           const b = document.createElement("button");
           b.type = "button";
-          b.className = "string-btn" + (i === droneRoot ? " active" : "");
-          b.innerHTML = r.name + "<small>" + r.freq.toFixed(2) + "</small>";
+          b.className = "note-btn" + (i === droneRoot ? " active" : "");
+          b.textContent = r.name;
+          b.setAttribute("aria-pressed", String(i === droneRoot));
           b.setAttribute("aria-label", "Root " + r.name);
           b.addEventListener("click", () => {
             droneRoot = i;
-            [...droneRootsEl.children].forEach((c, j) => c.classList.toggle("active", j === i));
+            [...droneRootsEl.children].forEach((c, j) => {
+              c.classList.toggle("active", j === i);
+              c.setAttribute("aria-pressed", String(j === i));
+            });
             if (dronePlaying) {
               releaseVoices(droneVoices);
               droneVoices = buildVoices(droneRoot, droneQuality);
@@ -2623,25 +3037,95 @@
           droneRootsEl.appendChild(b);
         });
 
-        Object.keys(CHORDS).forEach((q, i) => {
+        const PRIMARY_QUALITIES = ["5", "maj", "min"];
+        const MORE_QUALITIES = Object.keys(CHORDS).filter((q) => !PRIMARY_QUALITIES.includes(q));
+
+        function selectQuality(q) {
+          droneQuality = q;
+          syncQualityUI();
+          if (dronePlaying) {
+            releaseVoices(droneVoices);
+            droneVoices = buildVoices(droneRoot, droneQuality);
+          }
+          updateDroneStatus();
+        }
+
+        function qualityMenuLabel(q) {
+          const name = CHORD_NAMES[q];
+          return name.charAt(0).toUpperCase() + name.slice(1);
+        }
+
+        function syncQualityUI() {
+          [...droneQualsEl.children].forEach((b) => {
+            if (!b.dataset.q) return;
+            b.classList.toggle("active", b.dataset.q === droneQuality);
+            b.setAttribute("aria-pressed", String(b.dataset.q === droneQuality));
+          });
+          droneMoreBtn.textContent = MORE_QUALITIES.includes(droneQuality)
+            ? qualityMenuLabel(droneQuality) + " ▾"
+            : "More ▾";
+        }
+
+        PRIMARY_QUALITIES.forEach((q) => {
           const b = document.createElement("button");
           b.type = "button";
           b.className = "qual-btn" + (q === droneQuality ? " active" : "");
-          b.textContent = q === "5" ? "5 (power)" : q;
-          b.addEventListener("click", () => {
-            droneQuality = q;
-            [...droneQualsEl.children].forEach((c, j) =>
-              c.classList.toggle("active", Object.keys(CHORDS)[j] === q)
-            );
-            if (dronePlaying) {
-              releaseVoices(droneVoices);
-              droneVoices = buildVoices(droneRoot, droneQuality);
-            }
-            updateDroneStatus();
-          });
+          b.dataset.q = q;
+          b.textContent = q === "5" ? "Power (5)" : qualityMenuLabel(q);
+          b.setAttribute("aria-pressed", String(q === droneQuality));
+          b.addEventListener("click", () => selectQuality(q));
           droneQualsEl.appendChild(b);
         });
 
+        const droneMoreWrap = document.createElement("span");
+        droneMoreWrap.className = "drone-more-wrap";
+        const droneMoreBtn = document.createElement("button");
+        droneMoreBtn.type = "button";
+        droneMoreBtn.className = "qual-btn";
+        droneMoreBtn.textContent = "More ▾";
+        droneMoreBtn.setAttribute("aria-haspopup", "true");
+        droneMoreBtn.setAttribute("aria-expanded", "false");
+        const droneMenu = document.createElement("div");
+        droneMenu.className = "sb-menu";
+        droneMenu.hidden = true;
+        MORE_QUALITIES.forEach((q) => {
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "sb-menu-item";
+          item.textContent = qualityMenuLabel(q);
+          item.addEventListener("click", () => {
+            closeDroneMenu();
+            selectQuality(q);
+          });
+          droneMenu.appendChild(item);
+        });
+        droneMoreWrap.appendChild(droneMoreBtn);
+        droneMoreWrap.appendChild(droneMenu);
+        droneQualsEl.appendChild(droneMoreWrap);
+
+        function closeDroneMenu() {
+          droneMenu.hidden = true;
+          droneMoreBtn.setAttribute("aria-expanded", "false");
+        }
+
+        droneMoreBtn.addEventListener("click", () => {
+          const open = droneMenu.hidden;
+          droneMenu.hidden = !open;
+          droneMoreBtn.setAttribute("aria-expanded", String(open));
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!droneMenu.hidden && !droneMoreWrap.contains(e.target)) closeDroneMenu();
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && !droneMenu.hidden) {
+            closeDroneMenu();
+            droneMoreBtn.focus();
+          }
+        });
+
+        syncQualityUI();
         updateDroneStatus();
 
         /* ============ CHORD REFERENCE + SONG BUILDER ============ */
@@ -3367,10 +3851,6 @@
           })
         );
 
-        document.querySelectorAll(".jump-btn").forEach((btn) =>
-          btn.addEventListener("click", () => setBpm(bpm + Number(btn.dataset.d)))
-        );
-
         const soundSelEl = document.getElementById("song-sound");
 
         function saveSongPrefs() {
@@ -3460,6 +3940,18 @@
 
         function activateTool(name) {
           if (!TOOL_NAMES.includes(name)) name = "tuner";
+          if (name !== "tuner") {
+            // leaving the tuner: release the mic and any reference tone
+            if (micState !== "off" || micStream) {
+              stopMic();
+              micState = "off";
+              showIdle();
+            }
+            if (refOsc) {
+              stopRefTone();
+            }
+            tunerStatus.textContent = "";
+          }
           saveStore({ tool: name });
           tabBtns.forEach((b) => {
             const on = b.dataset.tool === name;
