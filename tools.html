@@ -122,25 +122,24 @@
         border-radius: 4px;
       }
 
-      /* ---------- hero ---------- */
-      .hero {
-        padding: clamp(2.5rem, 5vw, 4.5rem) 0 var(--sect);
-      }
-
-      .eyebrow-row {
+      /* ---------- tool band (slim app shell) ---------- */
+      .toolband {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem 1.5rem;
         flex-wrap: wrap;
+        padding: 1.1rem 0 1.35rem;
       }
 
-      .eyebrow {
+      .toolband h1 {
+        margin: 0;
         font-family: var(--mono);
         font-size: 0.8rem;
+        font-weight: 500;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: var(--blue);
+        color: var(--muted);
       }
 
       .chip {
@@ -163,56 +162,6 @@
         border-radius: 50%;
         background: var(--green);
         box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
-      }
-
-      h1 {
-        margin-top: 1.1rem;
-        font-size: clamp(2.55rem, 8vw, 5.4rem);
-        font-weight: 700;
-        letter-spacing: -0.025em;
-        line-height: 1.03;
-      }
-
-      h1 .day {
-        display: block;
-      }
-
-      h1 .shred {
-        display: block;
-        font-family: var(--serif);
-        font-style: italic;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        padding-right: 0.12em;
-        padding-bottom: 0.18em;
-        margin-bottom: -0.18em;
-        background: linear-gradient(100deg, var(--amber) 10%, var(--amber2) 55%, var(--amber) 95%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-      }
-
-      .sub {
-        margin-top: 1.2rem;
-        max-width: 58ch;
-        color: var(--muted);
-        font-size: clamp(1rem, 2.5vw, 1.12rem);
-        text-wrap: pretty;
-      }
-
-      .stats {
-        margin-top: 1.5rem;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem 1.6rem;
-        font-family: var(--mono);
-        font-size: 0.78rem;
-        color: var(--faint);
-      }
-
-      .stats b {
-        color: var(--amber);
-        font-weight: 500;
       }
 
       /* ---------- section heads ---------- */
@@ -251,7 +200,6 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
-        margin-bottom: 1.5rem;
       }
 
       .tool-tab {
@@ -478,8 +426,9 @@
       }
 
       .ghost-btn[aria-pressed="true"] {
-        background: rgba(122, 162, 247, 0.15);
-        border-color: var(--blue);
+        border-color: var(--amber);
+        color: var(--amber);
+        background: rgba(245, 182, 70, 0.08);
       }
 
       .tool-status {
@@ -522,11 +471,6 @@
         height: 22px;
         display: block;
         fill: currentColor;
-      }
-
-      .echo-slider {
-        width: 7rem;
-        accent-color: var(--amber);
       }
 
       .beat-blocks {
@@ -738,6 +682,231 @@
         color: var(--text);
       }
 
+      .track-vol {
+        width: 5.5rem;
+        accent-color: var(--amber);
+      }
+
+      /* ---------- song builder layout ---------- */
+      .sb-setup {
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem 1.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.4rem;
+      }
+
+      .sb-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+
+      .sb-field-sound {
+        margin-left: auto;
+      }
+
+      .sb-label {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .sb-seg {
+        display: inline-flex;
+        gap: 0.35rem;
+      }
+
+      .sb-hint {
+        margin: 0.45rem 0 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .sb-details {
+        margin-top: 0.45rem;
+      }
+
+      .sb-details summary {
+        font-size: 0.8rem;
+        color: var(--faint);
+        cursor: pointer;
+        width: fit-content;
+      }
+
+      .sb-details[open] summary {
+        color: var(--muted);
+      }
+
+      .sb-overflow {
+        position: relative;
+      }
+
+      .sb-menu {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 4px);
+        z-index: 30;
+        min-width: 11rem;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 0.3rem;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      }
+
+      .sb-menu-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        padding: 0.5rem 0.7rem;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .sb-menu-item:hover {
+        background: rgba(255, 255, 255, 0.07);
+      }
+
+      .sb-playrow {
+        display: flex;
+        align-items: center;
+        gap: 1rem 1.75rem;
+        flex-wrap: wrap;
+        margin-top: 1.4rem;
+      }
+
+      .sb-tempo {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .bpm-input {
+        font-family: var(--mono);
+        font-size: 0.95rem;
+        width: 4.5rem;
+        text-align: center;
+        padding: 0.42rem 0.3rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text);
+      }
+
+      .sb-unit {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--faint);
+      }
+
+      .sb-accomp {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem 1.4rem;
+        flex-wrap: wrap;
+      }
+
+      .sb-accomp .drone-label {
+        width: 100%;
+        margin: 0;
+      }
+
+      .sb-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.85rem;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .sb-check input {
+        accent-color: var(--amber);
+        width: 1rem;
+        height: 1rem;
+      }
+
+      .track-vol:disabled {
+        opacity: 0.35;
+      }
+
+      /* chord card action buttons + duration select */
+      .blk-actions {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        display: flex;
+        gap: 1px;
+        z-index: 3;
+      }
+
+      .blk-btn {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        line-height: 1;
+        padding: 0.18rem 0.26rem;
+        border: 0;
+        border-radius: 4px;
+        background: rgba(11, 13, 17, 0.45);
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .blk-btn:hover {
+        background: rgba(11, 13, 17, 0.85);
+        color: var(--amber);
+      }
+
+      .blk-dur {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        margin-top: 0.3rem;
+        padding: 0.12rem 0.15rem;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        background: rgba(11, 13, 17, 0.35);
+        color: var(--text);
+        cursor: pointer;
+        max-width: 90%;
+        position: relative;
+        z-index: 3;
+      }
+
+      .blk-dur:hover {
+        border-color: rgba(245, 182, 70, 0.5);
+      }
+
+      .seq-block .edge {
+        opacity: 0;
+        transition: opacity 0.12s ease;
+      }
+
+      .seq-block:hover .edge,
+      .seq-block:focus-within .edge,
+      .seq-block.resizing .edge {
+        opacity: 1;
+      }
+
+      .seq-block.fresh {
+        animation: blk-in 0.35s ease;
+      }
+
+      @keyframes blk-in {
+        from { transform: scale(0.97); opacity: 0.6; }
+        to { transform: scale(1); opacity: 1; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .seq-block.fresh {
+          animation: none;
+        }
+      }
+
       .metro-controls {
         display: flex;
         gap: 0.6rem;
@@ -808,6 +977,9 @@
       .qual-btn {
         font-family: var(--mono);
         font-size: 0.82rem;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
         padding: 0.45rem 0.9rem;
         border-radius: 999px;
         border: 1px solid var(--line);
@@ -828,15 +1000,6 @@
         background: rgba(245, 182, 70, 0.08);
       }
 
-      /* ---------- reference + song builder ---------- */
-      .ref-key-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem 1.25rem;
-        align-items: center;
-        justify-content: space-between;
-      }
-
       .seq-head {
         display: flex;
         flex-wrap: wrap;
@@ -846,15 +1009,24 @@
         margin-bottom: 0.45rem;
       }
 
-      .seq-head .drone-label,
-      .ref-key-row .drone-label {
+      .seq-head .drone-label {
         margin: 0;
       }
 
       .numeral {
+        display: block;
         color: var(--faint);
-        font-size: 0.72rem;
-        margin-left: 0.3rem;
+        font-size: 0.7rem;
+        margin-top: 0.1rem;
+      }
+
+      .qual-btn .chip-name {
+        font-size: 0.88rem;
+      }
+
+      .qual-btn.added {
+        border-color: var(--amber);
+        color: var(--amber);
       }
 
       .grid-scroll {
@@ -866,7 +1038,7 @@
 
       .grid-track {
         position: relative;
-        height: 116px;
+        height: 138px;
         min-width: 100%;
       }
 
@@ -904,7 +1076,7 @@
       .seq-block {
         position: absolute;
         top: 30px;
-        height: 60px;
+        height: 82px;
         border-radius: 8px;
         border: 1px solid rgba(52, 211, 153, 0.55);
         background: linear-gradient(160deg, rgba(52, 211, 153, 0.28), rgba(52, 211, 153, 0.1));
@@ -929,28 +1101,10 @@
       }
 
       .seq-block .blk-name {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: 600;
         pointer-events: none;
-      }
-
-      .seq-block .blk-len {
-        font-size: 0.65rem;
-        color: var(--green);
-        pointer-events: none;
-      }
-
-      .seq-block .rm {
-        position: absolute;
-        top: 2px;
-        right: 3px;
-        background: none;
-        border: 0;
-        padding: 2px;
-        line-height: 1;
-        font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.4);
-        cursor: pointer;
+        margin-top: 14px;
       }
 
       .seq-block .rm:hover {
@@ -990,23 +1144,6 @@
         flex-direction: column;
         align-items: stretch;
         gap: 0.45rem;
-      }
-
-      .danger-btn {
-        font-family: var(--mono);
-        font-size: 0.72rem;
-        padding: 0.4rem 0.6rem;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 95, 86, 0.4);
-        background: rgba(255, 95, 86, 0.06);
-        color: var(--rec);
-        cursor: pointer;
-        transition: background-color 0.15s ease, border-color 0.15s ease;
-      }
-
-      .danger-btn:hover {
-        background: rgba(255, 95, 86, 0.16);
-        border-color: var(--rec);
       }
 
       /* ---------- footer ---------- */
@@ -1092,26 +1229,15 @@
         <nav aria-label="Site">
           <a href="/">home</a>
           <a href="https://github.com/bronder" rel="noopener">github</a>
+          <a href="https://www.youtube.com/@scottbronder" rel="noopener">youtube</a>
           <a href="mailto:hello@scottbronder.com">hello@</a>
         </nav>
       </header>
 
       <main>
-        <div class="hero">
-          <div class="eyebrow-row">
-            <p class="eyebrow">Scott Bronder · the toolbench</p>
-            <p class="chip"><span class="chip-dot" aria-hidden="true"></span>more tools coming</p>
-          </div>
-          <h1>
-            <span class="day">Guitar tools,</span>
-            <span class="shred">hand-built.</span>
-          </h1>
-          <p class="sub">
-            Through decades of playing guitar as a hobby — and teaching shred guitar to
-            students — I've built the practice tools I always wanted: a tuner, a metronome,
-            a chord drone, and a song builder, all running entirely in your browser. No apps,
-            no sign-ups, no waiting.
-          </p>
+        <div class="toolband">
+          <h1>the toolbench</h1>
+          <p class="chip"><span class="chip-dot" aria-hidden="true"></span>more tools coming</p>
         </div>
 
         <section aria-label="Guitar tools">
@@ -1270,106 +1396,117 @@
             </div>
 
             <div class="tool-panel" data-tool="song-builder" hidden>
-            <!-- ============= song builder (with chord reference) ============= -->
+            <!-- ============= song builder ============= -->
             <div class="tool-card wide">
               <div class="tool-head">
                 <h3 class="tool-title">Song builder</h3>
-                <span class="tool-meta">pick a key · click chords · loop until stopped</span>
+                <span class="tool-meta">build a chord progression and play along</span>
               </div>
 
-              <div class="drone-block">
-                <p class="drone-label" id="ref-roots-label">key</p>
-                <div class="ref-key-row">
-                  <div class="qual-row" id="ref-roots" role="group" aria-labelledby="ref-roots-label"></div>
-                  <div class="tool-row">
-                    <button class="ghost-btn" id="ref-major" type="button" aria-pressed="true">major</button>
-                    <button class="ghost-btn" id="ref-minor" type="button" aria-pressed="false">minor</button>
+              <div class="sb-setup">
+                <div class="sb-field">
+                  <label class="sb-label" for="song-key">Key</label>
+                  <select class="time-sig" id="song-key" aria-label="Key"></select>
+                </div>
+                <div class="sb-field">
+                  <span class="sb-label" id="song-mode-label">Mode</span>
+                  <div class="sb-seg" role="group" aria-labelledby="song-mode-label">
+                    <button class="ghost-btn" id="ref-major" type="button" aria-pressed="true">Major</button>
+                    <button class="ghost-btn" id="ref-minor" type="button" aria-pressed="false">Minor</button>
                   </div>
+                </div>
+                <div class="sb-field sb-field-sound">
+                  <label class="sb-label" for="song-sound">Sound</label>
+                  <select class="time-sig" id="song-sound" aria-label="Sound">
+                    <option value="pad">warm pad</option>
+                    <option value="synthwave">synthwave</option>
+                    <option value="piano">sampled piano</option>
+                    <option value="strings">strings</option>
+                    <option value="choir">choir</option>
+                    <option value="organ">organ</option>
+                  </select>
                 </div>
               </div>
 
               <div class="drone-block">
-                <div class="ref-key-row">
-                  <p class="drone-label" id="ref-chords-label">chords in key — click to add to the sequence</p>
-                  <div class="tool-row">
-                    <p class="drone-label">new chords</p>
-                    <select class="time-sig" id="beats-per-chord" aria-label="Default beats for newly added chords">
-                      <option value="1">1 beat</option>
-                      <option value="2">2 beats</option>
-                      <option value="4" selected>4 beats</option>
-                      <option value="8">8 beats</option>
-                      <option value="12">12 beats</option>
-                      <option value="16">16 beats</option>
-                    </select>
-                  </div>
-                </div>
-                <p class="tool-status" id="ref-scale" aria-live="polite"></p>
+                <p class="drone-label" id="ref-chords-label">Add chords</p>
                 <div class="qual-row" id="ref-chords"></div>
+                <p class="sb-hint">Click a chord to add it.</p>
+                <details class="sb-details">
+                  <summary>Scale notes</summary>
+                  <p class="sb-hint" id="ref-scale" aria-live="polite"></p>
+                </details>
               </div>
 
               <div class="drone-block">
                 <div class="seq-head">
-                  <p class="drone-label" id="seq-label">sequence — drag a chord's right edge to resize · drag a chord to move it</p>
+                  <p class="drone-label" id="seq-label">Your progression</p>
                   <div class="tool-row">
-                    <p class="drone-label">sound</p>
-                    <select class="time-sig" id="song-sound" aria-label="Sound style">
-                      <option value="pad">warm pad</option>
-                      <option value="synthwave">synthwave</option>
-                    </select>
-                    <p class="drone-label">echo</p>
-                    <input
-                      class="echo-slider"
-                      id="echo-amount"
-                      type="range"
-                      min="0"
-                      max="60"
-                      step="1"
-                      value="0"
-                      aria-label="Echo amount"
-                    />
-                    <p class="drone-label">beats / measure</p>
-                    <select class="time-sig" id="beats-per-measure" aria-label="Beats per measure">
-                      <option value="2">2</option>
-                      <option value="3">3</option>
-                      <option value="4" selected>4</option>
-                      <option value="6">6</option>
-                    </select>
+                    <button class="ghost-btn" id="seq-undo" type="button" disabled>Undo</button>
+                    <div class="sb-overflow">
+                      <button class="ghost-btn" id="seq-menu-btn" type="button"
+                        aria-haspopup="true" aria-expanded="false" aria-label="More progression actions">···</button>
+                      <div class="sb-menu" id="seq-menu" hidden>
+                        <button type="button" class="sb-menu-item" id="seq-clear">Clear progression</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="grid-scroll" id="grid-scroll">
                   <div class="grid-track" id="grid-track"></div>
                 </div>
+                <p class="tool-status" id="song-status" aria-live="polite"></p>
               </div>
 
-              <div class="metro-controls">
-                <div class="tempo-col">
-                <div class="bpm-row">
-                  <button type="button" class="song-jump" data-song-d="-10">−10</button>
-                  <button type="button" class="song-jump" data-song-d="-5">−5</button>
-                  <button type="button" class="song-jump" data-song-d="-1">−1</button>
-                  <div class="bpm-value"><span id="song-bpm-num">80</span><small>BPM</small></div>
+              <div class="sb-playrow">
+                <button class="play-btn" id="song-btn" type="button" aria-pressed="false" disabled>Play loop</button>
+                <div class="sb-tempo" role="group" aria-label="Tempo">
+                  <span class="sb-label">Tempo</span>
+                  <button type="button" class="song-jump" data-song-d="-1" aria-label="Slower by one BPM">−</button>
                   <input
-                    class="bpm-slider"
-                    id="song-bpm"
-                    type="range"
+                    class="bpm-input"
+                    id="song-bpm-num"
+                    type="number"
+                    inputmode="numeric"
                     min="60"
                     max="200"
                     step="1"
                     value="80"
-                    aria-label="Song tempo in beats per minute"
+                    aria-label="Tempo in BPM"
                   />
-                  <button type="button" class="song-jump" data-song-d="1">+1</button>
-                  <button type="button" class="song-jump" data-song-d="5">+5</button>
-                  <button type="button" class="song-jump" data-song-d="10">+10</button>
-                </div>
-                <button class="ghost-btn" id="song-tap" type="button">tap tempo</button>
-                </div>
-                <div class="play-col">
-                  <button class="play-btn" id="song-btn" type="button" aria-pressed="false">▶ play loop</button>
-                  <button class="danger-btn" id="seq-reset" type="button" title="clear the sequence and start over">⟲ start over</button>
+                  <button type="button" class="song-jump" data-song-d="1" aria-label="Faster by one BPM">+</button>
+                  <span class="sb-unit">BPM</span>
+                  <button class="ghost-btn" id="song-tap" type="button">Tap</button>
                 </div>
               </div>
-              <p class="tool-status" id="song-status" aria-live="polite">no chords yet — click chords from above</p>
+
+              <div class="drone-block">
+                <p class="drone-label">Accompaniment</p>
+                <div class="sb-accomp">
+                  <label class="sb-check">
+                    <input type="checkbox" id="track-bass" checked />
+                    <span>Bass</span>
+                  </label>
+                  <input
+                    class="track-vol"
+                    id="bass-vol"
+                    type="range"
+                    min="0" max="100" step="1" value="50"
+                    aria-label="Bass volume"
+                  />
+                  <label class="sb-check">
+                    <input type="checkbox" id="track-arp" checked />
+                    <span>Arpeggio</span>
+                  </label>
+                  <input
+                    class="track-vol"
+                    id="arp-vol"
+                    type="range"
+                    min="0" max="100" step="1" value="50"
+                    aria-label="Arpeggio volume"
+                  />
+                </div>
+              </div>
             </div>
             </div>
           </div>
@@ -1381,6 +1518,7 @@
       <footer class="site-footer">
         <a href="mailto:hello@scottbronder.com">hello@scottbronder.com</a>
         <a href="https://github.com/bronder" rel="noopener">github.com/bronder</a>
+        <a href="https://www.youtube.com/@scottbronder" rel="noopener">youtube.com/@scottbronder</a>
         <span class="foot-note">tuned to A = 440 Hz</span>
       </footer>
     </div>
@@ -2044,7 +2182,7 @@
         let songEcho = null; // delay send level, 0..0.5
 
         function songDelayTime() {
-          const bpmv = parseInt(songBpmSlider.value, 10) || 80;
+          const bpmv = parseInt(songBpmInput.value, 10) || 80;
           return Math.min(1.1, (60 / bpmv) * 1.5);
         }
 
@@ -2061,10 +2199,14 @@
         function applySongSound() {
           if (!droneFilterCtl) return;
           if (songEcho === null) {
-            songEcho = songSound === "synthwave" ? 0.35 : 0;
-            const es = document.getElementById("echo-amount");
-            if (es) es.value = Math.round(songEcho * 100);
+            songEcho =
+              { pad: 0, synthwave: 0.35, piano: 0.2, strings: 0.25, choir: 0.3, organ: 0.12 }[
+                songSound
+              ] ?? 0;
           }
+          const sampled = SAMPLED_STYLES.includes(songSound);
+          droneFilterCtl.delaySend.gain.value = sampled ? 0 : songEcho;
+          if (pianoCtl) pianoCtl.delaySend.gain.value = sampled ? songEcho : 0;
           if (songSound === "synthwave") {
             droneFilterCtl.filter.frequency.value = 3600;
             droneFilterCtl.lfoDepth.gain.value = 700;
@@ -2118,6 +2260,200 @@
           return droneIn;
         }
 
+        /* ---------- sampled piano ---------- */
+
+        // Salamander Grand Piano (CC-BY) — one recorded note every minor
+        // third; the nearest sample is pitch-shifted to cover every key
+        const PIANO_BASE = "https://tonejs.github.io/audio/salamander/";
+        const PIANO_SAMPLE_NAMES = [
+          "C2", "Ds2", "Fs2", "A2", "C3", "Ds3", "Fs3", "A3",
+          "C4", "Ds4", "Fs4", "A4", "C5", "Ds5", "Fs5", "A5", "C6",
+        ];
+
+        function noteNameToMidi(name) {
+          const m = name.match(/^([A-G])(s|#|b)?(\d)$/);
+          const base = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+          const acc = m[2] === "b" ? -1 : m[2] ? 1 : 0;
+          return base[m[1]] + acc + 12 * (Number(m[3]) + 1);
+        }
+
+        let pianoSamples = null; // Map midi -> AudioBuffer
+        let pianoLoadPromise = null;
+
+        function loadPianoSamples() {
+          const ctx = ensureAudio();
+          if (!ctx) return Promise.resolve(null);
+          if (pianoLoadPromise) return pianoLoadPromise;
+          pianoLoadPromise = Promise.all(
+            PIANO_SAMPLE_NAMES.map(async (n) => {
+              const res = await fetch(PIANO_BASE + n + ".mp3");
+              const buf = await ctx.decodeAudioData(await res.arrayBuffer());
+              return [noteNameToMidi(n), { buffer: buf, norm: sampleNorm(buf, 0.5) }];
+            })
+          )
+            .then((entries) => {
+              pianoSamples = new Map(entries);
+              return pianoSamples;
+            })
+            .catch(() => {
+              pianoLoadPromise = null; // allow a retry on next play
+              return null;
+            });
+          return pianoLoadPromise;
+        }
+
+        let pianoCtl = null; // { out, delaySend } — sampled sounds bypass the pad filter
+
+        function ensurePiano() {
+          ensureDrone(); // the delay chain lives there
+          if (!pianoCtl && droneFilterCtl) {
+            const out = audioCtx.createGain();
+            out.gain.value = 1;
+            // gentle bus compressor — lets us run the samples hot without
+            // the chord stack clipping the master
+            const comp = audioCtx.createDynamicsCompressor();
+            comp.threshold.value = -14;
+            comp.knee.value = 24;
+            comp.ratio.value = 3;
+            comp.attack.value = 0.004;
+            comp.release.value = 0.18;
+            out.connect(comp);
+            comp.connect(masterGain);
+            const delaySend = audioCtx.createGain();
+            delaySend.gain.value = 0;
+            out.connect(delaySend);
+            delaySend.connect(droneFilterCtl.delay);
+            pianoCtl = { out, delaySend };
+          }
+          return pianoCtl;
+        }
+
+        // sampled styles routed through the piano bus (the pad filter/LFO
+        // would smear these instruments)
+        const SAMPLED_STYLES = ["piano", "strings", "choir", "organ"];
+
+        // FluidR3 General MIDI soundfonts (CC-BY) — 88 recorded notes per
+        // instrument as base64 mp3s, lazy-loaded one instrument at a time
+        const SOUND_FONT_BASE =
+          "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/";
+        const STYLE_FONTS = {
+          strings: "string_ensemble_1",
+          choir: "choir_aahs",
+          organ: "drawbar_organ",
+        };
+
+        let fontSamples = {}; // font name -> Map midi -> AudioBuffer
+        let fontLoads = {}; // font name -> Promise
+
+        const SOUND_LABELS = {
+          pad: "warm pad",
+          synthwave: "synthwave",
+          piano: "sampled piano",
+          strings: "strings",
+          choir: "choir",
+          organ: "organ",
+        };
+
+        const SOUND_BLURBS = {
+          pad: "smooth and round",
+          synthwave: "bright saws + echo",
+          piano: "real recorded keys",
+          strings: "lush ensemble swell",
+          choir: "voice-like pads",
+          organ: "drawbar, speaks fast",
+        };
+
+        function samplesReadyFor(style) {
+          if (style === "piano") return !!pianoSamples;
+          return !STYLE_FONTS[style] || !!fontSamples[style];
+        }
+
+        function loadSoundfont(style) {
+          const ctx = ensureAudio();
+          if (!ctx) return Promise.resolve(null);
+          if (!STYLE_FONTS[style]) return Promise.resolve(null);
+          if (fontLoads[style]) return fontLoads[style];
+          fontLoads[style] = fetch(SOUND_FONT_BASE + STYLE_FONTS[style] + "-mp3.js")
+            .then((res) => res.text())
+            .then((text) =>
+              Promise.all(
+                [...text.matchAll(
+                  /"([A-G]b?\d)":\s*"data:audio\/mp3;base64,([^"]+)"/g
+                )].map(async (m) => {
+                  const bin = atob(m[2]);
+                  const bytes = new Uint8Array(bin.length);
+                  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                  const buf = await ctx.decodeAudioData(bytes.buffer);
+                  // soundfonts name sharps as flats (Db4) — noteNameToMidi
+                  // treats b as flat
+                  return [noteNameToMidi(m[1]), { buffer: buf, norm: sampleNorm(buf, 0.42) }];
+                })
+              )
+            )
+            .then((entries) => {
+              fontSamples[style] = new Map(entries);
+              return fontSamples[style];
+            })
+            .catch(() => {
+              fontLoads[style] = null; // allow a retry on next play
+              return null;
+            });
+          return fontLoads[style];
+        }
+
+        function samplesForStyle(style) {
+          if (style === "piano") return pianoSamples;
+          return fontSamples[style] || null;
+        }
+
+        // soundfont sample loudness varies wildly — normalize each decoded
+        // sample to a common peak so styles don't need per-note hand tuning
+        function sampleNorm(buf, target) {
+          const d = buf.getChannelData(0);
+          let peak = 0;
+          for (let i = 0; i < d.length; i += 16) {
+            const a = Math.abs(d[i]);
+            if (a > peak) peak = a;
+          }
+          if (peak < 0.001) return 1;
+          const norm = target / peak;
+          return Math.max(0.4, Math.min(10, norm));
+        }
+
+        function freqToMidi(f) {
+          return Math.round(69 + 12 * Math.log2(f / 440));
+        }
+
+        function buildSampledVoice(samples, freq, level, attack) {
+          const now = audioCtx.currentTime;
+          const midi = freqToMidi(freq);
+          let best = null, bestDist = Infinity;
+          samples.forEach((s, m) => {
+            const d = Math.abs(m - midi);
+            if (d < bestDist) { bestDist = d; best = m; }
+          });
+          const { buffer, norm } = samples.get(best);
+          const src = audioCtx.createBufferSource();
+          src.buffer = buffer;
+          src.playbackRate.value = Math.pow(2, (midi - best) / 12);
+          // long chords outlive the one-shot recording — loop the sustained
+          // portion (skipping the attack) so a 12-beat chord doesn't go
+          // silent mid-bar
+          const dur = buffer.duration;
+          if (dur > 0.5) {
+            src.loop = true;
+            src.loopStart = Math.min(dur * 0.4, dur - 0.1);
+            src.loopEnd = Math.max(dur * 0.92, src.loopStart + 0.2);
+          }
+          const vgain = audioCtx.createGain();
+          vgain.gain.setValueAtTime(0.0001, now);
+          vgain.gain.linearRampToValueAtTime(level * norm, now + attack);
+          src.connect(vgain);
+          vgain.connect(pianoCtl.out);
+          src.start(now);
+          return { vgain, oscs: [src] };
+        }
+
         function chordLabel() {
           return DRONE_ROOTS[droneRoot].name + CHORD_SUFFIX[droneQuality];
         }
@@ -2139,6 +2475,50 @@
           const ctx = audioCtx;
           const root = DRONE_ROOTS[rootIdx];
           const now = ctx.currentTime;
+          if (SAMPLED_STYLES.includes(style)) {
+            const ctl = ensurePiano();
+            const samples = samplesForStyle(style);
+            if (!samples || !ctl) return [];
+            // each instrument gets its own envelope: the hammer is instant,
+            // organ pipes speak fast, strings and choir swell in
+            const noteAttack =
+              style === "piano" ? 0.008
+              : style === "organ" ? 0.02
+              : style === "strings" ? 0.5
+              : 0.35; // choir
+            const samplesLevel = style === "piano" ? 1.15 : 3.2; // norms do the per-sample work
+            let specs;
+            if (style === "piano") {
+              // chord tones one octave up for clarity, the top doubling
+              // quiet, root two octaves up as a sheen
+              specs = [];
+              CHORDS[quality].forEach((s) => {
+                const f = root.freq * Math.pow(2, s / 12);
+                specs.push({ f: f * 2, level: 0.3 }, { f: f * 4, level: 0.13 });
+              });
+              specs.push({ f: root.freq * 8, level: 0.1 });
+            } else if (style === "organ") {
+              // organ samples are bass-heavy — voice it an octave up with no
+              // sub, chord tones up top and the root underneath as support
+              specs = [];
+              CHORDS[quality].forEach((s) => {
+                const f = root.freq * Math.pow(2, s / 12);
+                specs.push({ f: f * 2, level: 0.2 }, { f: f * 4, level: 0.08 });
+              });
+              specs.push({ f: root.freq * 2, level: 0.09 });
+            } else {
+              // pad-style voicing: sub-octave root, chord tones doubled up
+              specs = [{ f: root.freq / 2, level: 0.16 }];
+              CHORDS[quality].forEach((s) => {
+                const f = root.freq * Math.pow(2, s / 12);
+                specs.push({ f, level: 0.2 }, { f: f * 2, level: 0.09 });
+              });
+              specs.push({ f: root.freq * 4, level: 0.05 });
+            }
+            return specs.map(({ f, level }) =>
+              buildSampledVoice(samples, f, level * samplesLevel, noteAttack)
+            );
+          }
           // voicing: sub-octave root for body, every chord tone doubled an
           // octave up, and the root two octaves up as a quiet sheen
           const specs = [{ f: root.freq / 2, level: 0.08 }];
@@ -2287,17 +2667,15 @@
           ],
         };
 
-        const refRootsEl = document.getElementById("ref-roots");
+        const songKeySel = document.getElementById("song-key");
         const refChordsEl = document.getElementById("ref-chords");
         const refScaleEl = document.getElementById("ref-scale");
         const refMajorBtn = document.getElementById("ref-major");
         const refMinorBtn = document.getElementById("ref-minor");
-        const seqArea = document.getElementById("seq-area");
         const songBtn = document.getElementById("song-btn");
         const songStatus = document.getElementById("song-status");
-        const songBpmSlider = document.getElementById("song-bpm");
-        const songBpmNum = document.getElementById("song-bpm-num");
-        const beatsSel = document.getElementById("beats-per-chord");
+        const songBpmInput = document.getElementById("song-bpm-num");
+        // new chords start at 4 beats — drag a block's right edge to change it
 
         let refRoot = 8; // C
         let refMode = "major";
@@ -2315,16 +2693,20 @@
         let songIdx = 0;
         let songVoices = [];
         let songTimer = null;
-        let songSound = (store.song && store.song.sound) || "pad";
+        let songSound =
+          store.song &&
+          ["pad", "synthwave", "piano", "strings", "choir", "organ"].includes(
+            store.song.sound
+          )
+            ? store.song.sound
+            : "pad";
 
         function chordName(root, quality) {
           return DRONE_ROOTS[root].name + CHORD_SUFFIX[quality];
         }
 
         function renderRef() {
-          [...refRootsEl.children].forEach((c, j) =>
-            c.classList.toggle("active", j === refRoot)
-          );
+          songKeySel.value = String(refRoot);
           refMajorBtn.setAttribute("aria-pressed", String(refMode === "major"));
           refMinorBtn.setAttribute("aria-pressed", String(refMode === "minor"));
           const degs = DEGREES[refMode];
@@ -2338,23 +2720,23 @@
             const b = document.createElement("button");
             b.type = "button";
             b.className = "qual-btn";
-            b.innerHTML = name + '<span class="numeral">' + d.r + "</span>";
-            b.setAttribute("aria-label", "Add " + name + " to the sequence");
-            b.addEventListener("click", () => addChip(rootIdx, d.q));
+            b.innerHTML = '<span class="chip-name">' + name + '</span><span class="numeral">' + d.r + "</span>";
+            b.setAttribute("aria-label", "Add " + name + " to the progression");
+            b.addEventListener("click", () => addChip(rootIdx, d.q, b));
             refChordsEl.appendChild(b);
           });
         }
 
         DRONE_ROOTS.forEach((r, i) => {
-          const b = document.createElement("button");
-          b.type = "button";
-          b.className = "qual-btn";
-          b.textContent = r.name;
-          b.addEventListener("click", () => {
-            refRoot = i;
-            renderRef();
-          });
-          refRootsEl.appendChild(b);
+          const o = document.createElement("option");
+          o.value = String(i);
+          o.textContent = r.name;
+          songKeySel.appendChild(o);
+        });
+        songKeySel.value = String(refRoot);
+        songKeySel.addEventListener("change", () => {
+          refRoot = parseInt(songKeySel.value, 10) || 0;
+          renderRef();
         });
 
         refMajorBtn.addEventListener("click", () => {
@@ -2371,19 +2753,15 @@
         const PX_BEAT = 30;
         const gridScroll = document.getElementById("grid-scroll");
         const gridTrack = document.getElementById("grid-track");
-        const measureSel = document.getElementById("beats-per-measure");
-        let beatsPerMeasure =
-          store.song && [2, 3, 4, 6].includes(store.song.beatsPerMeasure)
-            ? store.song.beatsPerMeasure
-            : 4;
+        const beatsPerMeasure = 4; // measure lines every 4 beats
         if (store.song && store.song.sound === "synthwave") songSound = "synthwave";
-        if (beatsPerMeasure !== 4) measureSel.value = String(beatsPerMeasure);
+        if (store.song && store.song.sound === "piano") songSound = "piano";
 
         function totalBeats() {
           return seq.reduce((s, c) => s + c.beats, 0);
         }
 
-        function renderGrid(move) {
+        function renderGrid(move, freshIdx) {
           // move: { idx, dropIdx } while a block is being dragged to dropIdx
           gridTrack.innerHTML = "";
           const tb = Math.max(totalBeats(), beatsPerMeasure);
@@ -2410,7 +2788,8 @@
           if (!seq.length) {
             const empty = document.createElement("div");
             empty.className = "grid-empty";
-            empty.textContent = "no chords yet — click chords from above";
+            empty.textContent =
+              "Your progression starts here. Click a chord above to add it.";
             gridTrack.appendChild(empty);
           }
 
@@ -2421,7 +2800,7 @@
               cursor += c.beats;
               return;
             }
-            renderBlock(c, i, cursor, move);
+            renderBlock(c, i, cursor, move, !move && i === freshIdx);
             cursor += c.beats;
           });
 
@@ -2433,46 +2812,77 @@
             gridTrack.appendChild(slot);
           }
 
-          saveStore({
-            song: {
-              seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
-              bpm: parseInt(songBpmSlider.value, 10) || 80,
-              beatsPerMeasure,
-              sound: songSound,
-              echo: songEcho,
-            },
-          });
+          saveSongPrefs();
         }
 
-        function renderBlock(c, i, startBeat, move) {
+        const BEAT_CHOICES = [1, 2, 4, 8, 12, 16];
+
+        function renderBlock(c, i, startBeat, move, fresh) {
           const el = document.createElement("div");
           el.className =
-            "seq-block" + (songPlaying && !move && i === songIdx ? " now" : "");
+            "seq-block" +
+            (songPlaying && !move && i === songIdx ? " now" : "") +
+            (fresh ? " fresh" : "");
           el.style.left = startBeat * PX_BEAT + 1 + "px";
           el.style.width = c.beats * PX_BEAT - 2 + "px";
-          el.setAttribute("aria-label", chordName(c.root, c.quality) + ", " + c.beats + " beats");
+          el.setAttribute("tabindex", "0");
+          el.setAttribute("aria-label",
+            chordName(c.root, c.quality) + ", " + c.beats + " beats, chord " + (i + 1) + " of " + seq.length);
 
           const name = document.createElement("span");
           name.className = "blk-name";
           name.textContent = chordName(c.root, c.quality);
-          const len = document.createElement("span");
-          len.className = "blk-len";
-          len.textContent = c.beats + (c.beats === 1 ? " beat" : " beats");
 
-          const rm = document.createElement("button");
-          rm.type = "button";
-          rm.className = "rm";
-          rm.textContent = "×";
-          rm.setAttribute("aria-label", "Remove " + chordName(c.root, c.quality));
-          rm.addEventListener("pointerdown", (e) => e.stopPropagation());
-          rm.addEventListener("click", () => {
+          // duration as a clickable select — drag-to-resize still works
+          const dur = document.createElement("select");
+          dur.className = "blk-dur";
+          dur.setAttribute("aria-label", "Length of " + chordName(c.root, c.quality) + " in beats");
+          const choices = BEAT_CHOICES.includes(c.beats)
+            ? BEAT_CHOICES
+            : [...BEAT_CHOICES, c.beats].sort((a, b) => a - b);
+          choices.forEach((n) => {
+            const o = document.createElement("option");
+            o.value = String(n);
+            o.textContent = n + (n === 1 ? " beat" : " beats");
+            if (n === c.beats) o.selected = true;
+            dur.appendChild(o);
+          });
+          dur.addEventListener("pointerdown", (e) => e.stopPropagation());
+          dur.addEventListener("change", () => {
+            mutateSeq(() => {
+              seq[i].beats = parseInt(dur.value, 10);
+            });
+          });
+
+          const actions = document.createElement("div");
+          actions.className = "blk-actions";
+          const mkBtn = (label, title, fn) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "blk-btn";
+            btn.textContent = label;
+            btn.title = title;
+            btn.setAttribute("aria-label",
+              title + " " + chordName(c.root, c.quality));
+            btn.addEventListener("pointerdown", (e) => e.stopPropagation());
+            btn.addEventListener("click", fn);
+            actions.appendChild(btn);
+          };
+          mkBtn("‹", "Move left", () => mutateSeq(() => {
+            if (i > 0) seq.splice(i - 1, 0, seq.splice(i, 1)[0]);
+          }));
+          mkBtn("›", "Move right", () => mutateSeq(() => {
+            if (i < seq.length - 1) seq.splice(i + 1, 0, seq.splice(i, 1)[0]);
+          }));
+          mkBtn("⧉", "Duplicate", () => mutateSeq(() => {
+            seq.splice(i + 1, 0, { root: c.root, quality: c.quality, beats: c.beats });
+          }));
+          mkBtn("×", "Remove", () => mutateSeq(() => {
             const played = songPlaying ? seq[songIdx] : null;
             seq.splice(i, 1);
             if (songPlaying && !seq.length) stopSong();
-            else if (songPlaying && played) songIdx = seq.indexOf(played);
-            renderGrid();
-            updateIdleStatus();
-          });
+            else if (songPlaying && played) songIdx = Math.max(0, seq.indexOf(played));
+          }));
 
           const edge = document.createElement("span");
           edge.className = "edge";
@@ -2484,17 +2894,26 @@
               i,
               el,
               startBeatPx: startBeat * PX_BEAT + 1,
+              prevSeq: seq.map((x) => ({ ...x })),
             });
           });
 
           el.addEventListener("pointerdown", (e) => {
             if (e.button !== 0) return;
-            beginDrag({ type: "move", i, el, startX: e.clientX, dropIdx: i, moved: false });
+            beginDrag({
+              type: "move",
+              i,
+              el,
+              startX: e.clientX,
+              dropIdx: i,
+              moved: false,
+              prevSeq: seq.map((x) => ({ ...x })),
+            });
           });
 
           el.appendChild(name);
-          el.appendChild(len);
-          el.appendChild(rm);
+          el.appendChild(dur);
+          el.appendChild(actions);
           el.appendChild(edge);
           gridTrack.appendChild(el);
         }
@@ -2550,8 +2969,8 @@
             if (nb !== seq[drag.i].beats) {
               seq[drag.i].beats = nb;
               drag.el.style.width = nb * PX_BEAT - 2 + "px";
-              drag.el.querySelector(".blk-len").textContent =
-                nb + (nb === 1 ? " beat" : " beats");
+              const sel = drag.el.querySelector(".blk-dur");
+              if (sel) sel.value = String(nb);
               gridTrack.style.width =
                 Math.max(totalBeats(), beatsPerMeasure) * PX_BEAT + "px";
             }
@@ -2586,22 +3005,63 @@
               songIdx = Math.max(0, seq.indexOf(played));
             }
           }
+          if (d.prevSeq && JSON.stringify(d.prevSeq) !== JSON.stringify(seq)) {
+            seqHistory.push(d.prevSeq);
+            if (seqHistory.length > 50) seqHistory.shift();
+          }
+          syncUndo();
           renderGrid();
           updateIdleStatus();
         }
+
+        /* ---------- progression history (undo / clear) ---------- */
+
+        let seqHistory = [];
+        const undoBtn = document.getElementById("seq-undo");
+
+        function syncUndo() {
+          undoBtn.disabled = seqHistory.length === 0;
+        }
+
+        function mutateSeq(fn) {
+          seqHistory.push(seq.map((c) => ({ ...c })));
+          if (seqHistory.length > 50) seqHistory.shift();
+          fn();
+          if (songPlaying && !seq.length) stopSong();
+          syncUndo();
+          renderGrid();
+          updateIdleStatus();
+        }
+
+        undoBtn.addEventListener("click", () => {
+          if (!seqHistory.length) return;
+          seq = seqHistory.pop();
+          if (songPlaying) songIdx = Math.min(songIdx, Math.max(0, seq.length - 1));
+          syncUndo();
+          renderGrid();
+          updateIdleStatus();
+        });
 
         function updateIdleStatus() {
           if (songPlaying) return;
+          songBtn.disabled = !seq.length;
           songStatus.textContent = seq.length
             ? seq.length + " chord" + (seq.length > 1 ? "s" : "") +
-              " · " + totalBeats() + " beats total"
-            : "no chords yet — click chords from above";
+              " · " + totalBeats() + " beats"
+            : "";
         }
 
-        function addChip(root, quality) {
-          seq.push({ root, quality, beats: parseInt(beatsSel.value, 10) });
-          renderGrid();
-          updateIdleStatus();
+        function addChip(root, quality, chipEl) {
+          mutateSeq(() => {
+            seq.push({ root, quality, beats: 4 });
+          });
+          if (chipEl) {
+            chipEl.classList.add("added");
+            setTimeout(() => chipEl.classList.remove("added"), 250);
+          }
+          // land the fresh-card pulse on the newly added block
+          renderGrid(null, seq.length - 1);
+          gridScroll.scrollLeft = gridScroll.scrollWidth;
         }
 
         const CHORD_XFADE_MS = 350; // new chord swells in over the last part of the previous one
@@ -2613,7 +3073,7 @@
           songVoices = buildVoices(seq[i].root, seq[i].quality, 0.35, songSound);
           renderGrid();
 
-          const ms = (seq[i].beats * 60000) / parseInt(songBpmSlider.value, 10);
+          const ms = (seq[i].beats * 60000) / parseInt(songBpmInput.value, 10);
           const anticipate = Math.max(150, ms - CHORD_XFADE_MS);
 
           // highlight + status land exactly on the audible boundary
@@ -2628,11 +3088,117 @@
 
           // chain fires early so the crossfade is centered on the boundary
           songTimer = setTimeout(() => playChord((songIdx + 1) % seq.length), ms - CHORD_XFADE_MS);
+
+          scheduleTracks(seq[i], ms);
+        }
+
+        /* ---------- derived tracks: bass + arpeggio ---------- */
+
+        let trackState = { bass: true, arp: true };
+        if (store.song) {
+          if (typeof store.song.bass === "boolean") trackState.bass = store.song.bass;
+          if (typeof store.song.arp === "boolean") trackState.arp = store.song.arp;
+        }
+        // slider 0-100 maps to 0..2x the designed default gain
+        let bassVol = 0.32, arpVol = 0.35;
+        if (store.song && typeof store.song.bassVol === "number") {
+          bassVol = Math.max(0, Math.min(0.64, store.song.bassVol));
+        }
+        if (store.song && typeof store.song.arpVol === "number") {
+          arpVol = Math.max(0, Math.min(0.7, store.song.arpVol));
+        }
+        let trackTimers = [];
+        let bassVoices = [];
+        let arpVoices = [];
+
+        function clearTrackTimers() {
+          trackTimers.forEach(clearTimeout);
+          trackTimers = [];
+        }
+
+        // arp = real piano samples an octave above the chords (the recording
+        // carries the pluck character the old synth pluck lacked)
+        function playArpNote(freq) {
+          if (!pianoSamples || !pianoCtl) return;
+          arpVoices.push(
+            buildSampledVoice(pianoSamples, freq, arpVol, 0.004)
+          );
+        }
+
+        function playBassNote(freq, durSec) {
+          const now = audioCtx.currentTime;
+          const hold = Math.max(0.03, durSec - 0.2);
+          const vgain = audioCtx.createGain();
+          vgain.gain.setValueAtTime(0.0001, now);
+          vgain.gain.linearRampToValueAtTime(bassVol, now + 0.02);
+          vgain.gain.setValueAtTime(bassVol, now + hold);
+          vgain.gain.setTargetAtTime(0.0001, now + hold, 0.09);
+          const lp = audioCtx.createBiquadFilter();
+          lp.type = "lowpass";
+          lp.frequency.value = 420;
+          const o1 = audioCtx.createOscillator();
+          o1.type = "triangle";
+          o1.frequency.value = freq;
+          const o2 = audioCtx.createOscillator();
+          o2.type = "sine";
+          o2.frequency.value = freq / 2;
+          const g2 = audioCtx.createGain();
+          g2.gain.value = 0.5;
+          o1.connect(lp);
+          o2.connect(g2);
+          g2.connect(lp);
+          lp.connect(vgain);
+          vgain.connect(masterGain);
+          o1.start();
+          o2.start();
+          o1.stop(now + durSec + 0.6);
+          o2.stop(now + durSec + 0.6);
+          bassVoices.push({ vgain, oscs: [o1, o2] });
+        }
+
+        // both tracks are computed from the chord the scheduler is already
+        // on, so they always harmonize
+        function scheduleTracks(chord, chordMs) {
+          clearTrackTimers();
+          releaseVoices(bassVoices);
+          bassVoices = [];
+          releaseVoices(arpVoices);
+          arpVoices = [];
+          const beatMs = chordMs / chord.beats;
+          if (trackState.bass) {
+            playBassNote(DRONE_ROOTS[chord.root].freq, chordMs / 1000);
+          }
+          if (trackState.arp) {
+            ensurePiano();
+            if (!pianoSamples) {
+              loadPianoSamples(); // arp notes start once the keys arrive
+            } else {
+              const tones = CHORDS[chord.quality].map(
+                (s) => DRONE_ROOTS[chord.root].freq * Math.pow(2, s / 12) * 4
+              );
+              for (let b = 0; b < chord.beats; b++) {
+                trackTimers.push(
+                  setTimeout(() => {
+                    if (songPlaying) playArpNote(tones[b % tones.length]);
+                  }, b * beatMs)
+                );
+              }
+            }
+          }
+        }
+
+        function stopTracks() {
+          clearTrackTimers();
+          releaseVoices(bassVoices);
+          bassVoices = [];
+          releaseVoices(arpVoices);
+          arpVoices = [];
         }
 
         function playSong() {
           if (!seq.length) {
-            songStatus.textContent = "add some chords first — click them from the chords in key";
+            songStatus.textContent =
+              "Your progression starts here. Click a chord above to add it.";
             return;
           }
           const ctx = ensureAudio();
@@ -2642,9 +3208,43 @@
           }
           ctx.resume().then(() => {
             ensureDrone();
+            const samplesPending =
+              (songSound === "piano" && !pianoSamples) ||
+              (STYLE_FONTS[songSound] && !fontSamples[songSound]) ||
+              (trackState.arp && !pianoSamples);
+            if (samplesPending) {
+              const label = SOUND_LABELS[songSound] || songSound;
+              if (trackState.arp && !pianoSamples &&
+                  !(songSound === "piano") && !STYLE_FONTS[songSound]) {
+                songStatus.textContent = "arp — loading the piano…";
+              } else {
+                songStatus.textContent = label + " — loading…";
+              }
+              // pick the loader for what's actually missing — the song's own
+              // font if it has one, otherwise the piano the arp needs
+              const loader =
+                STYLE_FONTS[songSound] && !fontSamples[songSound]
+                  ? loadSoundfont(songSound)
+                  : loadPianoSamples();
+              loader.then((loaded) => {
+                if (!songPlaying) return; // user hit stop while loading
+                if (!loaded) {
+                  songStatus.textContent =
+                    "couldn't load the samples — check your connection";
+                  songBtn.setAttribute("aria-pressed", "false");
+                  songBtn.textContent = "Play loop";
+                  return;
+                }
+                playChord(0);
+              });
+              songPlaying = true; // block double-starts while loading
+              songBtn.setAttribute("aria-pressed", "true");
+              songBtn.textContent = "Stop";
+              return;
+            }
             songPlaying = true;
             songBtn.setAttribute("aria-pressed", "true");
-            songBtn.textContent = "■ stop loop";
+            songBtn.textContent = "Stop";
             playChord(0);
           });
         }
@@ -2652,30 +3252,62 @@
         function stopSong() {
           songPlaying = false;
           clearTimeout(songTimer);
+          stopTracks();
           releaseVoices(songVoices);
           songVoices = [];
           songBtn.setAttribute("aria-pressed", "false");
-          songBtn.textContent = "▶ play loop";
+          songBtn.textContent = "Play loop";
+          songBtn.disabled = !seq.length;
           renderGrid();
           songStatus.textContent = seq.length
-            ? "stopped — " + seq.length + " chord" + (seq.length > 1 ? "s" : "") + " in the sequence"
-            : "no chords yet — click chords from above";
+            ? "Stopped · " + seq.length + " chord" + (seq.length > 1 ? "s" : "") +
+              " · " + totalBeats() + " beats"
+            : "";
         }
 
         songBtn.addEventListener("click", () => (songPlaying ? stopSong() : playSong()));
 
-        document.getElementById("seq-reset").addEventListener("click", () => {
+        /* ---------- progression overflow menu: clear ---------- */
+
+        const menuBtn = document.getElementById("seq-menu-btn");
+        const menuEl = document.getElementById("seq-menu");
+
+        function closeMenu() {
+          menuEl.hidden = true;
+          menuBtn.setAttribute("aria-expanded", "false");
+        }
+
+        menuBtn.addEventListener("click", () => {
+          const open = menuEl.hidden;
+          menuEl.hidden = !open;
+          menuBtn.setAttribute("aria-expanded", String(open));
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!menuEl.hidden && !menuEl.contains(e.target) && e.target !== menuBtn) {
+            closeMenu();
+          }
+        });
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && !menuEl.hidden) {
+            closeMenu();
+            menuBtn.focus();
+          }
+        });
+
+        document.getElementById("seq-clear").addEventListener("click", () => {
+          closeMenu();
           if (!seq.length) return;
-          if (!confirm("Clear the sequence and start over?")) return;
           if (songPlaying) stopSong();
-          seq = [];
-          renderGrid();
+          mutateSeq(() => {
+            seq = [];
+          });
           updateIdleStatus();
         });
 
         if (store.song && store.song.bpm) {
-          songBpmSlider.value = store.song.bpm;
-          songBpmNum.textContent = store.song.bpm;
+          songBpmInput.value = store.song.bpm;
         }
 
         function saveSongBpm(v) {
@@ -2685,10 +3317,29 @@
           updateSongDelayTime();
         }
 
-        songBpmSlider.addEventListener("input", () => {
-          songBpmNum.textContent = songBpmSlider.value;
-          saveSongBpm(parseInt(songBpmSlider.value, 10) || 80);
+        const clampBpm = (v) => Math.max(60, Math.min(200, v));
+
+        // live: persist only complete valid numbers so "1" mid-type doesn't
+        // jump to the floor; the field normalizes on blur/change
+        songBpmInput.addEventListener("input", () => {
+          const v = parseInt(songBpmInput.value, 10);
+          if (Number.isInteger(v) && v >= 60 && v <= 200) {
+            saveSongBpm(v);
+          }
         });
+        const normalizeBpmField = () => {
+          let v = parseInt(songBpmInput.value, 10);
+          if (!Number.isInteger(v)) {
+            v = parseInt(loadStore().song && loadStore().song.bpm, 10) || 80;
+          }
+          v = clampBpm(v);
+          songBpmInput.value = v;
+          saveSongBpm(v);
+        };
+        // change doesn't always fire on number inputs holding invalid
+        // values — blur is the reliable normalization point
+        songBpmInput.addEventListener("change", normalizeBpmField);
+        songBpmInput.addEventListener("blur", normalizeBpmField);
 
         let songTaps = [];
         document.getElementById("song-tap").addEventListener("click", () => {
@@ -2702,22 +3353,17 @@
           }
           let sum = 0;
           for (let i = 1; i < songTaps.length; i++) sum += songTaps[i] - songTaps[i - 1];
-          const v = Math.max(60, Math.min(200, Math.round(60000 / (sum / (songTaps.length - 1)))));
-          songBpmSlider.value = v;
-          songBpmNum.textContent = v;
+          const v = clampBpm(Math.round(60000 / (sum / (songTaps.length - 1))));
+          songBpmInput.value = v;
           saveSongBpm(v);
           songStatus.textContent = "tempo set from " + songTaps.length + " taps";
         });
 
         document.querySelectorAll(".song-jump").forEach((btn) =>
           btn.addEventListener("click", () => {
-            const v = Math.max(
-              60,
-              Math.min(200, parseInt(songBpmSlider.value, 10) + Number(btn.dataset.songD))
-            );
-            songBpmSlider.value = v;
-            songBpmNum.textContent = v;
-            saveSongBpm(v);
+            const nv = clampBpm((parseInt(songBpmInput.value, 10) || 80) + Number(btn.dataset.songD));
+            songBpmInput.value = nv;
+            saveSongBpm(nv);
           })
         );
 
@@ -2725,52 +3371,87 @@
           btn.addEventListener("click", () => setBpm(bpm + Number(btn.dataset.d)))
         );
 
-        measureSel.addEventListener("change", () => {
-          beatsPerMeasure = parseInt(measureSel.value, 10);
-          renderGrid();
+        const soundSelEl = document.getElementById("song-sound");
+
+        function saveSongPrefs() {
+          saveStore({
+            song: {
+              seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
+              bpm: Math.max(60, Math.min(200, parseInt(songBpmInput.value, 10) || 80)),
+              beatsPerMeasure,
+              sound: songSound,
+              bass: trackState.bass,
+              arp: trackState.arp,
+              bassVol,
+              arpVol,
+            },
+          });
+        }
+
+        const trackBassInput = document.getElementById("track-bass");
+        const trackArpInput = document.getElementById("track-arp");
+        trackBassInput.checked = trackState.bass;
+        trackArpInput.checked = trackState.arp;
+        const bassVolEl = document.getElementById("bass-vol");
+        const arpVolEl = document.getElementById("arp-vol");
+
+        function syncTrackControls() {
+          bassVolEl.disabled = !trackState.bass;
+          arpVolEl.disabled = !trackState.arp;
+        }
+
+        trackBassInput.addEventListener("change", () => {
+          trackState.bass = trackBassInput.checked;
+          syncTrackControls();
+          saveSongPrefs();
+        });
+        trackArpInput.addEventListener("change", () => {
+          trackState.arp = trackArpInput.checked;
+          syncTrackControls();
+          saveSongPrefs();
         });
 
-        const soundSelEl = document.getElementById("song-sound");
+        bassVolEl.value = Math.round((bassVol / 0.64) * 100);
+        arpVolEl.value = Math.round((arpVol / 0.7) * 100);
+        bassVolEl.addEventListener("input", () => {
+          bassVol = (parseInt(bassVolEl.value, 10) / 100) * 0.64;
+          saveSongPrefs();
+        });
+        arpVolEl.addEventListener("input", () => {
+          arpVol = (parseInt(arpVolEl.value, 10) / 100) * 0.7;
+          saveSongPrefs();
+        });
+        syncTrackControls();
+
         soundSelEl.value = songSound;
         soundSelEl.addEventListener("change", () => {
           songSound = soundSelEl.value;
           songEcho = null; // adopt the new style's default echo
-          saveStore({
-            song: {
-              seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
-              bpm: parseInt(songBpmSlider.value, 10) || 80,
-              beatsPerMeasure,
-              sound: songSound,
-            },
-          });
+          saveSongPrefs();
           ensureDrone();
           applySongSound();
-          songStatus.textContent =
-            songSound === "synthwave" ? "synthwave — bright saws + echo" : "warm pad — smooth and round";
-        });
-
-        const echoSliderEl = document.getElementById("echo-amount");
-        if (store.song && typeof store.song.echo === "number") {
-          songEcho = Math.max(0, Math.min(0.6, store.song.echo));
-          echoSliderEl.value = Math.round(songEcho * 100);
-        }
-        echoSliderEl.addEventListener("input", () => {
-          songEcho = parseInt(echoSliderEl.value, 10) / 100;
-          ensureDrone();
-          applySongSound();
-          saveStore({
-            song: {
-              seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
-              bpm: parseInt(songBpmSlider.value, 10) || 80,
-              beatsPerMeasure,
-              sound: songSound,
-              echo: songEcho,
-            },
-          });
+          const label = SOUND_LABELS[songSound] || songSound;
+          if (samplesReadyFor(songSound)) {
+            songStatus.textContent = label + " — " + SOUND_BLURBS[songSound];
+          } else if (songSound === "piano" || STYLE_FONTS[songSound]) {
+            songStatus.textContent = label + " — loading…";
+            const loader =
+              songSound === "piano"
+                ? loadPianoSamples()
+                : loadSoundfont(songSound);
+            loader.then((loaded) => {
+              if (!loaded || songSound !== soundSelEl.value) return;
+              songStatus.textContent = label + " — " + SOUND_BLURBS[songSound];
+            });
+          } else {
+            songStatus.textContent = label + " — " + SOUND_BLURBS[songSound];
+          }
         });
 
         renderRef();
         renderGrid();
+        updateIdleStatus();
+        syncUndo();
 
         /* ---------- tool tabs (hash deep-links) ---------- */
 
