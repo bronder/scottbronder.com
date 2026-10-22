@@ -217,7 +217,8 @@
         max-width: 47rem;
       }
 
-      .tool-panel[data-tool="song-builder"] {
+      .tool-panel[data-tool="song-builder"],
+      .tool-panel[data-tool="scale-builder"] {
         max-width: 64rem;
       }
 
@@ -1259,7 +1260,7 @@
 
       .grid-track {
         position: relative;
-        height: 138px;
+        height: 160px;
         min-width: 100%;
       }
 
@@ -1283,6 +1284,101 @@
         color: var(--faint);
       }
 
+      /* section markers: tint spans the whole section, flag sits in the ruler strip */
+      .marker-tint {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        pointer-events: none;
+      }
+
+      .marker-beat-line {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        pointer-events: none;
+      }
+
+      .mk-lane-hint {
+        position: absolute;
+        top: 18px;
+        left: 6px;
+        font-family: var(--mono);
+        font-size: 0.62rem;
+        color: var(--faint);
+        pointer-events: none;
+      }
+
+      .marker-flag {
+        position: absolute;
+        top: 15px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.22rem;
+        padding: 0.1rem 0.34rem;
+        border-radius: 5px;
+        border: 1px solid;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        font-weight: 600;
+        line-height: 1.35;
+        white-space: nowrap;
+        color: var(--mk);
+        cursor: grab;
+        user-select: none;
+        touch-action: none;
+      }
+
+      .marker-flag:active {
+        cursor: grabbing;
+      }
+
+      .marker-flag.blocked {
+        color: var(--rec);
+        border-color: var(--rec);
+        background: rgba(248, 113, 113, 0.14);
+      }
+
+      .marker-flag .mk-glyph {
+        font-size: 0.55rem;
+      }
+
+      .marker-flag .mk-del {
+        border: 0;
+        padding: 0 0.05rem;
+        margin-left: 0.1rem;
+        background: transparent;
+        color: inherit;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        line-height: 1;
+        border-radius: 3px;
+        cursor: pointer;
+        opacity: 0;
+      }
+
+      .marker-flag:hover .mk-del,
+      .marker-flag:focus-within .mk-del {
+        opacity: 0.75;
+      }
+
+      .marker-flag .mk-del:hover {
+        opacity: 1;
+        color: var(--rec);
+      }
+
+      .mk-rename {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        width: 6rem;
+        padding: 0.05rem 0.25rem;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+        background: #0c110e;
+        color: var(--text);
+      }
+
       .grid-empty {
         position: absolute;
         inset: 0;
@@ -1296,7 +1392,7 @@
 
       .seq-block {
         position: absolute;
-        top: 30px;
+        top: 50px;
         height: 82px;
         border-radius: 8px;
         border: 1px solid rgba(52, 211, 153, 0.55);
@@ -1352,7 +1448,7 @@
 
       .drop-slot {
         position: absolute;
-        top: 30px;
+        top: 50px;
         height: 60px;
         border: 2px dashed rgba(245, 182, 70, 0.65);
         border-radius: 8px;
@@ -1365,6 +1461,244 @@
         flex-direction: column;
         align-items: stretch;
         gap: 0.45rem;
+      }
+
+      /* ---------- scale builder ---------- */
+      .fb-setup {
+        display: flex;
+        align-items: flex-end;
+        gap: 1rem 1.75rem;
+        flex-wrap: wrap;
+      }
+
+      .fret-scroll {
+        overflow-x: auto;
+        padding: 0.3rem 0.3rem 0.9rem;
+      }
+
+      .fretboard {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        width: max-content;
+        min-width: 100%;
+      }
+
+      .fb-nums,
+      .fb-neck {
+        display: grid;
+        width: 100%;
+      }
+
+      .fb-num {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 0.15rem;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--faint);
+        white-space: nowrap;
+      }
+
+      .fb-num.marker {
+        color: var(--amber);
+      }
+
+      .fb-nums.under .fb-num {
+        align-items: flex-start;
+        padding: 0.35rem 0 0;
+      }
+
+      .fb-neck {
+        position: relative;
+        padding: 0.35rem 0;
+        background: linear-gradient(180deg, #1e150c, #130d07);
+        border: 2px solid rgba(10, 6, 3, 0.9);
+        border-radius: 10px;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.08),
+          inset 0 0 14px rgba(0, 0, 0, 0.35),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+          0 4px 12px rgba(0, 0, 0, 0.45);
+      }
+
+      .fb-inlays {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .fb-inlay {
+        position: absolute;
+        top: 50%;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(235, 241, 246, 0.32);
+        transform: translateY(-50%);
+      }
+
+      .fb-string {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.18rem;
+        padding-right: 0.7rem;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      .fb-string .oct {
+        font-size: 0.6rem;
+        color: var(--faint);
+      }
+
+      .fb-note {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.15rem;
+      }
+
+      .fb-note:hover {
+        background-color: rgba(255, 255, 255, 0.06);
+      }
+
+      .fb-frets {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .fb-wire {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: rgba(196, 205, 214, 0.3);
+        transform: translateX(-50%);
+      }
+
+      .fb-wire.nut {
+        width: 5px;
+        background: rgba(238, 231, 216, 0.8);
+      }
+
+      .fb-dot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: rgba(186, 198, 212, 0.72);
+        font-family: var(--mono);
+        font-size: 0.58rem;
+        font-weight: 600;
+        color: #0c1016;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+
+      .fb-dot.root {
+        width: 17px;
+        height: 17px;
+        background: var(--amber);
+        color: #20180a;
+      }
+
+      /* ---------- scale builder: octave-alternative board ---------- */
+      .fb-alt {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .fb-alt[hidden] {
+        display: none;
+      }
+
+      .fb-alt-label {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        color: var(--faint);
+      }
+
+      /* ---------- scale builder: tab staff ---------- */
+      .fb-tabwrap {
+        margin-top: -0.35rem;
+      }
+
+      .fb-tab {
+        display: flex;
+        align-items: stretch;
+        gap: 0.45rem;
+      }
+
+      .tab-labels {
+        display: grid;
+        grid-template-rows: repeat(6, 1.45rem);
+      }
+
+      .tab-labels span {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        color: var(--muted);
+      }
+
+      .tab-scroll {
+        flex: 1;
+        overflow-x: auto;
+      }
+
+      .tab-staff {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(1.35rem, 1fr);
+        grid-template-rows: repeat(6, 1.45rem);
+        width: max-content;
+        min-width: 100%;
+      }
+
+      .tab-cell {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .tab-cell::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 1px;
+        background: rgba(197, 205, 214, 0.26);
+      }
+
+      .tab-num {
+        position: relative;
+        z-index: 1;
+        background: var(--panel);
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text);
+        padding: 0 0.12rem;
+      }
+
+      .tab-num.root {
+        color: var(--amber);
+        font-weight: 600;
       }
 
       /* ---------- footer ---------- */
@@ -1471,6 +1805,7 @@
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="metronome">metronome</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="drone">drone</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="song-builder">song builder</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="scale-builder">scale builder</button>
           </div>
 
           <div class="tools-panels">
@@ -1749,6 +2084,88 @@
                 </div>
               </div>
             </div>
+            </div>
+
+            <div class="tool-panel" data-tool="scale-builder" hidden>
+            <!-- ===================== scale builder ===================== -->
+            <div class="tool-card wide">
+              <div class="tool-head">
+                <h3 class="tool-title">Scale builder</h3>
+                <span class="tool-meta">map notes across the neck</span>
+              </div>
+
+              <div class="fb-setup">
+                <div class="sb-field">
+                  <label class="sb-label" for="fb-key">Key</label>
+                  <select class="time-sig" id="fb-key" aria-label="Key"></select>
+                </div>
+                <div class="sb-field">
+                  <label class="sb-label" for="fb-mode">Mode</label>
+                  <select class="time-sig" id="fb-mode" aria-label="Mode"></select>
+                </div>
+                <div class="sb-field">
+                  <label class="sb-label" for="fb-shape">Shape</label>
+                  <select class="time-sig" id="fb-shape" aria-label="Shape"></select>
+                </div>
+                <div class="sb-field">
+                  <label class="sb-label" for="fret-from">Fret range</label>
+                  <div class="meter-pair">
+                    <select class="time-sig" id="fret-from" aria-label="First fret to show"></select>
+                    <span class="meter-slash" aria-hidden="true">–</span>
+                    <select class="time-sig" id="fret-to" aria-label="Last fret to show"></select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fret-scroll">
+                <div class="fretboard" id="fretboard" role="img">
+                  <div class="fb-nums" id="fb-nums"></div>
+                  <div class="fb-neck" id="fb-neck">
+                    <div class="fb-inlays" id="fb-inlays" aria-hidden="true"></div>
+                    <div class="fb-frets" id="fb-frets" aria-hidden="true"></div>
+                  </div>
+                  <div class="fb-nums under" id="fb-nums-under"></div>
+                </div>
+              </div>
+
+              <div class="fb-tabwrap" id="fb-tab" hidden>
+                <div class="fb-tab">
+                  <div class="tab-labels" aria-hidden="true">
+                    <span>e</span><span>B</span><span>G</span><span>D</span><span>A</span><span>E</span>
+                  </div>
+                  <div class="tab-scroll">
+                    <div class="tab-staff" id="fb-tab-staff"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fb-alt" id="fb-alt" hidden>
+                <p class="fb-alt-label" id="fb-alt-label"></p>
+                <div class="fret-scroll">
+                  <div class="fretboard" id="fb-alt-board" role="img">
+                    <div class="fb-nums" id="fb-alt-nums"></div>
+                    <div class="fb-neck" id="fb-alt-neck">
+                      <div class="fb-inlays" id="fb-alt-inlays" aria-hidden="true"></div>
+                      <div class="fb-frets" id="fb-alt-frets" aria-hidden="true"></div>
+                    </div>
+                    <div class="fb-nums under" id="fb-alt-nums-under"></div>
+                  </div>
+                </div>
+                <div class="fb-tabwrap" id="fb-alt-tab" hidden>
+                  <div class="fb-tab">
+                    <div class="tab-labels" aria-hidden="true">
+                      <span>e</span><span>B</span><span>G</span><span>D</span><span>A</span><span>E</span>
+                    </div>
+                    <div class="tab-scroll">
+                      <div class="tab-staff" id="fb-alt-tab-staff"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p class="tool-status" id="scale-status" aria-live="polite"></p>
+            </div>
+
             </div>
           </div>
         </section>
@@ -3173,10 +3590,33 @@
             Number.isInteger(c.beats) &&
             c.beats >= 1
         ).map((c) => ({ root: c.root, quality: c.quality, beats: Math.min(64, c.beats) }));
+        const MARKER_COLORS = ["#f5b646", "#7dd3fc", "#c4b5fd", "#fda4af", "#5eead4"];
+        const MARKER_NAMES = ["Intro", "Verse", "Chorus", "Bridge", "Outro"];
+        let markers = ((store.song && store.song.markers) || [])
+          .filter(
+            (m) =>
+              m &&
+              Number.isInteger(m.beat) &&
+              m.beat >= 0 &&
+              typeof m.label === "string" &&
+              m.label.trim()
+          )
+          .map((m) => ({
+            beat: m.beat,
+            label: m.label.trim().slice(0, 24),
+            color: /^#[0-9a-f]{6}$/i.test(m.color || "") ? m.color : null,
+          }))
+          .sort((a, b) => a.beat - b.beat);
+        markers.forEach((m, i) => {
+          if (!m.color) m.color = MARKER_COLORS[i % MARKER_COLORS.length];
+        });
+        const mkSeen = new Set();
+        markers = markers.filter((m) => !mkSeen.has(m.beat) && mkSeen.add(m.beat));
         let songPlaying = false;
         let songIdx = 0;
         let songVoices = [];
         let songTimer = null;
+        let songFlashTimer = null;
         let songSound =
           store.song &&
           ["pad", "synthwave", "piano", "strings", "choir", "organ"].includes(
@@ -3248,8 +3688,22 @@
         function renderGrid(move, freshIdx) {
           // move: { idx, dropIdx } while a block is being dragged to dropIdx
           gridTrack.innerHTML = "";
+          normalizeMarkers();
           const tb = Math.max(totalBeats(), beatsPerMeasure);
           gridTrack.style.width = tb * PX_BEAT + "px";
+
+          const sortedMk = [...markers].sort((a, b) => a.beat - b.beat);
+
+          // section tints: one colored span per marker, out to the next marker
+          sortedMk.forEach((m, i) => {
+            const end = i + 1 < sortedMk.length ? sortedMk[i + 1].beat : tb;
+            const tint = document.createElement("div");
+            tint.className = "marker-tint";
+            tint.style.left = m.beat * PX_BEAT + "px";
+            tint.style.width = Math.max(0, end - m.beat) * PX_BEAT + "px";
+            tint.style.background = hexA(m.color, 0.05);
+            gridTrack.appendChild(tint);
+          });
 
           // ruler: beat ticks, measure lines, measure numbers
           const measures = Math.ceil(tb / beatsPerMeasure);
@@ -3268,6 +3722,22 @@
               gridTrack.appendChild(num);
             }
           }
+
+          // markers: a beat line down the grid + a flag in the ruler strip
+          sortedMk.forEach((m) => {
+            const vline = document.createElement("div");
+            vline.className = "marker-beat-line";
+            vline.style.left = m.beat * PX_BEAT + "px";
+            vline.style.background = hexA(m.color, 0.32);
+            gridTrack.appendChild(vline);
+          });
+          if (seq.length && !markers.length) {
+            const hint = document.createElement("span");
+            hint.className = "mk-lane-hint";
+            hint.textContent = "double-click the ruler to drop a section marker";
+            gridTrack.appendChild(hint);
+          }
+          sortedMk.forEach(renderMarker);
 
           if (!seq.length) {
             const empty = document.createElement("div");
@@ -3402,6 +3872,227 @@
           gridTrack.appendChild(el);
         }
 
+        /* ---------- section markers: DAW-style flags on the ruler ---------- */
+
+        let mdrag = null;
+
+        function hexA(hex, a) {
+          const n = parseInt(hex.slice(1), 16);
+          return (
+            "rgba(" + ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"
+          );
+        }
+
+        function maxMarkerBeat() {
+          const tb = Math.max(totalBeats(), beatsPerMeasure);
+          return Math.max(0, Math.floor((tb - 1) / beatsPerMeasure)) * beatsPerMeasure;
+        }
+
+        function normalizeMarkers() {
+          if (!markers.length) return;
+          const maxB = maxMarkerBeat();
+          const seen = new Set();
+          markers = markers
+            .filter((m) => m.beat >= 0 && m.beat <= maxB && !seen.has(m.beat) && seen.add(m.beat))
+            .sort((a, b) => a.beat - b.beat);
+        }
+
+        function mutateMarkers(fn) {
+          seqHistory.push({ seq: seq.map((c) => ({ ...c })), markers: markers.map((m) => ({ ...m })) });
+          if (seqHistory.length > 50) seqHistory.shift();
+          fn();
+          syncUndo();
+          renderGrid();
+          updateIdleStatus();
+        }
+
+        function renderMarker(m) {
+          const el = document.createElement("div");
+          el.className = "marker-flag" + (mdrag && mdrag.blocked && mdrag.m === m ? " blocked" : "");
+          el.style.left = m.beat * PX_BEAT + 1 + "px";
+          el.style.setProperty("--mk", m.color);
+          el.style.background = hexA(m.color, 0.16);
+          el.style.borderColor = hexA(m.color, 0.5);
+          el.setAttribute("data-beat", String(m.beat));
+          el.setAttribute("role", "button");
+          el.setAttribute("tabindex", "0");
+          el.setAttribute(
+            "aria-label",
+            "Marker " + m.label + ", measure " + (m.beat / beatsPerMeasure + 1) +
+              ". Drag to move. Click to rename, or to jump the loop there while playing."
+          );
+
+          const glyph = document.createElement("span");
+          glyph.className = "mk-glyph";
+          glyph.textContent = "▸";
+
+          const label = document.createElement("span");
+          label.className = "mk-label";
+          label.textContent = m.label;
+
+          const del = document.createElement("button");
+          del.type = "button";
+          del.className = "mk-del";
+          del.textContent = "×";
+          del.setAttribute("aria-label", "Remove " + m.label + " marker");
+          del.addEventListener("pointerdown", (e) => e.stopPropagation());
+          del.addEventListener("click", () => {
+            mutateMarkers(() => markers.splice(markers.indexOf(m), 1));
+          });
+
+          el.append(glyph, label, del);
+
+          el.addEventListener("pointerdown", (e) => {
+            if (e.button !== 0 || e.target.closest(".mk-del") || el.querySelector(".mk-rename")) return;
+            e.stopPropagation();
+            beginMarkerDrag(m, el, e.clientX);
+          });
+
+          el.addEventListener("keydown", (e) => {
+            if (el.querySelector(".mk-rename")) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              if (songPlaying) jumpToMarker(m);
+              else beginMarkerRename(el, m);
+            } else if (e.key === "Delete" || e.key === "Backspace") {
+              e.preventDefault();
+              mutateMarkers(() => markers.splice(markers.indexOf(m), 1));
+            }
+          });
+
+          gridTrack.appendChild(el);
+        }
+
+        function beginMarkerDrag(m, el, startX) {
+          mdrag = { m, startX, origBeat: m.beat, lastBeat: m.beat, moved: false, blocked: false, snap: null };
+          window.addEventListener("pointermove", onMarkerDragMove);
+          window.addEventListener("pointerup", onMarkerDragEnd);
+        }
+
+        function onMarkerDragMove(e) {
+          if (!mdrag) return;
+          if (!mdrag.moved) {
+            if (Math.abs(e.clientX - mdrag.startX) <= 6) return;
+            mdrag.moved = true;
+            mdrag.snap = { seq: seq.map((c) => ({ ...c })), markers: markers.map((k) => ({ ...k })) };
+          }
+          const rect = gridTrack.getBoundingClientRect();
+          const measure = Math.round((e.clientX - rect.left) / (PX_BEAT * beatsPerMeasure));
+          const beat = Math.max(0, Math.min(maxMarkerBeat(), measure * beatsPerMeasure));
+          const blocked = markers.some((k) => k !== mdrag.m && k.beat === beat);
+          if (!blocked) mdrag.m.beat = beat;
+          if (beat !== mdrag.lastBeat || blocked !== mdrag.blocked) {
+            mdrag.lastBeat = beat;
+            mdrag.blocked = blocked;
+            renderGrid();
+            if (blocked) {
+              const fl = gridTrack.querySelector('.marker-flag[data-beat="' + mdrag.m.beat + '"]');
+              if (fl) fl.classList.add("blocked");
+            }
+          }
+        }
+
+        function onMarkerDragEnd() {
+          window.removeEventListener("pointermove", onMarkerDragMove);
+          window.removeEventListener("pointerup", onMarkerDragEnd);
+          const d = mdrag;
+          mdrag = null;
+          if (!d) return;
+          if (!d.moved) {
+            // plain click: rename while stopped, jump the loop while playing
+            if (songPlaying) {
+              jumpToMarker(d.m);
+            } else {
+              const fl = gridTrack.querySelector('.marker-flag[data-beat="' + d.m.beat + '"]');
+              if (fl) beginMarkerRename(fl, d.m);
+            }
+            return;
+          }
+          if (d.blocked) {
+            d.m.beat = d.origBeat;
+            songStatus.textContent = "that measure already has a marker";
+            renderGrid();
+            return;
+          }
+          if (d.snap && d.m.beat !== d.origBeat) {
+            seqHistory.push(d.snap);
+            if (seqHistory.length > 50) seqHistory.shift();
+            syncUndo();
+          }
+          renderGrid();
+        }
+
+        function beginMarkerRename(el, m) {
+          if (el.querySelector(".mk-rename")) return;
+          const labelEl = el.querySelector(".mk-label");
+          if (!labelEl) return;
+          const input = document.createElement("input");
+          input.className = "mk-rename";
+          input.value = m.label;
+          input.maxLength = 24;
+          input.setAttribute("aria-label", "Marker name");
+          labelEl.replaceWith(input);
+          input.addEventListener("pointerdown", (e) => e.stopPropagation());
+          input.addEventListener("keydown", (e) => {
+            e.stopPropagation();
+            if (e.key === "Enter") input.blur();
+            else if (e.key === "Escape") {
+              input.value = m.label;
+              input.blur();
+            }
+          });
+          input.addEventListener("blur", () => {
+            const v = input.value.trim();
+            if (v && v !== m.label) mutateMarkers(() => { m.label = v; });
+            else renderGrid();
+          });
+          input.focus();
+          input.select();
+        }
+
+        // jump the loop to the chord covering the marker's beat
+        function jumpToMarker(m) {
+          if (!songPlaying || !seq.length) return;
+          let acc = 0;
+          let idx = seq.length - 1;
+          for (let i = 0; i < seq.length; i++) {
+            if (m.beat < acc + seq[i].beats) {
+              idx = i;
+              break;
+            }
+            acc += seq[i].beats;
+          }
+          clearTimeout(songTimer);
+          playChord(idx);
+        }
+
+        // double-click the ruler strip to drop a marker on that measure
+        gridScroll.addEventListener("dblclick", (e) => {
+          if (e.target.closest(".seq-block, .marker-flag, .mk-rename")) return;
+          if (!seq.length) return;
+          const rect = gridTrack.getBoundingClientRect();
+          const y = e.clientY - rect.top;
+          const px = e.clientX - rect.left;
+          if (y < 0 || y > 44 || px < 0 || px > rect.width) return;
+          const beat = Math.max(
+            0,
+            Math.min(maxMarkerBeat(), Math.round(px / (PX_BEAT * beatsPerMeasure)) * beatsPerMeasure)
+          );
+          if (markers.some((m) => m.beat === beat)) {
+            songStatus.textContent = "that measure already has a marker";
+            return;
+          }
+          const used = markers.map((m) => m.label);
+          const label = MARKER_NAMES.find((n) => !used.includes(n)) || "Marker " + (markers.length + 1);
+          mutateMarkers(() => {
+            markers.push({
+              beat,
+              label,
+              color: MARKER_COLORS[markers.length % MARKER_COLORS.length],
+            });
+          });
+        });
+
         /* ---------- grid drag: resize (edge) + move (body) ---------- */
 
         let drag = null;
@@ -3490,7 +4181,7 @@
             }
           }
           if (d.prevSeq && JSON.stringify(d.prevSeq) !== JSON.stringify(seq)) {
-            seqHistory.push(d.prevSeq);
+            seqHistory.push({ seq: d.prevSeq, markers: markers.map((m) => ({ ...m })) });
             if (seqHistory.length > 50) seqHistory.shift();
           }
           syncUndo();
@@ -3508,7 +4199,7 @@
         }
 
         function mutateSeq(fn) {
-          seqHistory.push(seq.map((c) => ({ ...c })));
+          seqHistory.push({ seq: seq.map((c) => ({ ...c })), markers: markers.map((m) => ({ ...m })) });
           if (seqHistory.length > 50) seqHistory.shift();
           fn();
           if (songPlaying && !seq.length) stopSong();
@@ -3519,7 +4210,13 @@
 
         undoBtn.addEventListener("click", () => {
           if (!seqHistory.length) return;
-          seq = seqHistory.pop();
+          const past = seqHistory.pop();
+          if (Array.isArray(past)) {
+            seq = past; // older entries were bare seq snapshots
+          } else {
+            seq = past.seq;
+            markers = past.markers.map((m) => ({ ...m }));
+          }
           if (songPlaying) songIdx = Math.min(songIdx, Math.max(0, seq.length - 1));
           syncUndo();
           renderGrid();
@@ -3560,8 +4257,10 @@
           const ms = (seq[i].beats * 60000) / parseInt(songBpmInput.value, 10);
           const anticipate = Math.max(150, ms - CHORD_XFADE_MS);
 
-          // highlight + status land exactly on the audible boundary
-          setTimeout(() => {
+          // highlight + status land exactly on the audible boundary; tracked so
+          // a jump to a marker cancels the previous chord's pending flash
+          clearTimeout(songFlashTimer);
+          songFlashTimer = setTimeout(() => {
             if (!songPlaying) return;
             renderGrid();
             songStatus.textContent =
@@ -3736,6 +4435,7 @@
         function stopSong() {
           songPlaying = false;
           clearTimeout(songTimer);
+          clearTimeout(songFlashTimer);
           stopTracks();
           releaseVoices(songVoices);
           songVoices = [];
@@ -3786,6 +4486,7 @@
           if (songPlaying) stopSong();
           mutateSeq(() => {
             seq = [];
+            markers = [];
           });
           updateIdleStatus();
         });
@@ -3857,6 +4558,7 @@
           saveStore({
             song: {
               seq: seq.map((c) => ({ root: c.root, quality: c.quality, beats: c.beats })),
+              markers: markers.map((m) => ({ beat: m.beat, label: m.label, color: m.color })),
               bpm: Math.max(60, Math.min(200, parseInt(songBpmInput.value, 10) || 80)),
               beatsPerMeasure,
               sound: songSound,
@@ -3933,9 +4635,609 @@
         updateIdleStatus();
         syncUndo();
 
+        /* ===================== SCALE BUILDER ===================== */
+
+        const fretFromSel = document.getElementById("fret-from");
+        const fretToSel = document.getElementById("fret-to");
+        const fbKeySel = document.getElementById("fb-key");
+        const fbModeSel = document.getElementById("fb-mode");
+        const fbShapeSel = document.getElementById("fb-shape");
+        const fretboardEl = document.getElementById("fretboard");
+        const fbNumsEl = document.getElementById("fb-nums");
+        const fbNeckEl = document.getElementById("fb-neck");
+        const fbInlaysEl = document.getElementById("fb-inlays");
+        const fbFretsEl = document.getElementById("fb-frets");
+        const fbAltEl = document.getElementById("fb-alt");
+        const fbAltLabelEl = document.getElementById("fb-alt-label");
+        const fbAltBoardEl = document.getElementById("fb-alt-board");
+        const fbAltNumsEl = document.getElementById("fb-alt-nums");
+        const fbNumsUnderEl = document.getElementById("fb-nums-under");
+        const fbAltNumsUnderEl = document.getElementById("fb-alt-nums-under");
+        const fbTabEl = document.getElementById("fb-tab");
+        const fbTabStaffEl = document.getElementById("fb-tab-staff");
+        const fbAltTabEl = document.getElementById("fb-alt-tab");
+        const fbAltTabStaffEl = document.getElementById("fb-alt-tab-staff");
+        const fbAltNeckEl = document.getElementById("fb-alt-neck");
+        const fbAltInlaysEl = document.getElementById("fb-alt-inlays");
+        const fbAltFretsEl = document.getElementById("fb-alt-frets");
+        const scaleStatus = document.getElementById("scale-status");
+
+        const FRET_MAX = 24;
+        const FB_LABEL_COL = "2.4rem";
+        /* high string first, like a tab; gauge = string thickness in px */
+        const FB_STRINGS = [
+          { label: "e", midi: 64, gauge: 1 },
+          { label: "B", midi: 59, gauge: 1.35 },
+          { label: "G", midi: 55, gauge: 1.7 },
+          { label: "D", midi: 50, gauge: 2.1 },
+          { label: "A", midi: 45, gauge: 2.5 },
+          { label: "E", midi: 40, gauge: 3 },
+        ];
+        const MARKER_FRETS = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
+
+        /* interval patterns in semitones from the root */
+        const SCALE_MODES = [
+          { id: "ionian", group: "Modes", label: "Ionian (major)", short: "ionian", iv: [0, 2, 4, 5, 7, 9, 11] },
+          { id: "dorian", group: "Modes", label: "Dorian", short: "dorian", iv: [0, 2, 3, 5, 7, 9, 10] },
+          { id: "phrygian", group: "Modes", label: "Phrygian", short: "phrygian", iv: [0, 1, 3, 5, 7, 8, 10] },
+          { id: "lydian", group: "Modes", label: "Lydian", short: "lydian", iv: [0, 2, 4, 6, 7, 9, 11] },
+          { id: "mixolydian", group: "Modes", label: "Mixolydian", short: "mixolydian", iv: [0, 2, 4, 5, 7, 9, 10] },
+          { id: "aeolian", group: "Modes", label: "Aeolian (natural minor)", short: "aeolian", iv: [0, 2, 3, 5, 7, 8, 10] },
+          { id: "locrian", group: "Modes", label: "Locrian", short: "locrian", iv: [0, 1, 3, 5, 6, 8, 10] },
+          { id: "harmonic-minor", group: "Minor variations", label: "Harmonic minor", short: "harmonic minor", iv: [0, 2, 3, 5, 7, 8, 11] },
+          { id: "melodic-minor", group: "Minor variations", label: "Melodic minor", short: "melodic minor", iv: [0, 2, 3, 5, 7, 9, 11] },
+          { id: "major-pentatonic", group: "Pentatonics & blues", label: "Major pentatonic", short: "major pentatonic", iv: [0, 2, 4, 7, 9] },
+          { id: "minor-pentatonic", group: "Pentatonics & blues", label: "Minor pentatonic", short: "minor pentatonic", iv: [0, 3, 5, 7, 10] },
+          { id: "blues", group: "Pentatonics & blues", label: "Blues", short: "blues", iv: [0, 3, 5, 6, 7, 10] },
+        ];
+        const DEFAULT_MODE = "minor-pentatonic";
+
+        let fretFrom = 0;
+        let fretTo = FRET_MAX;
+        let fbKey = 9; /* A */
+        let fbMode = DEFAULT_MODE;
+        let fbShape = "full";
+
+        function fbCurMode() {
+          return SCALE_MODES.find((m) => m.id === fbMode) ||
+            SCALE_MODES.find((m) => m.id === DEFAULT_MODE);
+        }
+
+        function fbScaleName() {
+          return NOTE_NAMES[fbKey] + " " + fbCurMode().short;
+        }
+
+        /* pentatonic family gets boxes; 7-note scales get 3nps + caged */
+        function fbFamily() {
+          return ["minor-pentatonic", "major-pentatonic", "blues"].includes(fbMode)
+            ? "pent"
+            : "7note";
+        }
+
+        /* the mode name for degree d of the current 7-note scale
+           (positions walk degrees, so each position IS a mode of the parent) */
+        function fbDegreeModeName(d) {
+          const ROT = ["ionian", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"];
+          const EXTRA = {
+            "harmonic-minor": ["Harmonic minor", "Locrian ♯6", "Ionian ♯5", "Dorian ♯11",
+              "Phrygian dominant", "Lydian ♯2", "Altered diminished"],
+            "melodic-minor": ["Melodic minor", "Dorian ♭2", "Lydian augmented",
+              "Lydian dominant", "Mixolydian ♭6", "Locrian ♯2", "Altered"],
+          };
+          let name = null;
+          const idx = ROT.indexOf(fbMode);
+          if (idx >= 0) name = ROT[(idx + d) % ROT.length];
+          else if (EXTRA[fbMode]) name = EXTRA[fbMode][d];
+          if (!name) return null;
+          return name.charAt(0).toUpperCase() + name.slice(1);
+        }
+
+        function fbShapeList() {
+          if (fbFamily() === "pent") {
+            return [1, 2, 3, 4, 5].map((n) => ({ id: "box" + n, label: "Box " + n }));
+          }
+          return [1, 2, 3, 4, 5, 6, 7].map((n) => {
+            const modeName = fbDegreeModeName(n - 1);
+            return {
+              id: "p" + n,
+              label: "Position " + n + (modeName ? " · " + modeName : ""),
+            };
+          });
+        }
+
+        function fbShapeLabel() {
+          if (fbShape === "full") return "full neck";
+          const found = fbShapeList().find((s) => s.id === fbShape);
+          return found ? found.label.toLowerCase() : "full neck";
+        }
+
+        function buildShapeSelect() {
+          const list = fbShapeList();
+          if (!list.some((s) => s.id === fbShape)) fbShape = "full";
+          fbShapeSel.textContent = "";
+          const addOpt = (parent, id, label) => {
+            const opt = document.createElement("option");
+            opt.value = id;
+            opt.textContent = label;
+            parent.appendChild(opt);
+          };
+          addOpt(fbShapeSel, "full", "Full neck");
+          let group = null;
+          list.forEach((s) => {
+            if (s.group && s.group !== group) {
+              group = s.group;
+              const og = document.createElement("optgroup");
+              og.label = group;
+              fbShapeSel.appendChild(og);
+            }
+            addOpt(s.group ? fbShapeSel.lastElementChild : fbShapeSel, s.id, s.label);
+          });
+          fbShapeSel.value = fbShape;
+        }
+
+        /* finger for a note `off` semitones above its string's lowest shape note:
+           0->1, 1->2, 2->3, 3+->4 (the classic 1-4 box stretch) */
+        function fbFingerForOffset(off) {
+          return off <= 2 ? off + 1 : 4;
+        }
+
+        /* all scale frets per string, 0..24 (string index 0 = high e) */
+        function fbScaleFrets() {
+          const inScale = new Set(fbCurMode().iv.map((i) => (fbKey + i) % 12));
+          return FB_STRINGS.map((str) => {
+            const out = [];
+            for (let f = 0; f <= FRET_MAX; f++) {
+              if (inScale.has((str.midi + f) % 12)) out.push(f);
+            }
+            return out;
+          });
+        }
+
+        /* box / CAGED: every scale note in [anchor, anchor+3]; strings with fewer
+           than two notes extend one note further. Two-note boxes = classic pairs. */
+        function fbWindowShape(anchor, perString) {
+          const notes = new Map();
+          let lo = 99;
+          let hi = -1;
+          perString.forEach((frets, s) => {
+            let win = frets.filter((f) => f >= anchor && f <= anchor + 3);
+            if (win.length < 2) {
+              const next = frets.find((f) => f > anchor + 3);
+              if (next != null) win = win.concat([next]);
+            }
+            win.forEach((f) => {
+              notes.set(s + "," + f, fbFingerForOffset(f - win[0]));
+              lo = Math.min(lo, f);
+              hi = Math.max(hi, f);
+            });
+          });
+          return { from: lo, to: hi, notes };
+        }
+
+        /* 3nps: each string plays the next 3 consecutive scale DEGREES, walking
+           up in pitch from the anchor note on the low E; fingers follow the
+           half-step-gap convention */
+        function fb3NPSShape(anchor) {
+          const inScale = new Set(fbCurMode().iv.map((i) => (fbKey + i) % 12));
+          let next = FB_STRINGS[5].midi + anchor; /* absolute midi of next degree */
+          const notes = new Map();
+          let lo = 99;
+          let hi = -1;
+          for (let si = 5; si >= 0; si--) {
+            const str = FB_STRINGS[si];
+            const frets = [];
+            let m = next;
+            while (frets.length < 3) {
+              if (inScale.has(m % 12)) frets.push(m - str.midi);
+              m++;
+            }
+            next = m; /* one past the 3rd note — next string continues the walk */
+            if (frets[2] > FRET_MAX) return null;
+            const g1 = frets[1] - frets[0];
+            const g2 = frets[2] - frets[1];
+            const fingers =
+              g1 === 1 && g2 === 1
+                ? [1, 2, 3]
+                : g1 === 1
+                  ? [1, 2, 4]
+                  : g1 === 2 && g2 === 1
+                    ? [1, 3, 4]
+                    : [1, 2, 4];
+            frets.forEach((f, i) => {
+              notes.set(si + "," + f, fingers[i]);
+              lo = Math.min(lo, f);
+              hi = Math.max(hi, f);
+            });
+          }
+          return { from: lo, to: hi, notes };
+        }
+
+        /* default low-E anchor fret for a shape id (degree d of the scale) */
+        function fbShapeAnchor(shapeId) {
+          const iv = fbCurMode().iv;
+          const f0 = (fbKey - 4 + 12) % 12;
+          const d = shapeId.startsWith("box")
+            ? Number(shapeId.slice(3)) - 1
+            : Number(shapeId.slice(1)) - 1;
+          return f0 + iv[d];
+        }
+
+        function fbShapeAt(shapeId, anchor) {
+          const perString = fbScaleFrets();
+          if (shapeId.startsWith("box")) return fbWindowShape(anchor, perString);
+          if (shapeId.startsWith("p")) return fb3NPSShape(anchor);
+          return null;
+        }
+
+        function fbComputeShape(shapeId) {
+          const anchor = fbShapeAnchor(shapeId);
+          let shape = fbShapeAt(shapeId, anchor);
+          /* top positions of high keys can run past 24 — drop an octave */
+          if (!shape && anchor - 12 >= 0) {
+            shape = fbShapeAt(shapeId, anchor - 12);
+          }
+          return shape;
+        }
+
+        /* the same shape played an octave away — shown on a second board
+           when it also fits within frets 0–24 (at most one can) */
+        function fbAltShape() {
+          if (fbShape === "full") return null;
+          const anchor = fbShapeAnchor(fbShape);
+          const current = fbComputeShape(fbShape);
+          const cands = [
+            { shift: 12, dir: "up" },
+            { shift: -12, dir: "down" },
+          ];
+          for (let i = 0; i < cands.length; i++) {
+            const cand = anchor + cands[i].shift;
+            if (cand < 0) continue;
+            const shape = fbShapeAt(fbShape, cand);
+            if (shape && shape.from >= 0 && shape.to <= FRET_MAX) {
+              if (!current || shape.from !== current.from) {
+                return { dir: cands[i].dir, shape };
+              }
+            }
+          }
+          return null;
+        }
+
+        function fretClamp(from, to) {
+          from = Math.max(0, Math.min(FRET_MAX - 1, Math.round(from || 0)));
+          to = Math.max(from + 1, Math.min(FRET_MAX, Math.round(to || 0)));
+          return [from, to];
+        }
+
+        function buildFretSelects() {
+          const fill = (sel, lo, hi, val) => {
+            sel.textContent = "";
+            for (let f = lo; f <= hi; f++) {
+              const opt = document.createElement("option");
+              opt.value = String(f);
+              opt.textContent = String(f);
+              sel.appendChild(opt);
+            }
+            sel.value = String(val);
+          };
+          fill(fretFromSel, 0, FRET_MAX - 1, fretFrom);
+          fill(fretToSel, 1, FRET_MAX, fretTo);
+        }
+
+        function buildKeyModeSelects() {
+          fbKeySel.textContent = "";
+          for (let k = 0; k < 12; k++) {
+            const opt = document.createElement("option");
+            opt.value = String(k);
+            opt.textContent = NOTE_NAMES[k];
+            fbKeySel.appendChild(opt);
+          }
+          fbKeySel.value = String(fbKey);
+
+          fbModeSel.textContent = "";
+          let group = null;
+          SCALE_MODES.forEach((m) => {
+            if (m.group !== group) {
+              group = m.group;
+              const og = document.createElement("optgroup");
+              og.label = group;
+              fbModeSel.appendChild(og);
+            }
+            const opt = document.createElement("option");
+            opt.value = m.id;
+            opt.textContent = m.label;
+            fbModeSel.lastElementChild.appendChild(opt);
+          });
+          fbModeSel.value = fbMode;
+        }
+
+        /* column widths shrink up the neck like real 12-TET fret spacing */
+        function fretTemplate(from, to) {
+          const cols = [];
+          for (let f = from; f <= to; f++) {
+            cols.push("minmax(0.9rem, " + Math.pow(2, -(f - from) / 12) + "fr)");
+          }
+          return FB_LABEL_COL + " " + cols.join(" ");
+        }
+
+        /* 12-TET column weights: each fret column is 2^(-d/12) of the first */
+        function fretWeights(count) {
+          const w = [];
+          for (let i = 0; i < count; i++) w.push(Math.pow(2, -i / 12));
+          return w;
+        }
+
+        /* each column's center as a fraction of the fret span, for inlay dots */
+        function fretCenters(count) {
+          const w = fretWeights(count);
+          const total = w.reduce((a, b) => a + b, 0);
+          let acc = 0;
+          return w.map((x) => {
+            const c = (acc + x / 2) / total;
+            acc += x;
+            return c;
+          });
+        }
+
+        /* right edge of each column as a fraction, for fret wires */
+        function fretBounds(count) {
+          const w = fretWeights(count);
+          const total = w.reduce((a, b) => a + b, 0);
+          let acc = 0;
+          return w.map((x) => {
+            acc += x;
+            return acc / total;
+          });
+        }
+
+        /* paint one full board (numbers, inlays, wires, strings, dots) */
+        function paintBoard(numsEl, numsUnderEl, neckEl, inlaysEl, fretsEl, from, to, shape) {
+          const template = fretTemplate(from, to);
+          [numsEl, numsUnderEl, neckEl].forEach((el) => {
+            el.style.gridTemplateColumns = template;
+          });
+          const inScale = new Set(fbCurMode().iv.map((i) => (fbKey + i) % 12));
+
+          /* fret numbers, above and below the wood */
+          const fillNums = (el) => {
+            el.textContent = "";
+            el.appendChild(document.createElement("span"));
+            for (let f = from; f <= to; f++) {
+              const num = document.createElement("span");
+              num.className = "fb-num" + (MARKER_FRETS.includes(f) ? " marker" : "");
+              num.textContent = String(f);
+              el.appendChild(num);
+            }
+          };
+          fillNums(numsEl);
+          fillNums(numsUnderEl);
+
+          /* inlay dots between the middle strings (double at 12 and 24) */
+          inlaysEl.textContent = "";
+          const centers = fretCenters(to - from + 1);
+          MARKER_FRETS.forEach((f) => {
+            if (f < from || f > to) return;
+            const inner =
+              FB_LABEL_COL + " + (100% - " + FB_LABEL_COL + ") * " + centers[f - from];
+            const offsets = f === 12 || f === 24 ? [-8, 8] : [0];
+            offsets.forEach((off) => {
+              const dot = document.createElement("span");
+              dot.className = "fb-inlay";
+              dot.style.left =
+                "calc(" + inner + (off > 0 ? " + " : off < 0 ? " - " : "") +
+                (off ? Math.abs(off) + "px" : "") + ")";
+              inlaysEl.appendChild(dot);
+            });
+          });
+
+          /* nut + fret wires: full-height lines at the column boundaries
+             (fret 0's wire is the nut; the board edge ends the last fret) */
+          fretsEl.textContent = "";
+          const bounds = fretBounds(to - from + 1);
+          for (let f = from; f < to; f++) {
+            const wire = document.createElement("span");
+            wire.className = "fb-wire" + (f === 0 ? " nut" : "");
+            wire.style.left =
+              "calc(" + FB_LABEL_COL + " + (100% - " + FB_LABEL_COL + ") * " +
+              bounds[f - from] + ")";
+            fretsEl.appendChild(wire);
+          }
+
+          /* strings: label column + one empty cell per fret */
+          Array.from(neckEl.children).forEach((el) => {
+            if (el !== inlaysEl && el !== fretsEl) el.remove();
+          });
+          FB_STRINGS.forEach((str, si) => {
+            const label = document.createElement("span");
+            label.className = "fb-string";
+            label.appendChild(document.createTextNode(str.label));
+            const oct = document.createElement("span");
+            oct.className = "oct";
+            oct.textContent = String(Math.floor(str.midi / 12) - 1);
+            label.appendChild(oct);
+            neckEl.appendChild(label);
+
+            for (let f = from; f <= to; f++) {
+              const midi = str.midi + f;
+              const cell = document.createElement("span");
+              cell.className = "fb-note";
+              /* the string: a gauge-thick line through the middle of the lane */
+              const half = str.gauge / 2;
+              const line = "rgba(197, 205, 214, 0.4)";
+              cell.style.backgroundImage =
+                "linear-gradient(to bottom, transparent calc(50% - " + half + "px), " +
+                line + " calc(50% - " + half + "px), " +
+                line + " calc(50% + " + half + "px), " +
+                "transparent calc(50% + " + half + "px))";
+              const pc = midi % 12;
+              const finger = shape ? shape.notes.get(si + "," + f) : null;
+              const marked = shape ? finger != null : inScale.has(pc);
+              if (marked) {
+                const dot = document.createElement("span");
+                dot.className = "fb-dot" + (pc === fbKey ? " root" : "");
+                if (finger != null) dot.textContent = String(finger);
+                cell.appendChild(dot);
+              }
+              cell.title = NOTE_NAMES[midi % 12] + (Math.floor(midi / 12) - 1);
+              neckEl.appendChild(cell);
+            }
+          });
+        }
+
+        /* tab staff for a shape: one column per note, ascending,
+           low string first — numbers on the string lines */
+        function paintTab(staffEl, shape) {
+          staffEl.textContent = "";
+          for (let si = 5; si >= 0; si--) {
+            const frets = [];
+            shape.notes.forEach((finger, key) => {
+              const parts = key.split(",");
+              if (Number(parts[0]) === si) frets.push(Number(parts[1]));
+            });
+            frets.sort((a, b) => a - b);
+            const row = si; /* e (0) renders on the top row, low E (5) at the bottom */
+            frets.forEach((f) => {
+              for (let r = 0; r < 6; r++) {
+                const cell = document.createElement("span");
+                cell.className = "tab-cell";
+                if (r === row) {
+                  const num = document.createElement("span");
+                  const pc = (FB_STRINGS[si].midi + f) % 12;
+                  num.className = "tab-num" + (pc === fbKey ? " root" : "");
+                  num.textContent = String(f);
+                  cell.appendChild(num);
+                }
+                staffEl.appendChild(cell);
+              }
+            });
+          }
+        }
+
+        function renderFretboard() {
+          const shape = fbShape === "full" ? null : fbComputeShape(fbShape);
+          paintBoard(fbNumsEl, fbNumsUnderEl, fbNeckEl, fbInlaysEl, fbFretsEl, fretFrom, fretTo, shape);
+          fretboardEl.setAttribute(
+            "aria-label",
+            "Fretboard, " + fbScaleName() + ", standard tuning, frets " +
+              fretFrom + " to " + fretTo
+          );
+          scaleStatus.textContent =
+            fbScaleName() + " · " + fbShapeLabel() + " · frets " +
+            fretFrom + "–" + fretTo + " of " + FRET_MAX + " · standard tuning";
+
+          /* tab under the main board — only meaningful for a shape */
+          fbTabEl.hidden = !shape;
+          if (shape) paintTab(fbTabStaffEl, shape);
+
+          /* second board when the shape also fits an octave away */
+          const alt = shape ? fbAltShape() : null;
+          if (alt) {
+            fbAltEl.hidden = false;
+            fbAltLabelEl.textContent =
+              "same shape an octave " + alt.dir + " · frets " +
+              alt.shape.from + "–" + alt.shape.to;
+            paintBoard(
+              fbAltNumsEl, fbAltNumsUnderEl, fbAltNeckEl, fbAltInlaysEl, fbAltFretsEl,
+              alt.shape.from, alt.shape.to, alt.shape
+            );
+            fbAltBoardEl.setAttribute(
+              "aria-label",
+              "Same shape an octave " + alt.dir + ", frets " +
+                alt.shape.from + " to " + alt.shape.to
+            );
+            fbAltTabEl.hidden = false;
+            paintTab(fbAltTabStaffEl, alt.shape);
+          } else {
+            fbAltEl.hidden = true;
+          }
+        }
+
+        /* saveStore replaces the whole scale object — always write every key */
+        function saveScalePrefs() {
+          saveStore({
+            scale: { from: fretFrom, to: fretTo, key: fbKey, mode: fbMode, shape: fbShape },
+          });
+        }
+
+        /* snap the fret window to the active shape (falling back to full) */
+        function applyShapeWindow() {
+          if (fbShape === "full") return;
+          const shape = fbComputeShape(fbShape);
+          if (!shape) {
+            fbShape = "full";
+            buildShapeSelect();
+            return;
+          }
+          const clamped = fretClamp(shape.from, Math.min(FRET_MAX, shape.to));
+          fretFrom = clamped[0];
+          fretTo = clamped[1];
+          buildFretSelects();
+        }
+
+        function setFretRange(from, to, save) {
+          const clamped = fretClamp(from, to);
+          fretFrom = clamped[0];
+          fretTo = clamped[1];
+          if (save && fbShape !== "full") {
+            /* manual range change leaves shape mode */
+            fbShape = "full";
+            buildShapeSelect();
+          }
+          buildFretSelects();
+          renderFretboard();
+          if (save) saveScalePrefs();
+        }
+
+        fretFromSel.addEventListener("change", () =>
+          setFretRange(Number(fretFromSel.value), fretTo, true)
+        );
+        fretToSel.addEventListener("change", () =>
+          setFretRange(fretFrom, Number(fretToSel.value), true)
+        );
+        fbKeySel.addEventListener("change", () => {
+          fbKey = Number(fbKeySel.value);
+          applyShapeWindow();
+          renderFretboard();
+          saveScalePrefs();
+        });
+        fbModeSel.addEventListener("change", () => {
+          fbMode = fbModeSel.value;
+          buildShapeSelect(); /* validates fbShape against the new family */
+          applyShapeWindow();
+          renderFretboard();
+          saveScalePrefs();
+        });
+        fbShapeSel.addEventListener("change", () => {
+          fbShape = fbShapeSel.value;
+          applyShapeWindow();
+          renderFretboard();
+          saveScalePrefs();
+        });
+
+        const savedScale = store.scale || {};
+        if (Number.isInteger(savedScale.key) && savedScale.key >= 0 && savedScale.key < 12) {
+          fbKey = savedScale.key;
+        }
+        if (SCALE_MODES.some((m) => m.id === savedScale.mode)) {
+          fbMode = savedScale.mode;
+        }
+        if (typeof savedScale.shape === "string") {
+          fbShape = savedScale.shape;
+        }
+        buildKeyModeSelects();
+        buildShapeSelect();
+        setFretRange(
+          savedScale.from != null ? savedScale.from : 0,
+          savedScale.to != null ? savedScale.to : FRET_MAX,
+          false
+        );
+        if (fbShape !== "full") {
+          applyShapeWindow();
+          renderFretboard();
+        }
+
         /* ---------- tool tabs (hash deep-links) ---------- */
 
-        const TOOL_NAMES = ["tuner", "metronome", "drone", "song-builder"];
+        const TOOL_NAMES = ["tuner", "metronome", "drone", "song-builder", "scale-builder"];
         const tabBtns = document.querySelectorAll(".tool-tab");
 
         function activateTool(name) {
