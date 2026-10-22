@@ -1686,6 +1686,11 @@
         background: rgba(197, 205, 214, 0.26);
       }
 
+      /* barline between the ascending and descending halves */
+      .tab-cell.bar {
+        border-left: 1px solid rgba(197, 205, 214, 0.4);
+      }
+
       .tab-num {
         position: relative;
         z-index: 1;
@@ -1698,6 +1703,66 @@
 
       .tab-num.root {
         color: var(--amber);
+        font-weight: 600;
+      }
+
+      /* ---------- scale builder: playback transport ---------- */
+      .fb-transport {
+        display: flex;
+        align-items: flex-end;
+        gap: 0.9rem 1.25rem;
+        flex-wrap: wrap;
+      }
+
+      .fb-transport[hidden] {
+        display: none;
+      }
+
+      .fb-tfield {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+
+      /* metronome tempo control, scaled down for the transport */
+      .fb-tfield .tempo-input {
+        width: 3.6ch;
+        font-size: 1.35rem;
+        font-weight: 600;
+        border-bottom-color: var(--line);
+      }
+
+      .fb-tfield .tempo-input:focus {
+        border-bottom-color: var(--amber);
+      }
+
+      .fb-tfield .step-btn {
+        width: 1.9rem;
+        height: 1.9rem;
+        font-size: 0.95rem;
+      }
+
+      .fb-dot {
+        transition: transform 0.08s ease, box-shadow 0.08s ease;
+      }
+
+      .fb-note.playing {
+        background-color: rgba(245, 182, 70, 0.22);
+        box-shadow: inset 0 0 0 1px rgba(245, 182, 70, 0.5);
+      }
+
+      .fb-note {
+        transition: background-color 0.08s ease, box-shadow 0.08s ease;
+      }
+
+      .fb-dot.playing {
+        transform: scale(1.4);
+        box-shadow: 0 0 0 3px rgba(245, 182, 70, 0.35);
+      }
+
+      .tab-num.playing {
+        background: var(--amber);
+        color: #20180a;
         font-weight: 600;
       }
 
@@ -2135,6 +2200,34 @@
                   </div>
                   <div class="tab-scroll">
                     <div class="tab-staff" id="fb-tab-staff"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fb-transport" id="fb-transport" hidden>
+                <button class="play-btn" id="fb-play" type="button" aria-pressed="false">Play</button>
+                <button class="ghost-btn" id="fb-loop" type="button" aria-pressed="false">Loop</button>
+                <div class="fb-tfield">
+                  <label class="sb-label" for="fb-voice">Voice</label>
+                  <select class="time-sig" id="fb-voice" aria-label="Playback voice"></select>
+                </div>
+                <div class="fb-tfield">
+                  <span class="sb-label" id="fb-bpm-label">Tempo</span>
+                  <div class="tempo-entry" role="group" aria-labelledby="fb-bpm-label">
+                    <button class="step-btn" id="fb-bpm-down" type="button" aria-label="Slower by one BPM">−</button>
+                    <input class="tempo-input" id="fb-bpm" type="number" inputmode="numeric"
+                      min="40" max="240" step="1" value="120" aria-label="Tempo in BPM" />
+                    <span class="tempo-unit" aria-hidden="true">BPM</span>
+                    <button class="step-btn" id="fb-bpm-up" type="button" aria-label="Faster by one BPM">+</button>
+                  </div>
+                </div>
+                <div class="fb-tfield">
+                  <span class="sb-label" id="fb-sub-label">Subdivision</span>
+                  <div class="sub-row" id="fb-sub" role="group" aria-labelledby="fb-sub-label">
+                    <button class="sub-opt" type="button" data-sub="1" aria-pressed="true">Quarter</button>
+                    <button class="sub-opt" type="button" data-sub="2" aria-pressed="false">Eighths</button>
+                    <button class="sub-opt" type="button" data-sub="3" aria-pressed="false">Triplets</button>
+                    <button class="sub-opt" type="button" data-sub="4" aria-pressed="false">Sixteenths</button>
                   </div>
                 </div>
               </div>
@@ -3150,6 +3243,10 @@
           strings: "string_ensemble_1",
           choir: "choir_aahs",
           organ: "drawbar_organ",
+          eguitar: "electric_guitar_clean",
+          aguitar: "acoustic_guitar_steel",
+          nylon: "acoustic_guitar_nylon",
+          violin: "violin",
         };
 
         let fontSamples = {}; // font name -> Map midi -> AudioBuffer
@@ -3234,8 +3331,9 @@
           return Math.round(69 + 12 * Math.log2(f / 440));
         }
 
-        function buildSampledVoice(samples, freq, level, attack) {
+        function buildSampledVoice(samples, freq, level, attack, when, stopAfter) {
           const now = audioCtx.currentTime;
+          const t0 = when != null ? when : now;
           const midi = freqToMidi(freq);
           let best = null, bestDist = Infinity;
           samples.forEach((s, m) => {
@@ -3256,11 +3354,18 @@
             src.loopEnd = Math.max(dur * 0.92, src.loopStart + 0.2);
           }
           const vgain = audioCtx.createGain();
-          vgain.gain.setValueAtTime(0.0001, now);
-          vgain.gain.linearRampToValueAtTime(level * norm, now + attack);
+          vgain.gain.setValueAtTime(0.0001, t0);
+          vgain.gain.linearRampToValueAtTime(level * norm, t0 + attack);
           src.connect(vgain);
           vgain.connect(pianoCtl.out);
-          src.start(now);
+          src.start(t0);
+          if (stopAfter != null) {
+            // one-shot line notes (scale playback) — envelope them out so
+            // looped samples don't ring over the following notes
+            vgain.gain.setValueAtTime(level * norm, t0 + stopAfter);
+            vgain.gain.linearRampToValueAtTime(0.0001, t0 + stopAfter + 0.05);
+            src.stop(t0 + stopAfter + 0.12);
+          }
           return { vgain, oscs: [src] };
         }
 
@@ -5083,10 +5188,12 @@
           });
         }
 
-        /* tab staff for a shape: one column per note, ascending,
-           low string first — numbers on the string lines */
-        function paintTab(staffEl, shape) {
-          staffEl.textContent = "";
+        /* the full practice run: ascending, a bar divider, then descending.
+           One-shot: top note not repeated. Loop: top AND bottom notes not
+           repeated — the next cycle supplies them, so no pitch doubles at
+           the seam and the up-down flow stays fluid. */
+        function fbShapeRun(shape, loop) {
+          const up = [];
           for (let si = 5; si >= 0; si--) {
             const frets = [];
             shape.notes.forEach((finger, key) => {
@@ -5094,22 +5201,40 @@
               if (Number(parts[0]) === si) frets.push(Number(parts[1]));
             });
             frets.sort((a, b) => a - b);
-            const row = si; /* e (0) renders on the top row, low E (5) at the bottom */
-            frets.forEach((f) => {
-              for (let r = 0; r < 6; r++) {
-                const cell = document.createElement("span");
-                cell.className = "tab-cell";
-                if (r === row) {
-                  const num = document.createElement("span");
-                  const pc = (FB_STRINGS[si].midi + f) % 12;
-                  num.className = "tab-num" + (pc === fbKey ? " root" : "");
-                  num.textContent = String(f);
-                  cell.appendChild(num);
-                }
-                staffEl.appendChild(cell);
-              }
-            });
+            frets.forEach((f) => up.push({ si, f, midi: FB_STRINGS[si].midi + f }));
           }
+          const run = up.map((n) => ({ si: n.si, f: n.f, midi: n.midi, bar: false }));
+          run.push({ bar: true });
+          for (let i = up.length - 2; i >= (loop ? 1 : 0); i--) {
+            run.push({ si: up[i].si, f: up[i].f, midi: up[i].midi, bar: false });
+          }
+          return run;
+        }
+
+        /* tab staff for a shape: one column per run entry, low string first */
+        function paintTab(staffEl, shape, loop) {
+          staffEl.textContent = "";
+          const run = fbShapeRun(shape, loop);
+          run.forEach((n) => {
+            const row = n.bar ? -1 : n.si; /* e (0) top, low E (5) bottom */
+            for (let r = 0; r < 6; r++) {
+              const cell = document.createElement("span");
+              cell.className = "tab-cell" + (n.bar ? " bar" : "");
+              if (r === row) {
+                const num = document.createElement("span");
+                const pc = (FB_STRINGS[n.si].midi + n.f) % 12;
+                num.className = "tab-num" + (pc === fbKey ? " root" : "");
+                num.textContent = String(n.f);
+                cell.appendChild(num);
+              }
+              staffEl.appendChild(cell);
+            }
+          });
+        }
+
+        function fbIdleStatusText() {
+          return fbScaleName() + " · " + fbShapeLabel() + " · frets " +
+            fretFrom + "–" + fretTo + " of " + FRET_MAX + " · standard tuning";
         }
 
         function renderFretboard() {
@@ -5120,13 +5245,12 @@
             "Fretboard, " + fbScaleName() + ", standard tuning, frets " +
               fretFrom + " to " + fretTo
           );
-          scaleStatus.textContent =
-            fbScaleName() + " · " + fbShapeLabel() + " · frets " +
-            fretFrom + "–" + fretTo + " of " + FRET_MAX + " · standard tuning";
+          scaleStatus.textContent = fbIdleStatusText();
 
-          /* tab under the main board — only meaningful for a shape */
+          /* tab + transport under the main board — only meaningful for a shape */
           fbTabEl.hidden = !shape;
-          if (shape) paintTab(fbTabStaffEl, shape);
+          fbTransportEl.hidden = !shape;
+          if (shape) paintTab(fbTabStaffEl, shape, fbLoop);
 
           /* second board when the shape also fits an octave away */
           const alt = shape ? fbAltShape() : null;
@@ -5145,7 +5269,7 @@
                 alt.shape.from + " to " + alt.shape.to
             );
             fbAltTabEl.hidden = false;
-            paintTab(fbAltTabStaffEl, alt.shape);
+            paintTab(fbAltTabStaffEl, alt.shape, false);
           } else {
             fbAltEl.hidden = true;
           }
@@ -5154,7 +5278,11 @@
         /* saveStore replaces the whole scale object — always write every key */
         function saveScalePrefs() {
           saveStore({
-            scale: { from: fretFrom, to: fretTo, key: fbKey, mode: fbMode, shape: fbShape },
+            scale: {
+              from: fretFrom, to: fretTo, key: fbKey, mode: fbMode, shape: fbShape,
+              voice: fbVoice, bpm: Number(fbBpmInput.value) || 120, sub: fbSub,
+              loop: fbLoop,
+            },
           });
         }
 
@@ -5187,19 +5315,23 @@
           if (save) saveScalePrefs();
         }
 
-        fretFromSel.addEventListener("change", () =>
-          setFretRange(Number(fretFromSel.value), fretTo, true)
-        );
-        fretToSel.addEventListener("change", () =>
-          setFretRange(fretFrom, Number(fretToSel.value), true)
-        );
+        fretFromSel.addEventListener("change", () => {
+          fbStopPlayback();
+          setFretRange(Number(fretFromSel.value), fretTo, true);
+        });
+        fretToSel.addEventListener("change", () => {
+          fbStopPlayback();
+          setFretRange(fretFrom, Number(fretToSel.value), true);
+        });
         fbKeySel.addEventListener("change", () => {
+          fbStopPlayback();
           fbKey = Number(fbKeySel.value);
           applyShapeWindow();
           renderFretboard();
           saveScalePrefs();
         });
         fbModeSel.addEventListener("change", () => {
+          fbStopPlayback();
           fbMode = fbModeSel.value;
           buildShapeSelect(); /* validates fbShape against the new family */
           applyShapeWindow();
@@ -5207,11 +5339,228 @@
           saveScalePrefs();
         });
         fbShapeSel.addEventListener("change", () => {
+          fbStopPlayback();
           fbShape = fbShapeSel.value;
           applyShapeWindow();
           renderFretboard();
           saveScalePrefs();
         });
+
+        /* ---------- scale builder: play the tab ---------- */
+
+        const fbTransportEl = document.getElementById("fb-transport");
+        const fbPlayBtn = document.getElementById("fb-play");
+        const fbVoiceSel = document.getElementById("fb-voice");
+        const fbBpmInput = document.getElementById("fb-bpm");
+
+        const FB_VOICES = [
+          { id: "eguitar", label: "electric guitar" },
+          { id: "aguitar", label: "steel-string guitar" },
+          { id: "nylon", label: "nylon guitar" },
+          { id: "violin", label: "violin" },
+          { id: "piano", label: "piano" },
+        ];
+        let fbVoice = "eguitar";
+        let fbSub = 1; /* notes per beat — quarter default, like the metro */
+        let fbLoop = false;
+        const fbLoopBtn = document.getElementById("fb-loop");
+
+        let fbPlayTimer = null;
+        let fbHiTos = [];
+        let fbLoadPending = false;
+
+        function fbClearHighlights() {
+          fbHiTos.forEach((t) => clearTimeout(t));
+          fbHiTos = [];
+          document.querySelectorAll(".fb-note.playing, .fb-dot.playing, .tab-num.playing").forEach((el) => {
+            el.classList.remove("playing");
+          });
+        }
+
+        function fbStopPlayback() {
+          if (fbPlayTimer) {
+            clearInterval(fbPlayTimer);
+            fbPlayTimer = null;
+          }
+          fbClearHighlights();
+          fbPlayBtn.textContent = "Play";
+          fbPlayBtn.setAttribute("aria-pressed", "false");
+          scaleStatus.textContent = fbIdleStatusText();
+        }
+
+        function fbStartPlayback() {
+          const ctx = ensureAudio();
+          if (!ctx || fbLoadPending) return;
+          const shape = fbShape === "full" ? null : fbComputeShape(fbShape);
+          if (!shape) return;
+          const voice = FB_VOICES.find((v) => v.id === fbVoice) || FB_VOICES[0];
+
+          ensurePiano();
+          fbLoadPending = true;
+          scaleStatus.textContent = "loading the " + voice.label + "…";
+          const loading = voice.id === "piano" ? loadPianoSamples() : loadSoundfont(voice.id);
+          loading.then((samples) => {
+            fbLoadPending = false;
+            if (!samples) {
+              scaleStatus.textContent =
+                "couldn't load the " + voice.label + " — check your connection and try again";
+              return;
+            }
+            if (fbPlayBtn.getAttribute("aria-pressed") !== "true") return; // changed mind
+
+            /* audio walks the same run the tab renders (bar column skipped) */
+            let seq = [];
+            fbShapeRun(shape, fbLoop).forEach((n, idx) => {
+              if (!n.bar) seq.push({ si: n.si, f: n.f, midi: n.midi, col: idx });
+            });
+
+            const ncols = fretTo - fretFrom + 1;
+            let neckCells = Array.from(document.querySelectorAll("#fb-neck .fb-note"));
+            let tabCells = Array.from(document.getElementById("fb-tab-staff").children);
+            const busLevel = voice.id === "piano" ? 1.15 : 3.2;
+
+            let idx = 0;
+            let next = ctx.currentTime + 0.15;
+            /* four-count click-in before the first note (metronome click) */
+            const beat0 = 60 / Math.max(40, Math.min(240, Number(fbBpmInput.value) || 120));
+            for (let b = 0; b < 4; b++) {
+              scheduleClick(next, b === 0 ? 2 : 1, false);
+              const at = next;
+              const n = b + 1;
+              fbHiTos.push(
+                setTimeout(() => {
+                  scaleStatus.textContent = "count · " + n;
+                }, Math.max(0, (at - ctx.currentTime) * 1000))
+              );
+              next += beat0;
+            }
+            fbHiTos.push(
+              setTimeout(() => {
+                scaleStatus.textContent = "playing · " + fbScaleName();
+              }, Math.max(0, (next - ctx.currentTime) * 1000))
+            );
+            const tick = () => {
+              const beat = 60 / Math.max(40, Math.min(240, Number(fbBpmInput.value) || 120));
+              const spacing = beat / fbSub;
+              while (idx < seq.length && next < ctx.currentTime + 0.15) {
+                const i = idx;
+                const n = seq[i];
+                const last = i === seq.length - 1 && !fbLoop;
+                const ringSec = last ? Math.min(beat * 2, 2.2) : Math.min(spacing * 0.85, 1.2);
+                const freq = 440 * Math.pow(2, (n.midi - 69) / 12);
+                buildSampledVoice(
+                  samples, freq, 0.5 * busLevel, 0.005, next, ringSec
+                );
+                /* light the neck dot + tab column — capture i, never the loop var */
+                const cell = neckCells[n.si * ncols + (n.f - fretFrom)];
+                const tabCell = tabCells[n.col * 6 + n.si];
+                const delay = Math.max(0, (next - ctx.currentTime) * 1000);
+                fbHiTos.push(
+                  setTimeout(() => {
+                    const dot = cell && cell.querySelector(".fb-dot");
+                    const num = tabCell && tabCell.querySelector(".tab-num");
+                    if (cell) cell.classList.add("playing");
+                    if (dot) dot.classList.add("playing");
+                    if (num) num.classList.add("playing");
+                    fbHiTos.push(
+                      setTimeout(() => {
+                        if (cell) cell.classList.remove("playing");
+                        if (dot) dot.classList.remove("playing");
+                        if (num) num.classList.remove("playing");
+                      }, last ? ringSec * 1000 : spacing * 900)
+                    );
+                  }, delay)
+                );
+                next += spacing;
+                idx++;
+              }
+              if (idx >= seq.length) {
+                const lastStart = next - spacing;
+                const ringSec = Math.min(beat * 2, 2.2);
+                if (fbLoop) {
+                  /* loop: seamless — swap in the loop pattern (no doubled
+                     seam note), refresh the live cell refs, and continue
+                     on the very next beat slot */
+                  paintTab(fbTabStaffEl, shape, true);
+                  tabCells = Array.from(document.getElementById("fb-tab-staff").children);
+                  neckCells = Array.from(document.querySelectorAll("#fb-neck .fb-note"));
+                  seq = [];
+                  fbShapeRun(shape, true).forEach((n2, idx2) => {
+                    if (!n2.bar) seq.push({ si: n2.si, f: n2.f, midi: n2.midi, col: idx2 });
+                  });
+                  next = lastStart + spacing;
+                  idx = 0;
+                } else {
+                  fbHiTos.push(
+                    setTimeout(
+                      fbStopPlayback,
+                      Math.max(0, (lastStart - ctx.currentTime) * 1000) + ringSec * 1000 + 300
+                    )
+                  );
+                  clearInterval(fbPlayTimer);
+                  fbPlayTimer = null;
+                }
+              }
+            };
+            fbPlayTimer = setInterval(tick, 30);
+            tick();
+          });
+          fbPlayBtn.textContent = "Stop";
+          fbPlayBtn.setAttribute("aria-pressed", "true");
+        }
+
+        fbPlayBtn.addEventListener("click", () => {
+          if (fbPlayTimer || fbLoadPending) fbStopPlayback();
+          else fbStartPlayback();
+        });
+        fbVoiceSel.addEventListener("change", () => {
+          fbVoice = fbVoiceSel.value;
+          fbStopPlayback();
+          saveScalePrefs();
+        });
+        function fbSetBpm(v) {
+          const c = Math.max(40, Math.min(240, Math.round(v)));
+          fbBpmInput.value = String(c);
+          saveScalePrefs();
+        }
+        document.getElementById("fb-bpm-down").addEventListener("click", () =>
+          fbSetBpm((Number(fbBpmInput.value) || 120) - 1)
+        );
+        document.getElementById("fb-bpm-up").addEventListener("click", () =>
+          fbSetBpm((Number(fbBpmInput.value) || 120) + 1)
+        );
+        /* typing applies live (the scheduler reads the field each tick);
+           blur/Enter commits and normalizes to the 40–240 range */
+        fbBpmInput.addEventListener("change", () =>
+          fbSetBpm(Number(fbBpmInput.value) || 120)
+        );
+        document.querySelectorAll("#fb-sub .sub-opt").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            fbSub = Number(btn.dataset.sub) || 1;
+            document.querySelectorAll("#fb-sub .sub-opt").forEach((b) => {
+              b.setAttribute("aria-pressed", String(Number(b.dataset.sub) === fbSub));
+            });
+            saveScalePrefs();
+          });
+        });
+        fbLoopBtn.addEventListener("click", () => {
+          fbLoop = !fbLoop;
+          fbLoopBtn.setAttribute("aria-pressed", String(fbLoop));
+          /* mid-play the pattern swaps at the loop seam instead */
+          if (!fbPlayTimer && !fbLoadPending) renderFretboard();
+          saveScalePrefs();
+        });
+
+        function buildVoiceSelect() {
+          fbVoiceSel.textContent = "";
+          FB_VOICES.forEach((v) => {
+            const opt = document.createElement("option");
+            opt.value = v.id;
+            opt.textContent = v.label;
+            fbVoiceSel.appendChild(opt);
+          });
+          fbVoiceSel.value = fbVoice;
+        }
 
         const savedScale = store.scale || {};
         if (Number.isInteger(savedScale.key) && savedScale.key >= 0 && savedScale.key < 12) {
@@ -5223,8 +5572,27 @@
         if (typeof savedScale.shape === "string") {
           fbShape = savedScale.shape;
         }
+        if (FB_VOICES.some((v) => v.id === savedScale.voice)) {
+          fbVoice = savedScale.voice;
+        }
+        if (savedScale.bpm != null) {
+          fbBpmInput.value = String(
+            Math.max(40, Math.min(240, Math.round(savedScale.bpm)))
+          );
+        }
+        if ([1, 2, 3, 4].includes(savedScale.sub)) {
+          fbSub = savedScale.sub;
+        }
+        if (typeof savedScale.loop === "boolean") {
+          fbLoop = savedScale.loop;
+          fbLoopBtn.setAttribute("aria-pressed", String(fbLoop));
+        }
+        document.querySelectorAll("#fb-sub .sub-opt").forEach((b) => {
+          b.setAttribute("aria-pressed", String(Number(b.dataset.sub) === fbSub));
+        });
         buildKeyModeSelects();
         buildShapeSelect();
+        buildVoiceSelect();
         setFretRange(
           savedScale.from != null ? savedScale.from : 0,
           savedScale.to != null ? savedScale.to : FRET_MAX,
@@ -5253,6 +5621,9 @@
               stopRefTone();
             }
             tunerStatus.textContent = "";
+          }
+          if (name !== "scale-builder" && typeof fbStopPlayback === "function") {
+            fbStopPlayback();
           }
           saveStore({ tool: name });
           tabBtns.forEach((b) => {
