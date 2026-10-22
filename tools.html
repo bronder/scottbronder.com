@@ -1623,6 +1623,12 @@
         display: none;
       }
 
+      .fb-alt-head {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+      }
+
       .fb-alt-label {
         margin: 0;
         font-family: var(--mono);
@@ -2235,7 +2241,10 @@
               </div>
 
               <div class="fb-alt" id="fb-alt" hidden>
-                <p class="fb-alt-label" id="fb-alt-label"></p>
+                <div class="fb-alt-head">
+                  <p class="fb-alt-label" id="fb-alt-label"></p>
+                  <button class="ghost-btn" id="fb-alt-play" type="button" aria-pressed="false">Play</button>
+                </div>
                 <div class="fret-scroll">
                   <div class="fretboard" id="fb-alt-board" role="img">
                     <div class="fb-nums" id="fb-alt-nums"></div>
@@ -2286,11 +2295,21 @@
         let masterGain = null;
 
         function ensureAudio() {
-          if (audioCtx) return audioCtx;
+          if (audioCtx) {
+            /* mobile browsers suspend contexts aggressively — every play
+               path calls this inside a tap, which is the gesture iOS needs */
+            if (audioCtx.state === "suspended") {
+              audioCtx.resume().catch(() => {});
+            }
+            return audioCtx;
+          }
           const AC = window.AudioContext || window.webkitAudioContext;
           if (!AC) return null;
           try {
             audioCtx = new AC();
+            if (audioCtx.state === "suspended") {
+              audioCtx.resume().catch(() => {});
+            }
             masterGain = audioCtx.createGain();
             masterGain.gain.value = 0.5;
             const comp = audioCtx.createDynamicsCompressor();
@@ -5379,6 +5398,8 @@
         let fbPlayTimer = null;
         let fbHiTos = [];
         let fbLoadPending = false;
+        let fbPlayingAlt = false; /* which board the run belongs to */
+        const fbAltPlayBtn = document.getElementById("fb-alt-play");
 
         function fbClearHighlights() {
           fbHiTos.forEach((t) => clearTimeout(t));
@@ -5394,17 +5415,24 @@
             fbPlayTimer = null;
           }
           fbClearHighlights();
-          fbPlayBtn.textContent = "Play";
-          fbPlayBtn.setAttribute("aria-pressed", "false");
+          fbPlayingAlt = false;
+          [fbPlayBtn, fbAltPlayBtn].forEach((b) => {
+            b.textContent = "Play";
+            b.setAttribute("aria-pressed", "false");
+          });
           scaleStatus.textContent = fbIdleStatusText();
         }
 
-        function fbStartPlayback() {
+        /* play the run of the main shape (altShape = null) or the
+           octave-alternative board's shape */
+        function fbStartPlayback(altShape) {
           const ctx = ensureAudio();
           if (!ctx || fbLoadPending) return;
-          const shape = fbShape === "full" ? null : fbComputeShape(fbShape);
+          const shape = altShape || (fbShape === "full" ? null : fbComputeShape(fbShape));
           if (!shape) return;
           const voice = FB_VOICES.find((v) => v.id === fbVoice) || FB_VOICES[0];
+          const playBtn = altShape ? fbAltPlayBtn : fbPlayBtn;
+          fbPlayingAlt = !!altShape;
 
           ensurePiano();
           fbLoadPending = true;
@@ -5417,7 +5445,7 @@
                 "couldn't load the " + voice.label + " — check your connection and try again";
               return;
             }
-            if (fbPlayBtn.getAttribute("aria-pressed") !== "true") return; // changed mind
+            if (playBtn.getAttribute("aria-pressed") !== "true") return; // changed mind
 
             /* audio walks the same run the tab renders (bar column skipped) */
             let seq = [];
@@ -5425,9 +5453,12 @@
               if (!n.bar) seq.push({ si: n.si, f: n.f, midi: n.midi, col: idx });
             });
 
-            const ncols = fretTo - fretFrom + 1;
-            let neckCells = Array.from(document.querySelectorAll("#fb-neck .fb-note"));
-            let tabCells = Array.from(document.getElementById("fb-tab-staff").children);
+            const winFrom = altShape ? altShape.from : fretFrom;
+            const ncols = (altShape ? altShape.to : fretTo) - winFrom + 1;
+            const neckSel = altShape ? "#fb-alt-neck .fb-note" : "#fb-neck .fb-note";
+            const staffEl = altShape ? fbAltTabStaffEl : fbTabStaffEl;
+            let neckCells = Array.from(document.querySelectorAll(neckSel));
+            let tabCells = Array.from(staffEl.children);
             const busLevel = voice.id === "piano" ? 1.15 : 3.2;
 
             let idx = 0;
@@ -5468,7 +5499,7 @@
                   samples, freq, 0.5 * busLevel, 0.005, next, ringSec
                 );
                 /* light the neck dot + tab column — capture i, never the loop var */
-                const cell = neckCells[n.si * ncols + (n.f - fretFrom)];
+                const cell = neckCells[n.si * ncols + (n.f - winFrom)];
                 const tabCell = tabCells[n.col * 6 + n.si];
                 const delay = Math.max(0, (next - ctx.currentTime) * 1000);
                 fbHiTos.push(
@@ -5503,9 +5534,9 @@
                   /* loop: seamless — swap in the loop pattern (no doubled
                      seam note), refresh the live cell refs, and continue
                      on the very next beat slot */
-                  paintTab(fbTabStaffEl, shape, true);
-                  tabCells = Array.from(document.getElementById("fb-tab-staff").children);
-                  neckCells = Array.from(document.querySelectorAll("#fb-neck .fb-note"));
+                  paintTab(staffEl, shape, true);
+                  tabCells = Array.from(staffEl.children);
+                  neckCells = Array.from(document.querySelectorAll(neckSel));
                   seq = [];
                   fbShapeRun(shape, true).forEach((n2, idx2) => {
                     if (!n2.bar) seq.push({ si: n2.si, f: n2.f, midi: n2.midi, col: idx2 });
@@ -5528,14 +5559,23 @@
             fbPlayTimer = setInterval(tick, 30);
             tick();
           });
-          fbPlayBtn.textContent = "Stop";
-          fbPlayBtn.setAttribute("aria-pressed", "true");
+          playBtn.textContent = "Stop";
+          playBtn.setAttribute("aria-pressed", "true");
         }
 
-        fbPlayBtn.addEventListener("click", () => {
-          if (fbPlayTimer || fbLoadPending) fbStopPlayback();
-          else fbStartPlayback();
-        });
+        /* either Play button: toggle if it owns the run, otherwise switch */
+        const fbTogglePlay = (alt) => {
+          const active = fbPlayTimer || fbLoadPending;
+          if (active && fbPlayingAlt === alt) {
+            fbStopPlayback();
+            return;
+          }
+          fbStopPlayback();
+          const altInfo = alt ? fbAltShape() : null;
+          fbStartPlayback(altInfo ? altInfo.shape : null);
+        };
+        fbPlayBtn.addEventListener("click", () => fbTogglePlay(false));
+        fbAltPlayBtn.addEventListener("click", () => fbTogglePlay(true));
         fbVoiceSel.addEventListener("change", () => {
           fbVoice = fbVoiceSel.value;
           fbStopPlayback();
