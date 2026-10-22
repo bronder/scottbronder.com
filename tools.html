@@ -1467,8 +1467,89 @@
       .fb-setup {
         display: flex;
         align-items: flex-end;
-        gap: 1rem 1.75rem;
+        gap: 1rem 1.4rem;
         flex-wrap: wrap;
+      }
+
+      .fb-sel-root {
+        min-width: 4.2rem;
+      }
+
+      .fb-sel-scale {
+        min-width: 12rem;
+      }
+
+      .fb-sel-pos {
+        min-width: 14rem;
+      }
+
+      .fb-headrow {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 0.75rem 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .fb-scale-name {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .fb-sub {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+
+      .fb-viewctrls {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+
+      .fb-legend {
+        display: flex;
+        gap: 1.1rem;
+        margin-top: -0.3rem;
+        font-family: var(--mono);
+        font-size: 0.64rem;
+        color: var(--muted);
+      }
+
+      .fb-lg {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.32rem;
+      }
+
+      .fb-lg .sw {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .fb-lg .sw-root {
+        background: var(--amber);
+        box-shadow: inset 0 0 0 2px rgba(32, 24, 10, 0.55);
+      }
+
+      .fb-lg .sw-tone {
+        background: rgba(200, 212, 226, 0.85);
+      }
+
+      .fb-lg .sw-play {
+        background: rgba(238, 242, 248, 0.85);
+        box-shadow: 0 0 0 2px rgba(238, 242, 248, 0.4);
+      }
+
+      .fb-compare {
+        align-self: flex-start;
       }
 
       .fret-scroll {
@@ -1503,11 +1584,6 @@
 
       .fb-num.marker {
         color: var(--amber);
-      }
-
-      .fb-nums.under .fb-num {
-        align-items: flex-start;
-        padding: 0.35rem 0 0;
       }
 
       .fb-neck {
@@ -1594,22 +1670,37 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 14px;
-        height: 14px;
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
-        background: rgba(186, 198, 212, 0.72);
+        background: rgba(200, 212, 226, 0.88);
         font-family: var(--mono);
-        font-size: 0.58rem;
+        font-size: 0.6rem;
         font-weight: 600;
         color: #0c1016;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
       }
 
       .fb-dot.root {
-        width: 17px;
-        height: 17px;
+        width: 20px;
+        height: 20px;
         background: var(--amber);
         color: #20180a;
+        font-size: 0.64rem;
+        box-shadow: inset 0 0 0 2px rgba(32, 24, 10, 0.55), 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+
+      /* full-neck view: smaller markers so narrow frets stay readable */
+      .fb-neck.compact .fb-dot {
+        width: 12px;
+        height: 12px;
+        font-size: 0.52rem;
+      }
+
+      .fb-neck.compact .fb-dot.root {
+        width: 15px;
+        height: 15px;
+        font-size: 0.56rem;
       }
 
       /* ---------- scale builder: octave-alternative board ---------- */
@@ -1690,7 +1781,7 @@
         right: 0;
         top: 50%;
         height: 1px;
-        background: rgba(197, 205, 214, 0.26);
+        background: rgba(197, 205, 214, 0.34);
       }
 
       /* barline between the ascending and descending halves */
@@ -1703,9 +1794,10 @@
         z-index: 1;
         background: var(--panel);
         font-family: var(--mono);
-        font-size: 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 500;
         color: var(--text);
-        padding: 0 0.12rem;
+        padding: 0 0.14rem;
       }
 
       .tab-num.root {
@@ -1763,8 +1855,8 @@
       }
 
       .fb-dot.playing {
-        transform: scale(1.4);
-        box-shadow: 0 0 0 3px rgba(245, 182, 70, 0.35);
+        transform: scale(1.35);
+        box-shadow: 0 0 0 3px rgba(238, 242, 248, 0.6);
       }
 
       .tab-num.playing {
@@ -2168,25 +2260,46 @@
 
               <div class="fb-setup">
                 <div class="sb-field">
-                  <label class="sb-label" for="fb-key">Key</label>
-                  <select class="time-sig" id="fb-key" aria-label="Key"></select>
+                  <label class="sb-label" for="fb-key">Root</label>
+                  <select class="time-sig fb-sel-root" id="fb-key" aria-label="Root"></select>
                 </div>
                 <div class="sb-field">
-                  <label class="sb-label" for="fb-mode">Mode</label>
-                  <select class="time-sig" id="fb-mode" aria-label="Mode"></select>
+                  <label class="sb-label" for="fb-mode">Scale</label>
+                  <select class="time-sig fb-sel-scale" id="fb-mode" aria-label="Scale"></select>
                 </div>
                 <div class="sb-field">
-                  <label class="sb-label" for="fb-shape">Shape</label>
-                  <select class="time-sig" id="fb-shape" aria-label="Shape"></select>
+                  <label class="sb-label" for="fb-shape">Position</label>
+                  <select class="time-sig fb-sel-pos" id="fb-shape" aria-label="Position"></select>
                 </div>
                 <div class="sb-field">
-                  <label class="sb-label" for="fret-from">Fret range</label>
+                  <label class="sb-label" for="fret-from">Frets</label>
                   <div class="meter-pair">
                     <select class="time-sig" id="fret-from" aria-label="First fret to show"></select>
                     <span class="meter-slash" aria-hidden="true">–</span>
                     <select class="time-sig" id="fret-to" aria-label="Last fret to show"></select>
                   </div>
                 </div>
+              </div>
+
+              <div class="fb-headrow">
+                <div class="fb-identity">
+                  <h4 class="fb-scale-name" id="fb-scale-name"></h4>
+                  <p class="fb-sub" id="fb-sub"></p>
+                </div>
+                <div class="fb-viewctrls">
+                  <div class="sub-row" id="fb-display" role="group" aria-label="Marker labels">
+                    <button class="sub-opt" type="button" data-display="fingers" aria-pressed="true">Fingers</button>
+                    <button class="sub-opt" type="button" data-display="notes" aria-pressed="false">Notes</button>
+                    <button class="sub-opt" type="button" data-display="intervals" aria-pressed="false">Intervals</button>
+                  </div>
+                  <button class="ghost-btn" id="fb-tab-toggle" type="button" aria-pressed="true" hidden>Hide TAB</button>
+                </div>
+              </div>
+
+              <div class="fb-legend" aria-hidden="true">
+                <span class="fb-lg"><i class="sw sw-root"></i>root</span>
+                <span class="fb-lg"><i class="sw sw-tone"></i>scale tone</span>
+                <span class="fb-lg"><i class="sw sw-play"></i>playing</span>
               </div>
 
               <div class="fret-scroll">
@@ -2196,7 +2309,6 @@
                     <div class="fb-inlays" id="fb-inlays" aria-hidden="true"></div>
                     <div class="fb-frets" id="fb-frets" aria-hidden="true"></div>
                   </div>
-                  <div class="fb-nums under" id="fb-nums-under"></div>
                 </div>
               </div>
 
@@ -2216,8 +2328,8 @@
                 <button class="ghost-btn" id="fb-loop" type="button" aria-pressed="false">Loop</button>
                 <button class="ghost-btn" id="fb-click" type="button" aria-pressed="false">Click</button>
                 <div class="fb-tfield">
-                  <label class="sb-label" for="fb-voice">Voice</label>
-                  <select class="time-sig" id="fb-voice" aria-label="Playback voice"></select>
+                  <label class="sb-label" for="fb-voice">Sound</label>
+                  <select class="time-sig" id="fb-voice" aria-label="Sound"></select>
                 </div>
                 <div class="fb-tfield">
                   <span class="sb-label" id="fb-bpm-label">Tempo</span>
@@ -2240,6 +2352,8 @@
                 </div>
               </div>
 
+              <button class="ghost-btn fb-compare" id="fb-compare" type="button" aria-expanded="false" hidden>Compare octave below</button>
+
               <div class="fb-alt" id="fb-alt" hidden>
                 <div class="fb-alt-head">
                   <p class="fb-alt-label" id="fb-alt-label"></p>
@@ -2252,7 +2366,6 @@
                       <div class="fb-inlays" id="fb-alt-inlays" aria-hidden="true"></div>
                       <div class="fb-frets" id="fb-alt-frets" aria-hidden="true"></div>
                     </div>
-                    <div class="fb-nums under" id="fb-alt-nums-under"></div>
                   </div>
                 </div>
                 <div class="fb-tabwrap" id="fb-alt-tab" hidden>
@@ -4777,8 +4890,10 @@
         const fbAltLabelEl = document.getElementById("fb-alt-label");
         const fbAltBoardEl = document.getElementById("fb-alt-board");
         const fbAltNumsEl = document.getElementById("fb-alt-nums");
-        const fbNumsUnderEl = document.getElementById("fb-nums-under");
-        const fbAltNumsUnderEl = document.getElementById("fb-alt-nums-under");
+        const fbScaleNameEl = document.getElementById("fb-scale-name");
+        const fbSubEl = document.getElementById("fb-sub");
+        const fbTabToggleEl = document.getElementById("fb-tab-toggle");
+        const fbCompareBtnEl = document.getElementById("fb-compare");
         const fbTabEl = document.getElementById("fb-tab");
         const fbTabStaffEl = document.getElementById("fb-tab-staff");
         const fbAltTabEl = document.getElementById("fb-alt-tab");
@@ -4878,8 +4993,8 @@
 
         function fbShapeLabel() {
           if (fbShape === "full") return "full neck";
-          const found = fbShapeList().find((s) => s.id === fbShape);
-          return found ? found.label.toLowerCase() : "full neck";
+          if (fbShape.startsWith("box")) return "box " + fbShape.slice(3);
+          return "position " + fbShape.slice(1);
         }
 
         function buildShapeSelect() {
@@ -5121,26 +5236,23 @@
         }
 
         /* paint one full board (numbers, inlays, wires, strings, dots) */
-        function paintBoard(numsEl, numsUnderEl, neckEl, inlaysEl, fretsEl, from, to, shape) {
+        function paintBoard(numsEl, neckEl, inlaysEl, fretsEl, from, to, shape) {
           const template = fretTemplate(from, to);
-          [numsEl, numsUnderEl, neckEl].forEach((el) => {
+          [numsEl, neckEl].forEach((el) => {
             el.style.gridTemplateColumns = template;
           });
+          neckEl.classList.toggle("compact", !shape);
           const inScale = new Set(fbCurMode().iv.map((i) => (fbKey + i) % 12));
 
-          /* fret numbers, above and below the wood */
-          const fillNums = (el) => {
-            el.textContent = "";
-            el.appendChild(document.createElement("span"));
-            for (let f = from; f <= to; f++) {
-              const num = document.createElement("span");
-              num.className = "fb-num" + (MARKER_FRETS.includes(f) ? " marker" : "");
-              num.textContent = String(f);
-              el.appendChild(num);
-            }
-          };
-          fillNums(numsEl);
-          fillNums(numsUnderEl);
+          /* fret numbers, above the wood */
+          numsEl.textContent = "";
+          numsEl.appendChild(document.createElement("span"));
+          for (let f = from; f <= to; f++) {
+            const num = document.createElement("span");
+            num.className = "fb-num" + (MARKER_FRETS.includes(f) ? " marker" : "");
+            num.textContent = String(f);
+            numsEl.appendChild(num);
+          }
 
           /* inlay dots between the middle strings (double at 12 and 24) */
           inlaysEl.textContent = "";
@@ -5207,7 +5319,13 @@
               if (marked) {
                 const dot = document.createElement("span");
                 dot.className = "fb-dot" + (pc === fbKey ? " root" : "");
-                if (finger != null) dot.textContent = String(finger);
+                if (fbDisplay === "notes") {
+                  dot.textContent = NOTE_NAMES[pc];
+                } else if (fbDisplay === "intervals") {
+                  dot.textContent = FB_DEGREES[(pc - fbKey + 12) % 12];
+                } else if (finger != null) {
+                  dot.textContent = String(finger);
+                }
                 cell.appendChild(dot);
               }
               cell.title = NOTE_NAMES[midi % 12] + (Math.floor(midi / 12) - 1);
@@ -5261,34 +5379,55 @@
         }
 
         function fbIdleStatusText() {
-          return fbScaleName() + " · " + fbShapeLabel() + " · frets " +
-            fretFrom + "–" + fretTo + " of " + FRET_MAX + " · standard tuning";
+          /* the identity header above the board carries the scale info;
+             the status line is reserved for playback/loading messages */
+          return "";
         }
 
         function renderFretboard() {
           const shape = fbShape === "full" ? null : fbComputeShape(fbShape);
-          paintBoard(fbNumsEl, fbNumsUnderEl, fbNeckEl, fbInlaysEl, fbFretsEl, fretFrom, fretTo, shape);
+
+          /* scale identity above the board */
+          const degName = fbShape.startsWith("p")
+            ? fbDegreeModeName(Number(fbShape.slice(1)) - 1)
+            : null;
+          fbScaleNameEl.textContent = fbScaleName();
+          fbSubEl.textContent =
+            fbShapeLabel() + (degName ? " · " + degName : "") +
+            " · frets " + fretFrom + "–" + fretTo;
+
+          paintBoard(fbNumsEl, fbNeckEl, fbInlaysEl, fbFretsEl, fretFrom, fretTo, shape);
           fretboardEl.setAttribute(
             "aria-label",
             "Fretboard, " + fbScaleName() + ", standard tuning, frets " +
               fretFrom + " to " + fretTo
           );
-          scaleStatus.textContent = fbIdleStatusText();
+          scaleStatus.textContent = "";
 
-          /* tab + transport under the main board — only meaningful for a shape */
-          fbTabEl.hidden = !shape;
+          /* tab + transport — only meaningful for a shape */
+          fbTabToggleEl.hidden = !shape;
+          fbTabToggleEl.textContent = fbShowTab ? "Hide TAB" : "Show TAB";
+          fbTabToggleEl.setAttribute("aria-pressed", String(fbShowTab));
+          fbTabEl.hidden = !shape || !fbShowTab;
           fbTransportEl.hidden = !shape;
           if (shape) paintTab(fbTabStaffEl, shape, fbLoop);
 
-          /* second board when the shape also fits an octave away */
+          /* octave comparison: collapsed behind a toggle unless opened */
           const alt = shape ? fbAltShape() : null;
+          fbCompareBtnEl.hidden = !alt;
           if (alt) {
+            fbCompareBtnEl.textContent = fbCompareOpen
+              ? "Hide octave comparison"
+              : "Compare octave " + alt.dir;
+            fbCompareBtnEl.setAttribute("aria-expanded", String(fbCompareOpen));
+          }
+          if (alt && fbCompareOpen) {
             fbAltEl.hidden = false;
             fbAltLabelEl.textContent =
               "same shape an octave " + alt.dir + " · frets " +
               alt.shape.from + "–" + alt.shape.to;
             paintBoard(
-              fbAltNumsEl, fbAltNumsUnderEl, fbAltNeckEl, fbAltInlaysEl, fbAltFretsEl,
+              fbAltNumsEl, fbAltNeckEl, fbAltInlaysEl, fbAltFretsEl,
               alt.shape.from, alt.shape.to, alt.shape
             );
             fbAltBoardEl.setAttribute(
@@ -5310,6 +5449,7 @@
               from: fretFrom, to: fretTo, key: fbKey, mode: fbMode, shape: fbShape,
               voice: fbVoice, bpm: Number(fbBpmInput.value) || 120, sub: fbSub,
               loop: fbLoop, click: fbClick,
+              display: fbDisplay, showTab: fbShowTab, compareOpen: fbCompareOpen,
             },
           });
         }
@@ -5392,6 +5532,12 @@
         let fbSub = 1; /* notes per beat — quarter default, like the metro */
         let fbLoop = false;
         let fbClick = false; /* metronome click during the run */
+        let fbDisplay = "fingers"; /* dot labels: fingers | notes | intervals */
+        let fbShowTab = true;
+        let fbCompareOpen = false;
+        const FB_DEGREES = [
+          "1", "b2", "2", "b3", "3", "4", "b5", "5", "b6", "6", "b7", "7",
+        ];
         const fbLoopBtn = document.getElementById("fb-loop");
         const fbClickBtn = document.getElementById("fb-click");
 
@@ -5618,6 +5764,27 @@
           fbClickBtn.setAttribute("aria-pressed", String(fbClick));
           saveScalePrefs();
         });
+        document.querySelectorAll("#fb-display .sub-opt").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            fbDisplay = btn.dataset.display;
+            document.querySelectorAll("#fb-display .sub-opt").forEach((b) => {
+              b.setAttribute("aria-pressed", String(b.dataset.display === fbDisplay));
+            });
+            renderFretboard();
+            saveScalePrefs();
+          });
+        });
+        fbTabToggleEl.addEventListener("click", () => {
+          fbShowTab = !fbShowTab;
+          renderFretboard();
+          saveScalePrefs();
+        });
+        fbCompareBtnEl.addEventListener("click", () => {
+          fbCompareOpen = !fbCompareOpen;
+          if (!fbCompareOpen && fbPlayingAlt) fbStopPlayback();
+          renderFretboard();
+          saveScalePrefs();
+        });
 
         /* ---------- scale builder: tap a fret position to hear it ---------- */
 
@@ -5696,6 +5863,14 @@
           fbClick = savedScale.click;
           fbClickBtn.setAttribute("aria-pressed", String(fbClick));
         }
+        if (["fingers", "notes", "intervals"].includes(savedScale.display)) {
+          fbDisplay = savedScale.display;
+        }
+        if (typeof savedScale.showTab === "boolean") fbShowTab = savedScale.showTab;
+        if (typeof savedScale.compareOpen === "boolean") fbCompareOpen = savedScale.compareOpen;
+        document.querySelectorAll("#fb-display .sub-opt").forEach((b) => {
+          b.setAttribute("aria-pressed", String(b.dataset.display === fbDisplay));
+        });
         document.querySelectorAll("#fb-sub .sub-opt").forEach((b) => {
           b.setAttribute("aria-pressed", String(Number(b.dataset.sub) === fbSub));
         });
