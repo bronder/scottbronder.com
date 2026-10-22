@@ -1563,6 +1563,7 @@
         align-items: center;
         justify-content: center;
         min-height: 2.15rem;
+        cursor: pointer;
       }
 
       .fb-note:hover {
@@ -2207,6 +2208,7 @@
               <div class="fb-transport" id="fb-transport" hidden>
                 <button class="play-btn" id="fb-play" type="button" aria-pressed="false">Play</button>
                 <button class="ghost-btn" id="fb-loop" type="button" aria-pressed="false">Loop</button>
+                <button class="ghost-btn" id="fb-click" type="button" aria-pressed="false">Click</button>
                 <div class="fb-tfield">
                   <label class="sb-label" for="fb-voice">Voice</label>
                   <select class="time-sig" id="fb-voice" aria-label="Playback voice"></select>
@@ -5165,6 +5167,8 @@
               const midi = str.midi + f;
               const cell = document.createElement("span");
               cell.className = "fb-note";
+              cell.dataset.si = String(si);
+              cell.dataset.f = String(f);
               /* the string: a gauge-thick line through the middle of the lane */
               const half = str.gauge / 2;
               const line = "rgba(197, 205, 214, 0.4)";
@@ -5281,7 +5285,7 @@
             scale: {
               from: fretFrom, to: fretTo, key: fbKey, mode: fbMode, shape: fbShape,
               voice: fbVoice, bpm: Number(fbBpmInput.value) || 120, sub: fbSub,
-              loop: fbLoop,
+              loop: fbLoop, click: fbClick,
             },
           });
         }
@@ -5363,7 +5367,9 @@
         let fbVoice = "eguitar";
         let fbSub = 1; /* notes per beat — quarter default, like the metro */
         let fbLoop = false;
+        let fbClick = false; /* metronome click during the run */
         const fbLoopBtn = document.getElementById("fb-loop");
+        const fbClickBtn = document.getElementById("fb-click");
 
         let fbPlayTimer = null;
         let fbHiTos = [];
@@ -5439,6 +5445,11 @@
                 scaleStatus.textContent = "playing · " + fbScaleName();
               }, Math.max(0, (next - ctx.currentTime) * 1000))
             );
+            /* optional click track: quarter beats, accent every 4 (the
+               accent count resets at each loop cycle = the pattern's "1") */
+            let nextClick = next;
+            let clickBeat = 0;
+            let runEnd = next;
             const tick = () => {
               const beat = 60 / Math.max(40, Math.min(240, Number(fbBpmInput.value) || 120));
               const spacing = beat / fbSub;
@@ -5473,6 +5484,12 @@
                 );
                 next += spacing;
                 idx++;
+                runEnd = next;
+              }
+              while (fbClick && nextClick < ctx.currentTime + 0.15 && nextClick < runEnd + 0.001) {
+                scheduleClick(nextClick, clickBeat % 4 === 0 ? 2 : 1, false);
+                nextClick += beat;
+                clickBeat++;
               }
               if (idx >= seq.length) {
                 const lastStart = next - spacing;
@@ -5490,6 +5507,7 @@
                   });
                   next = lastStart + spacing;
                   idx = 0;
+                  clickBeat = 0;
                 } else {
                   fbHiTos.push(
                     setTimeout(
@@ -5550,6 +5568,48 @@
           if (!fbPlayTimer && !fbLoadPending) renderFretboard();
           saveScalePrefs();
         });
+        fbClickBtn.addEventListener("click", () => {
+          fbClick = !fbClick;
+          fbClickBtn.setAttribute("aria-pressed", String(fbClick));
+          saveScalePrefs();
+        });
+
+        /* ---------- scale builder: tap a fret position to hear it ---------- */
+
+        function fbPlayNote(midi, cell) {
+          const ctx = ensureAudio();
+          if (!ctx) return;
+          const voice = FB_VOICES.find((v) => v.id === fbVoice) || FB_VOICES[0];
+          ensurePiano();
+          const loading = voice.id === "piano" ? loadPianoSamples() : loadSoundfont(voice.id);
+          loading.then((samples) => {
+            if (!samples) {
+              scaleStatus.textContent =
+                "couldn't load the " + voice.label + " — check your connection and try again";
+              return;
+            }
+            const freq = 440 * Math.pow(2, (midi - 69) / 12);
+            buildSampledVoice(
+              samples, freq, 0.5 * (voice.id === "piano" ? 1.15 : 3.2),
+              0.005, ctx.currentTime, 1.6
+            );
+          });
+          if (cell) {
+            cell.classList.add("playing");
+            setTimeout(() => cell.classList.remove("playing"), 350);
+          }
+        }
+
+        [fbNeckEl, fbAltNeckEl].forEach((neck) => {
+          neck.addEventListener("click", (e) => {
+            const cell = e.target.closest(".fb-note");
+            if (!cell || cell.dataset.si == null) return;
+            fbPlayNote(
+              FB_STRINGS[Number(cell.dataset.si)].midi + Number(cell.dataset.f),
+              cell
+            );
+          });
+        });
 
         function buildVoiceSelect() {
           fbVoiceSel.textContent = "";
@@ -5586,6 +5646,10 @@
         if (typeof savedScale.loop === "boolean") {
           fbLoop = savedScale.loop;
           fbLoopBtn.setAttribute("aria-pressed", String(fbLoop));
+        }
+        if (typeof savedScale.click === "boolean") {
+          fbClick = savedScale.click;
+          fbClickBtn.setAttribute("aria-pressed", String(fbClick));
         }
         document.querySelectorAll("#fb-sub .sub-opt").forEach((b) => {
           b.setAttribute("aria-pressed", String(Number(b.dataset.sub) === fbSub));
