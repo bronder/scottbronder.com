@@ -169,13 +169,48 @@
       }
 
       /* ---------- toolbench ---------- */
+      .tool-tabs-wrap {
+        position: relative;
+        margin-bottom: 1.1rem;
+      }
+
+      .tool-tabs-wrap::before,
+      .tool-tabs-wrap::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1.8rem;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        z-index: 1;
+      }
+
+      .tool-tabs-wrap::before {
+        left: 0;
+        background: linear-gradient(to right, rgba(11, 13, 17, 0.95), rgba(11, 13, 17, 0));
+      }
+
+      .tool-tabs-wrap::after {
+        right: 0;
+        background: linear-gradient(to left, rgba(11, 13, 17, 0.95), rgba(11, 13, 17, 0));
+      }
+
+      .tool-tabs-wrap.scroll-left::before {
+        opacity: 1;
+      }
+
+      .tool-tabs-wrap.scroll-right::after {
+        opacity: 1;
+      }
+
       .tool-tabs {
         display: flex;
         gap: 0.25rem;
         border-bottom: 1px solid var(--line);
         overflow-x: auto;
         scrollbar-width: none;
-        margin-bottom: 1.1rem;
       }
 
       .tool-tabs::-webkit-scrollbar {
@@ -1964,12 +1999,14 @@
         </div>
 
         <section aria-label="Guitar tools">
-          <div class="tool-tabs" role="tablist" aria-label="Tools">
+          <div class="tool-tabs-wrap">
+            <div class="tool-tabs" role="tablist" aria-label="Tools">
             <button class="tool-tab active" type="button" role="tab" aria-selected="true" data-tool="tuner">tuner</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="metronome">metronome</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="drone">drone</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="song-builder">song builder</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="scale-builder">scale builder</button>
+            </div>
           </div>
 
           <div class="tools-panels">
@@ -5891,6 +5928,23 @@
 
         const TOOL_NAMES = ["tuner", "metronome", "drone", "song-builder", "scale-builder"];
         const tabBtns = document.querySelectorAll(".tool-tab");
+        const tabsWrapEl = document.querySelector(".tool-tabs-wrap");
+        const tabsStripEl = document.querySelector(".tool-tabs");
+
+        /* edge fades hint at off-screen tabs on narrow screens */
+        function updateTabEdgeFade() {
+          if (!tabsWrapEl || !tabsStripEl) return;
+          const max = tabsStripEl.scrollWidth - tabsStripEl.clientWidth;
+          tabsWrapEl.classList.toggle("scroll-left", tabsStripEl.scrollLeft > 4);
+          tabsWrapEl.classList.toggle("scroll-right", tabsStripEl.scrollLeft < max - 4);
+        }
+        if (tabsStripEl) {
+          tabsStripEl.addEventListener("scroll", updateTabEdgeFade);
+          if (window.ResizeObserver) {
+            new ResizeObserver(updateTabEdgeFade).observe(tabsStripEl);
+          }
+        }
+        window.addEventListener("resize", updateTabEdgeFade);
 
         function activateTool(name) {
           if (!TOOL_NAMES.includes(name)) name = "tuner";
@@ -5918,6 +5972,15 @@
           document.querySelectorAll(".tool-panel").forEach((p) => {
             p.hidden = p.dataset.tool !== name;
           });
+          /* a deep-linked tab can sit off-screen on narrow devices */
+          const active = document.querySelector(".tool-tab.active");
+          if (active && tabsStripEl) {
+            tabsStripEl.scrollTo({
+              left: Math.max(0, active.offsetLeft - 8),
+              behavior: "smooth",
+            });
+          }
+          updateTabEdgeFade();
         }
 
         tabBtns.forEach((b) =>
