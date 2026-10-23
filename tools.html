@@ -2391,6 +2391,19 @@
                 <button class="ghost-btn" id="fb-loop" type="button" aria-pressed="false">Loop</button>
                 <button class="ghost-btn" id="fb-click" type="button" aria-pressed="false">Click</button>
                 <div class="fb-tfield">
+                  <label class="sb-label" for="fb-pattern">Sequence</label>
+                  <select class="time-sig" id="fb-pattern" aria-label="Practice sequence">
+                    <option value="run">Up &amp; down</option>
+                    <option value="i3">In 3rds</option>
+                    <option value="i4">In 4ths</option>
+                    <option value="i5">In 5ths</option>
+                    <option value="i6">In 6ths</option>
+                    <option value="g3">Groups of 3</option>
+                    <option value="g4">Groups of 4</option>
+                    <option value="g5">Groups of 5</option>
+                  </select>
+                </div>
+                <div class="fb-tfield">
                   <label class="sb-label" for="fb-voice">Sound</label>
                   <select class="time-sig" id="fb-voice" aria-label="Sound"></select>
                 </div>
@@ -5023,40 +5036,101 @@
             : "7note";
         }
 
+        const FB_ROT = ["ionian", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"];
+
         /* the mode name for degree d of the current 7-note scale
            (positions walk degrees, so each position IS a mode of the parent) */
         function fbDegreeModeName(d) {
-          const ROT = ["ionian", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"];
           const EXTRA = {
             "harmonic-minor": ["Harmonic minor", "Locrian ♯6", "Ionian ♯5", "Dorian ♯11",
               "Phrygian dominant", "Lydian ♯2", "Altered diminished"],
             "melodic-minor": ["Melodic minor", "Dorian ♭2", "Lydian augmented",
               "Lydian dominant", "Mixolydian ♭6", "Locrian ♯2", "Altered"],
+            /* phrygian dominant is harmonic minor's 5th mode — its family
+               is the same table rotated to start there */
+            "phrygian-dominant": ["Phrygian dominant", "Lydian ♯2", "Altered diminished",
+              "Harmonic minor", "Locrian ♯6", "Ionian ♯5", "Dorian ♯11"],
           };
           let name = null;
-          const idx = ROT.indexOf(fbMode);
-          if (idx >= 0) name = ROT[(idx + d) % ROT.length];
+          const idx = FB_ROT.indexOf(fbMode);
+          if (idx >= 0) name = FB_ROT[(idx + d) % FB_ROT.length];
           else if (EXTRA[fbMode]) name = EXTRA[fbMode][d];
           if (!name) return null;
           return name.charAt(0).toUpperCase() + name.slice(1);
+        }
+
+        /* harmonic-minor family cross positions (major modes only): the
+           relative minor's harmonic minor sits at the Aeolian position,
+           its 5th mode (Phrygian dominant, a fifth up) at that position.
+           These are views within the current key — root and scale stay. */
+        function fbCrossInfo() {
+          const mi = FB_ROT.indexOf(fbMode);
+          if (mi < 0) return null;
+          const iv = fbCurMode().iv;
+          const hmPos = (((5 - mi) % 7) + 7) % 7 + 1;
+          const hmPc = (fbKey + iv[hmPos - 1]) % 12;
+          const pdPc = (hmPc + 7) % 12;
+          const pdDeg = iv.findIndex((s) => (fbKey + s) % 12 === pdPc);
+          if (pdDeg < 0) return { hmPos, hmPc };
+          return { hmPos, hmPc, pdPos: pdDeg + 1, pdPc };
+        }
+
+        /* pitch class the active shape is rooted on — cross positions
+           root on the harmonic-minor family note, not the selected key */
+        function fbShapeRootPc() {
+          if (fbShape === "xhm" || fbShape === "xpd") {
+            const info = fbCrossInfo();
+            if (info) return fbShape === "xhm" ? info.hmPc : info.pdPc;
+          }
+          return fbKey;
+        }
+
+        function fbActiveScaleName() {
+          if (fbShape === "xhm") return NOTE_NAMES[fbShapeRootPc()] + " harmonic minor";
+          if (fbShape === "xpd") return NOTE_NAMES[fbShapeRootPc()] + " phrygian dominant";
+          return fbScaleName();
         }
 
         function fbShapeList() {
           if (fbFamily() === "pent") {
             return [1, 2, 3, 4, 5].map((n) => ({ id: "box" + n, label: "Box " + n }));
           }
-          return [1, 2, 3, 4, 5, 6, 7].map((n) => {
+          const info = fbCrossInfo();
+          const cross = {};
+          if (info) {
+            cross[info.hmPos] = {
+              id: "xhm",
+              label: "Position " + info.hmPos + " · Harmonic minor",
+            };
+            if (info.pdPos) {
+              cross[info.pdPos] = {
+                id: "xpd",
+                label: "Position " + info.pdPos + " · Phrygian dominant",
+              };
+            }
+          }
+          const list = [];
+          for (let n = 1; n <= 7; n++) {
             const modeName = fbDegreeModeName(n - 1);
-            return {
+            list.push({
               id: "p" + n,
               label: "Position " + n + (modeName ? " · " + modeName : ""),
-            };
-          });
+            });
+            if (cross[n]) list.push(cross[n]);
+          }
+          return list;
         }
 
         function fbShapeLabel() {
           if (fbShape === "full") return "full neck";
           if (fbShape.startsWith("box")) return "box " + fbShape.slice(3);
+          if (fbShape === "xhm" || fbShape === "xpd") {
+            const info = fbCrossInfo();
+            if (info) {
+              if (fbShape === "xhm") return "position " + info.hmPos + " · Harmonic minor";
+              if (info.pdPos) return "position " + info.pdPos + " · Phrygian dominant";
+            }
+          }
           return "position " + fbShape.slice(1);
         }
 
@@ -5125,9 +5199,10 @@
 
         /* 3nps: each string plays the next 3 consecutive scale DEGREES, walking
            up in pitch from the anchor note on the low E; fingers follow the
-           half-step-gap convention */
-        function fb3NPSShape(anchor) {
-          const inScale = new Set(fbCurMode().iv.map((i) => (fbKey + i) % 12));
+           half-step-gap convention. pcs overrides the current scale's pitch
+           classes (cross positions play the harmonic-minor family). */
+        function fb3NPSShape(anchor, pcs) {
+          const inScale = pcs || new Set(fbCurMode().iv.map((i) => (fbKey + i) % 12));
           let next = FB_STRINGS[5].midi + anchor; /* absolute midi of next degree */
           const notes = new Map();
           let lo = 99;
@@ -5161,10 +5236,16 @@
           return { from: lo, to: hi, notes };
         }
 
-        /* default low-E anchor fret for a shape id (degree d of the scale) */
+        /* default low-E anchor fret for a shape id (degree d of the scale);
+           cross positions anchor at their own region's degree */
         function fbShapeAnchor(shapeId) {
           const iv = fbCurMode().iv;
           const f0 = (fbKey - 4 + 12) % 12;
+          if (shapeId === "xhm" || shapeId === "xpd") {
+            const info = fbCrossInfo();
+            const pos = !info ? 0 : shapeId === "xhm" ? info.hmPos : info.pdPos;
+            return f0 + iv[pos - 1];
+          }
           const d = shapeId.startsWith("box")
             ? Number(shapeId.slice(3)) - 1
             : Number(shapeId.slice(1)) - 1;
@@ -5174,6 +5255,15 @@
         function fbShapeAt(shapeId, anchor) {
           const perString = fbScaleFrets();
           if (shapeId.startsWith("box")) return fbWindowShape(anchor, perString);
+          if (shapeId === "xhm" || shapeId === "xpd") {
+            const info = fbCrossInfo();
+            const pc = shapeId === "xhm" ? info && info.hmPc : info && info.pdPc;
+            if (pc == null) return null;
+            const iv = SCALE_MODES.find((m) =>
+              m.id === (shapeId === "xhm" ? "harmonic-minor" : "phrygian-dominant")
+            ).iv;
+            return fb3NPSShape(anchor, new Set(iv.map((i) => (pc + i) % 12)));
+          }
           if (shapeId.startsWith("p")) return fb3NPSShape(anchor);
           return null;
         }
@@ -5298,8 +5388,11 @@
           });
         }
 
-        /* paint one full board (numbers, inlays, wires, strings, dots) */
-        function paintBoard(numsEl, neckEl, inlaysEl, fretsEl, from, to, shape) {
+        /* paint one full board (numbers, inlays, wires, strings, dots).
+           rootPc: the pitch class to mark as root / measure intervals from
+           (cross positions root away from the selected key) */
+        function paintBoard(numsEl, neckEl, inlaysEl, fretsEl, from, to, shape, rootPc) {
+          if (rootPc == null) rootPc = fbKey;
           const template = fretTemplate(from, to);
           [numsEl, neckEl].forEach((el) => {
             el.style.gridTemplateColumns = template;
@@ -5381,11 +5474,11 @@
               const marked = shape ? finger != null : inScale.has(pc);
               if (marked) {
                 const dot = document.createElement("span");
-                dot.className = "fb-dot" + (pc === fbKey ? " root" : "");
+                dot.className = "fb-dot" + (pc === rootPc ? " root" : "");
                 if (fbDisplay === "notes") {
                   dot.textContent = NOTE_NAMES[pc];
                 } else if (fbDisplay === "intervals") {
-                  dot.textContent = FB_DEGREES[(pc - fbKey + 12) % 12];
+                  dot.textContent = FB_DEGREES[(pc - rootPc + 12) % 12];
                 } else if (finger != null) {
                   dot.textContent = String(finger);
                 }
@@ -5400,7 +5493,13 @@
         /* the full practice run: ascending, a bar divider, then descending.
            One-shot: top note not repeated. Loop: top AND bottom notes not
            repeated — the next cycle supplies them, so no pitch doubles at
-           the seam and the up-down flow stays fluid. */
+           the seam and the up-down flow stays fluid.
+           Interval sequences reorder the same notes: "in 3rds" walks the
+           pairs 1-3, 2-4, 3-5… up, then mirrors each pair (high note
+           first) on the way down with the same seam policy. Group
+           sequences walk g-note runs (1-2-3, 2-3-4…) up, then mirror
+           them top-down. A shape too small for the interval or group
+           falls back to the plain run. */
         function fbShapeRun(shape, loop) {
           const up = [];
           for (let si = 5; si >= 0; si--) {
@@ -5412,10 +5511,33 @@
             frets.sort((a, b) => a - b);
             frets.forEach((f) => up.push({ si, f, midi: FB_STRINGS[si].midi + f }));
           }
-          const run = up.map((n) => ({ si: n.si, f: n.f, midi: n.midi, bar: false }));
-          run.push({ bar: true });
-          for (let i = up.length - 2; i >= (loop ? 1 : 0); i--) {
-            run.push({ si: up[i].si, f: up[i].f, midi: up[i].midi, bar: false });
+          const pat = FB_PATTERNS.find((p) => p.id === fbPattern);
+          const run = [];
+          const push = (n) => run.push({ si: n.si, f: n.f, midi: n.midi, bar: false });
+          if (pat && pat.k >= 2 && up.length > pat.k) {
+            const k = pat.k;
+            for (let i = 0; i + k < up.length; i++) {
+              push(up[i]);
+              push(up[i + k]);
+            }
+            run.push({ bar: true });
+            for (let i = up.length - 2; i >= (loop ? k + 1 : k); i--) {
+              push(up[i]);
+              push(up[i - k]);
+            }
+          } else if (pat && pat.g >= 2 && up.length > pat.g) {
+            const g = pat.g;
+            for (let i = 0; i + g <= up.length; i++) {
+              for (let j = 0; j < g; j++) push(up[i + j]);
+            }
+            run.push({ bar: true });
+            for (let i = up.length - 2; i >= (loop ? g : g - 1); i--) {
+              for (let j = 0; j < g; j++) push(up[i - j]);
+            }
+          } else {
+            up.forEach(push);
+            run.push({ bar: true });
+            for (let i = up.length - 2; i >= (loop ? 1 : 0); i--) push(up[i]);
           }
           return run;
         }
@@ -5457,12 +5579,13 @@
           fbScaleNameEl.textContent = fbScaleName();
           fbSubEl.textContent =
             fbShapeLabel() + (degName ? " · " + degName : "") +
+            (fbPatternLabel() ? " · " + fbPatternLabel() : "") +
             " · frets " + fretFrom + "–" + fretTo;
 
-          paintBoard(fbNumsEl, fbNeckEl, fbInlaysEl, fbFretsEl, fretFrom, fretTo, shape);
+          paintBoard(fbNumsEl, fbNeckEl, fbInlaysEl, fbFretsEl, fretFrom, fretTo, shape, fbShapeRootPc());
           fretboardEl.setAttribute(
             "aria-label",
-            "Fretboard, " + fbScaleName() + ", standard tuning, frets " +
+            "Fretboard, " + fbActiveScaleName() + ", standard tuning, frets " +
               fretFrom + " to " + fretTo
           );
           scaleStatus.textContent = "";
@@ -5491,7 +5614,7 @@
               alt.shape.from + "–" + alt.shape.to;
             paintBoard(
               fbAltNumsEl, fbAltNeckEl, fbAltInlaysEl, fbAltFretsEl,
-              alt.shape.from, alt.shape.to, alt.shape
+              alt.shape.from, alt.shape.to, alt.shape, fbShapeRootPc()
             );
             fbAltBoardEl.setAttribute(
               "aria-label",
@@ -5511,7 +5634,7 @@
             scale: {
               from: fretFrom, to: fretTo, key: fbKey, mode: fbMode, shape: fbShape,
               voice: fbVoice, bpm: Number(fbBpmInput.value) || 120, sub: fbSub,
-              loop: fbLoop, click: fbClick,
+              loop: fbLoop, click: fbClick, pattern: fbPattern,
               display: fbDisplay, showTab: fbShowTab, compareOpen: fbCompareOpen,
             },
           });
@@ -5582,6 +5705,7 @@
         const fbTransportEl = document.getElementById("fb-transport");
         const fbPlayBtn = document.getElementById("fb-play");
         const fbVoiceSel = document.getElementById("fb-voice");
+        const fbPatternSel = document.getElementById("fb-pattern");
         const fbBpmInput = document.getElementById("fb-bpm");
 
         const FB_VOICES = [
@@ -5592,6 +5716,24 @@
           { id: "piano", label: "piano" },
         ];
         let fbVoice = "eguitar";
+        /* practice sequences: plain up/down run, interval pairs where k is
+           the scale-step gap between each pair's low and high note, or
+           g-note groups that slide up the scale (1-2-3, 2-3-4, …) */
+        const FB_PATTERNS = [
+          { id: "run", k: 0, label: "up & down" },
+          { id: "i3", k: 2, label: "in 3rds" },
+          { id: "i4", k: 3, label: "in 4ths" },
+          { id: "i5", k: 4, label: "in 5ths" },
+          { id: "i6", k: 5, label: "in 6ths" },
+          { id: "g3", g: 3, label: "groups of 3" },
+          { id: "g4", g: 4, label: "groups of 4" },
+          { id: "g5", g: 5, label: "groups of 5" },
+        ];
+        let fbPattern = "run";
+        function fbPatternLabel() {
+          const p = FB_PATTERNS.find((x) => x.id === fbPattern);
+          return p && p.id !== "run" ? p.label : "";
+        }
         let fbSub = 1; /* notes per beat — quarter default, like the metro */
         let fbLoop = false;
         let fbClick = false; /* metronome click during the run */
@@ -5687,7 +5829,9 @@
             }
             fbHiTos.push(
               setTimeout(() => {
-                scaleStatus.textContent = "playing · " + fbScaleName();
+                scaleStatus.textContent =
+                  "playing · " + fbActiveScaleName() +
+                  (fbPatternLabel() ? " · " + fbPatternLabel() : "");
               }, Math.max(0, (next - ctx.currentTime) * 1000))
             );
             /* optional click track: quarter beats, accent every 4 (the
@@ -5788,6 +5932,12 @@
         fbVoiceSel.addEventListener("change", () => {
           fbVoice = fbVoiceSel.value;
           fbStopPlayback();
+          saveScalePrefs();
+        });
+        fbPatternSel.addEventListener("change", () => {
+          fbPattern = fbPatternSel.value;
+          fbStopPlayback();
+          renderFretboard();
           saveScalePrefs();
         });
         function fbSetBpm(v) {
@@ -5910,6 +6060,9 @@
         if (FB_VOICES.some((v) => v.id === savedScale.voice)) {
           fbVoice = savedScale.voice;
         }
+        if (FB_PATTERNS.some((p) => p.id === savedScale.pattern)) {
+          fbPattern = savedScale.pattern;
+        }
         if (savedScale.bpm != null) {
           fbBpmInput.value = String(
             Math.max(40, Math.min(240, Math.round(savedScale.bpm)))
@@ -5937,6 +6090,7 @@
         document.querySelectorAll("#fb-sub .sub-opt").forEach((b) => {
           b.setAttribute("aria-pressed", String(Number(b.dataset.sub) === fbSub));
         });
+        fbPatternSel.value = fbPattern;
         buildKeyModeSelects();
         buildShapeSelect();
         buildVoiceSelect();
