@@ -1985,6 +1985,17 @@
           justify-content: space-between;
         }
 
+        /* tabs wrap instead of scrolling — nothing hides off-screen */
+        .tool-tabs {
+          flex-wrap: wrap;
+          overflow-x: visible;
+        }
+
+        .tool-tabs-wrap::before,
+        .tool-tabs-wrap::after {
+          display: none;
+        }
+
         .tuner-display {
           min-height: 13rem;
           padding: 1.25rem 1rem 1.1rem;
