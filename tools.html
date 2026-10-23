@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>The Toolbench — Scott Bronder</title>
     <meta property="og:title" content="The Toolbench — Scott Bronder" />
-    <meta property="og:description" content="Free guitar tools that run entirely in your browser — tuner, metronome, drone, song builder, and a scale trainer with tab playback." />
+    <meta property="og:description" content="Free guitar tools that run entirely in your browser — a scale trainer with tab playback, song builder, drone, tuner, and metronome." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://scottbronder.com/tools" />
     <meta property="og:image" content="https://scottbronder.com/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="The Toolbench — Scott Bronder" />
-    <meta name="twitter:description" content="Free browser guitar tools — tuner, metronome, drone, song builder, scale trainer." />
+    <meta name="twitter:description" content="Free browser guitar tools — scale trainer, song builder, drone, tuner, metronome." />
     <meta name="twitter:image" content="https://scottbronder.com/og.png" />
     <meta
       name="description"
-      content="Free browser guitar tools by Scott Bronder: a tuner with mic pitch detection, a metronome, a chord drone, and a looping song builder. No apps, no sign-ups."
+      content="Free browser guitar tools by Scott Bronder: a scale trainer with tab playback, a looping song builder, a chord drone, a tuner with mic pitch detection, and a metronome. No apps, no sign-ups."
     />
     <meta property="og:title" content="The Toolbench — Scott Bronder" />
     <meta
       property="og:description"
-      content="Free browser guitar tools: tuner, metronome, chord drone, song builder."
+      content="Free browser guitar tools: scale trainer, song builder, chord drone, tuner, metronome."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://scottbronder.com/" />
@@ -2027,16 +2027,16 @@
         <section aria-label="Guitar tools">
           <div class="tool-tabs-wrap">
             <div class="tool-tabs" role="tablist" aria-label="Tools">
-            <button class="tool-tab active" type="button" role="tab" aria-selected="true" data-tool="tuner">tuner</button>
-            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="metronome">metronome</button>
-            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="drone">drone</button>
+            <button class="tool-tab active" type="button" role="tab" aria-selected="true" data-tool="scale-builder">scale builder</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="song-builder">song builder</button>
-            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="scale-builder">scale builder</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="drone">drone</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="tuner">tuner</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="metronome">metronome</button>
             </div>
           </div>
 
           <div class="tools-panels">
-            <div class="tool-panel" data-tool="tuner">
+            <div class="tool-panel" data-tool="tuner" hidden>
             <!-- ===================== tuner ===================== -->
             <div class="tool-card">
               <div class="tool-head">
@@ -2313,7 +2313,7 @@
             </div>
             </div>
 
-            <div class="tool-panel" data-tool="scale-builder" hidden>
+            <div class="tool-panel" data-tool="scale-builder">
             <!-- ===================== scale builder ===================== -->
             <div class="tool-card wide">
               <div class="tool-head">
@@ -5952,7 +5952,7 @@
 
         /* ---------- tool tabs (hash deep-links) ---------- */
 
-        const TOOL_NAMES = ["tuner", "metronome", "drone", "song-builder", "scale-builder"];
+        const TOOL_NAMES = ["scale-builder", "song-builder", "drone", "tuner", "metronome"];
         const tabBtns = document.querySelectorAll(".tool-tab");
         const tabsWrapEl = document.querySelector(".tool-tabs-wrap");
         const tabsStripEl = document.querySelector(".tool-tabs");
@@ -5973,7 +5973,7 @@
         window.addEventListener("resize", updateTabEdgeFade);
 
         function activateTool(name) {
-          if (!TOOL_NAMES.includes(name)) name = "tuner";
+          if (!TOOL_NAMES.includes(name)) name = "scale-builder";
           if (name !== "tuner") {
             // leaving the tuner: release the mic and any reference tone
             if (micState !== "off" || micStream) {
@@ -6016,7 +6016,7 @@
           })
         );
         window.addEventListener("hashchange", () => activateTool(location.hash.slice(1)));
-        activateTool(location.hash.slice(1) || store.tool || "tuner");
+        activateTool(location.hash.slice(1) || store.tool || "scale-builder");
       })();
     </script>
   </body>
