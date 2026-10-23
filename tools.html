@@ -298,6 +298,71 @@
         color: var(--faint);
       }
 
+      .tool-head-side {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+      }
+
+      .tool-guide-btn {
+        padding: 0.05rem 0.6rem;
+        font-size: 0.72rem;
+        line-height: 1.5;
+      }
+
+      .tool-guide-btn[aria-expanded="true"] {
+        border-color: var(--amber);
+        color: var(--amber);
+      }
+
+      /* collapsible per-tool guide, toggled from the head's "?" */
+      .tool-guide {
+        margin-top: 0.9rem;
+        padding: 0.85rem 1rem 0.95rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(122, 162, 247, 0.05);
+        font-size: 0.86rem;
+        line-height: 1.55;
+        color: var(--muted);
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      .tool-guide[hidden] {
+        display: none;
+      }
+
+      .tool-guide ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .tool-guide li {
+        padding-left: 1.05rem;
+        position: relative;
+      }
+
+      .tool-guide li::before {
+        content: "–";
+        position: absolute;
+        left: 0.15rem;
+        color: var(--faint);
+      }
+
+      .tool-guide a {
+        color: var(--blue);
+      }
+
+      .tool-guide-link {
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        color: var(--faint);
+      }
+
       /* ---------- tuner ---------- */
       .mic-btn {
         display: inline-flex;
@@ -2041,10 +2106,23 @@
             <div class="tool-card">
               <div class="tool-head">
                 <h3 class="tool-title">Standard tuning</h3>
-                <button class="mic-btn" id="mic-btn" type="button" aria-pressed="false">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 11a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.93V20H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.07A7 7 0 0 0 19 11Z"/></svg>
-                  <span id="mic-btn-label">Enable microphone</span>
-                </button>
+                <span class="tool-head-side">
+                  <button class="mic-btn" id="mic-btn" type="button" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z"/><path d="M19 11a1 1 0 1 0-2 0 5 5 0 0 1-10 0 1 1 0 1 0-2 0 7 7 0 0 0 6 6.93V20H8a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2h-3v-2.07A7 7 0 0 0 19 11Z"/></svg>
+                    <span id="mic-btn-label">Enable microphone</span>
+                  </button>
+                  <button class="ghost-btn tool-guide-btn" type="button" aria-expanded="false" aria-controls="guide-tuner">?</button>
+                </span>
+              </div>
+
+              <div class="tool-guide" id="guide-tuner" hidden>
+                <p>a chromatic tuner — pitch detection through your microphone, plus reference tones.</p>
+                <ul>
+                  <li>enable the microphone and play a string; the needle shows how far off you are, in cents, sharp or flat.</li>
+                  <li>no mic handy? tap a string button to hear its reference tone instead.</li>
+                  <li>tuned to a = 440 hz, standard tuning. the mic releases when you switch tools.</li>
+                </ul>
+                <p class="tool-guide-link">deep-link this tool: <a href="#tuner">tools#tuner</a></p>
               </div>
 
               <div class="tuner-display" id="tuner-display" data-state="idle">
@@ -2085,7 +2163,21 @@
             <div class="tool-card">
               <div class="tool-head">
                 <h3 class="tool-title">Metronome</h3>
-                <span class="run-state" id="metro-run-state">Stopped</span>
+                <span class="tool-head-side">
+                  <span class="run-state" id="metro-run-state">Stopped</span>
+                  <button class="ghost-btn tool-guide-btn" type="button" aria-expanded="false" aria-controls="guide-metronome">?</button>
+                </span>
+              </div>
+
+              <div class="tool-guide" id="guide-metronome" hidden>
+                <p>a metronome that goes well beyond 4/4 clicks.</p>
+                <ul>
+                  <li>40–300 bpm with tap tempo — tap along to a recording to match its pace.</li>
+                  <li>time signatures from 1/2 to 12/8, four click sounds, and subdivisions from quarters to sixteenths.</li>
+                  <li>click any beat to cycle accent → normal → rest; beat settings subdivides individual beats.</li>
+                  <li>the white ring marks the beat that's playing.</li>
+                </ul>
+                <p class="tool-guide-link">deep-link this tool: <a href="#metronome">tools#metronome</a></p>
               </div>
 
               <div class="metro-tempo">
@@ -2164,6 +2256,16 @@
             <div class="tool-card">
               <div class="tool-head">
                 <h3 class="tool-title">Drone</h3>
+                <button class="ghost-btn tool-guide-btn" type="button" aria-expanded="false" aria-controls="guide-drone">?</button>
+              </div>
+
+              <div class="tool-guide" id="guide-drone" hidden>
+                <p>a sustained chord to practice scales, intonation, and improvisation against.</p>
+                <ul>
+                  <li>pick a root and a chord type — the preview names the notes before you start.</li>
+                  <li>leave it running while you play single notes or whole solos on top.</li>
+                </ul>
+                <p class="tool-guide-link">deep-link this tool: <a href="#drone">tools#drone</a></p>
               </div>
               <p class="field-hint">A sustained chord to practice against.</p>
 
@@ -2203,7 +2305,22 @@
             <div class="tool-card wide">
               <div class="tool-head">
                 <h3 class="tool-title">Song builder</h3>
-                <span class="tool-meta">build a chord progression and play along</span>
+                <span class="tool-head-side">
+                  <span class="tool-meta">build a chord progression and play along</span>
+                  <button class="ghost-btn tool-guide-btn" type="button" aria-expanded="false" aria-controls="guide-song-builder">?</button>
+                </span>
+              </div>
+
+              <div class="tool-guide" id="guide-song-builder" hidden>
+                <p>sketch a chord progression and play along with a backing track.</p>
+                <ul>
+                  <li>pick a key and mode, then click chords from the palette to stack your progression — undo and clear sit beside the grid.</li>
+                  <li>double-click the ruler above the grid to drop section markers; drag the flags to move them, daw-style.</li>
+                  <li>six sounds: warm pad, synthwave, sampled piano, strings, choir, organ.</li>
+                  <li>bass and arpeggio tracks play along, each with its own level control.</li>
+                  <li>play loop runs 60–200 bpm — tap sets the tempo.</li>
+                </ul>
+                <p class="tool-guide-link">deep-link this tool: <a href="#song-builder">tools#song-builder</a></p>
               </div>
 
               <div class="sb-setup">
@@ -2318,7 +2435,23 @@
             <div class="tool-card wide">
               <div class="tool-head">
                 <h3 class="tool-title">Scale builder</h3>
-                <span class="tool-meta">map notes across the neck</span>
+                <span class="tool-head-side">
+                  <span class="tool-meta">map notes across the neck</span>
+                  <button class="ghost-btn tool-guide-btn" type="button" aria-expanded="false" aria-controls="guide-scale-builder">?</button>
+                </span>
+              </div>
+
+              <div class="tool-guide" id="guide-scale-builder" hidden>
+                <p>map any scale across the neck and practice it with tab playback.</p>
+                <ul>
+                  <li>17 scales, from the modes to pentatonics to exotics. positions are named for the mode that starts there — and with a major-family scale you also get the harmonic minor and phrygian dominant positions that live in the same key.</li>
+                  <li>click any note on the neck to hear it. labels switch between fingers, note names, and intervals.</li>
+                  <li>choosing a position unlocks playback: the tab walks the shape with a count-in, five instrument voices, tempo, and subdivisions.</li>
+                  <li>sequence changes what you practice — intervals in 3rds through 6ths, or sliding groups of 3, 4, and 5, up the shape and back down.</li>
+                  <li>loop cycles seamlessly, click adds the metronome, and compare octave shows the same shape an octave away.</li>
+                  <li>everything you pick is remembered for your next visit.</li>
+                </ul>
+                <p class="tool-guide-link">deep-link this tool: <a href="#scale-builder">tools#scale-builder</a></p>
               </div>
 
               <div class="fb-setup">
@@ -2374,6 +2507,8 @@
                   </div>
                 </div>
               </div>
+
+              <p class="field-hint" id="fb-full-hint" hidden>the full neck maps the scale everywhere it fits — pick a position to unlock tab playback, practice sequences, and octave comparison.</p>
 
               <div class="fb-tabwrap" id="fb-tab" hidden>
                 <div class="fb-tab">
@@ -5596,6 +5731,7 @@
           fbTabToggleEl.setAttribute("aria-pressed", String(fbShowTab));
           fbTabEl.hidden = !shape || !fbShowTab;
           fbTransportEl.hidden = !shape;
+          fbFullHintEl.hidden = !!shape;
           if (shape) paintTab(fbTabStaffEl, shape, fbLoop);
 
           /* octave comparison: collapsed behind a toggle unless opened */
@@ -5703,6 +5839,7 @@
         /* ---------- scale builder: play the tab ---------- */
 
         const fbTransportEl = document.getElementById("fb-transport");
+        const fbFullHintEl = document.getElementById("fb-full-hint");
         const fbPlayBtn = document.getElementById("fb-play");
         const fbVoiceSel = document.getElementById("fb-voice");
         const fbPatternSel = document.getElementById("fb-pattern");
@@ -6103,6 +6240,22 @@
           applyShapeWindow();
           renderFretboard();
         }
+
+        /* ---------- tool guides ---------- */
+        (function () {
+          document.querySelectorAll(".tool-guide-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const panel = document.getElementById(
+                btn.getAttribute("aria-controls")
+              );
+              if (!panel) return;
+              const open = panel.hidden;
+              panel.hidden = !open;
+              btn.setAttribute("aria-expanded", String(open));
+              btn.textContent = open ? "×" : "?";
+            });
+          });
+        })();
 
         /* ---------- tool tabs (hash deep-links) ---------- */
 
