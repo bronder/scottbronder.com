@@ -4,6 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>The Toolbench — Scott Bronder</title>
+    <meta property="og:title" content="The Toolbench — Scott Bronder" />
+    <meta property="og:description" content="Free guitar tools that run entirely in your browser — tuner, metronome, drone, song builder, and a scale trainer with tab playback." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://scottbronder.com/tools" />
+    <meta property="og:image" content="https://scottbronder.com/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="The Toolbench — Scott Bronder" />
+    <meta name="twitter:description" content="Free browser guitar tools — tuner, metronome, drone, song builder, scale trainer." />
+    <meta name="twitter:image" content="https://scottbronder.com/og.png" />
     <meta
       name="description"
       content="Free browser guitar tools by Scott Bronder: a tuner with mic pitch detection, a metronome, a chord drone, and a looping song builder. No apps, no sign-ups."
@@ -1964,10 +1973,16 @@
           width: 100%;
         }
 
+        .site-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.4rem;
+        }
+
         .site-header nav {
-          gap: 1rem;
-          flex-wrap: wrap;
-          justify-content: flex-end;
+          width: 100%;
+          gap: 0.5rem;
+          justify-content: space-between;
         }
 
         .tuner-display {

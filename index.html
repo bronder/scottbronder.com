@@ -3,6 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta property="og:title" content="Scott Bronder — Code by day. Shred by night." />
+    <meta property="og:description" content="Hand-built websites by day, shred guitar by night — plus a free browser toolbench: tuner, metronome, drone, song builder, and a scale trainer." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://scottbronder.com/" />
+    <meta property="og:image" content="https://scottbronder.com/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="scottbronder.com — web design &amp; the guitar toolbench" />
+    <meta name="twitter:description" content="Hand-built websites by day, shred guitar by night — plus a free browser toolbench." />
+    <meta name="twitter:image" content="https://scottbronder.com/og.png" />
     <title>Scott Bronder — Code by day. Shred by night.</title>
     <meta
       name="description"
@@ -518,11 +527,15 @@
 
       @media (max-width: 560px) {
         .site-header {
-          gap: 0.75rem;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.4rem;
         }
 
         .site-header nav {
-          gap: 1rem;
+          width: 100%;
+          gap: 0.5rem;
+          justify-content: space-between;
         }
 
         .hero-actions .btn,
