@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>The Toolbench — Scott Bronder</title>
     <meta property="og:title" content="The Toolbench — Scott Bronder" />
-    <meta property="og:description" content="Free guitar tools that run entirely in your browser — a scale trainer with tab playback, song builder, drone, tuner, and metronome." />
+    <meta property="og:description" content="Free guitar tools that run entirely in your browser — a scale trainer with tab playback, an arpeggio sweep builder, song builder, drone, tuner, and metronome." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://scottbronder.com/tools" />
     <meta property="og:image" content="https://scottbronder.com/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="The Toolbench — Scott Bronder" />
-    <meta name="twitter:description" content="Free browser guitar tools — scale trainer, song builder, drone, tuner, metronome." />
+    <meta name="twitter:description" content="Free browser guitar tools — scale trainer, sweep builder, song builder, drone, tuner, metronome." />
     <meta name="twitter:image" content="https://scottbronder.com/og.png" />
     <meta
       name="description"
-      content="Free browser guitar tools by Scott Bronder: a scale trainer with tab playback, a looping song builder, a chord drone, a tuner with mic pitch detection, and a metronome. No apps, no sign-ups."
+      content="Free browser guitar tools by Scott Bronder: a scale trainer with tab playback, an arpeggio sweep builder, a looping song builder, a chord drone, a tuner with mic pitch detection, and a metronome. No apps, no sign-ups."
     />
     <meta property="og:title" content="The Toolbench — Scott Bronder" />
     <meta
       property="og:description"
-      content="Free browser guitar tools: scale trainer, song builder, chord drone, tuner, metronome."
+      content="Free browser guitar tools: scale trainer, sweep builder, song builder, chord drone, tuner, metronome."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://scottbronder.com/" />
@@ -1914,6 +1914,13 @@
         font-weight: 600;
       }
 
+      /* inline slur letter inside a tab figure (5h8 / 8p3) */
+      .tab-num i {
+        font-style: normal;
+        color: var(--amber);
+        padding: 0 0.05rem;
+      }
+
       /* ---------- scale builder: playback transport ---------- */
       .fb-transport {
         display: flex;
@@ -2093,6 +2100,7 @@
           <div class="tool-tabs-wrap">
             <div class="tool-tabs" role="tablist" aria-label="Tools">
             <button class="tool-tab active" type="button" role="tab" aria-selected="true" data-tool="scale-builder">scale builder</button>
+            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="sweeps">sweep builder</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="song-builder">song builder</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="drone">drone</button>
             <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="tuner">tuner</button>
@@ -2595,6 +2603,146 @@
             </div>
 
             </div>
+
+            <div class="tool-panel" data-tool="sweeps" hidden>
+            <!-- ===================== sweep generator ===================== -->
+            <div class="tool-card wide">
+              <div class="tool-head">
+                <h3 class="tool-title">Sweep builder</h3>
+                <span class="tool-head-side">
+                  <span class="tool-meta">arpeggio sweeps across the neck</span>
+                  <button class="ghost-btn tool-guide-btn" type="button" aria-expanded="false" aria-controls="guide-sweeps">?</button>
+                </span>
+              </div>
+
+              <div class="tool-guide" id="guide-sweeps" hidden>
+                <p>arpeggio shapes built for sweep picking — one fluid rake across the strings, up and back down.</p>
+                <ul>
+                  <li>pick a root, chord quality, string count (3 to 6), and inversion — the shape, tab, and slur markers follow.</li>
+                  <li>the tab walks the sweep up and back with a bar line at the turn; h and p mark the hammer-on and pull-off that carry the turnaround.</li>
+                  <li>loop cycles seamlessly at your tempo, with a click track and count-in, in five voices — same transport as the scale builder.</li>
+                  <li>diminished and augmented shapes are symmetric: the same shape repeats every 3 (or 4) frets, so walk the fret stepper and watch it repeat.</li>
+                  <li>everything is remembered for your next visit.</li>
+                </ul>
+                <p class="tool-guide-link">deep-link this tool: <a href="#sweeps">tools#sweeps</a></p>
+              </div>
+
+              <div class="fb-setup">
+                <div class="sb-field">
+                  <label class="sb-label" for="sw-root">Root</label>
+                  <select class="time-sig" id="sw-root" aria-label="Root"></select>
+                </div>
+                <div class="sb-field">
+                  <label class="sb-label" for="sw-quality">Quality</label>
+                  <select class="time-sig" id="sw-quality" aria-label="Chord quality">
+                    <option value="maj">Major</option>
+                    <option value="min" selected>Minor</option>
+                    <option value="dim">Diminished</option>
+                    <option value="aug">Augmented</option>
+                  </select>
+                </div>
+                <div class="sb-field">
+                  <label class="sb-label" for="sw-strings">Strings</label>
+                  <select class="time-sig" id="sw-strings" aria-label="String count">
+                    <option value="3">3 · g b e</option>
+                    <option value="4">4 · d g b e</option>
+                    <option value="5" selected>5 · a d g b e</option>
+                    <option value="6">6 · e a d g b e</option>
+                  </select>
+                </div>
+                <div class="sb-field">
+                  <label class="sb-label" for="sw-inv">Inversion</label>
+                  <select class="time-sig" id="sw-inv" aria-label="Inversion">
+                    <option value="0" selected>Root</option>
+                    <option value="1">1st</option>
+                    <option value="2">2nd</option>
+                  </select>
+                </div>
+                <div class="sb-field">
+                  <span class="sb-label" id="sw-fret-label">Fret</span>
+                  <div class="tempo-entry" role="group" aria-labelledby="sw-fret-label">
+                    <button class="step-btn" id="sw-fret-down" type="button" aria-label="Move shape down one fret">−</button>
+                    <input class="tempo-input" id="sw-fret" type="number" inputmode="numeric"
+                      min="0" max="24" step="1" value="7" aria-label="Anchor fret of the shape" />
+                    <button class="step-btn" id="sw-fret-up" type="button" aria-label="Move shape up one fret">+</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fb-headrow">
+                <div class="fb-identity">
+                  <h4 class="fb-scale-name" id="sw-name"></h4>
+                  <p class="fb-sub" id="sw-sub"></p>
+                </div>
+                <div class="fb-viewctrls">
+                  <div class="sub-row" id="sw-display" role="group" aria-label="Marker labels">
+                    <button class="sub-opt" type="button" data-display="fingers" aria-pressed="true">Fingers</button>
+                    <button class="sub-opt" type="button" data-display="notes" aria-pressed="false">Notes</button>
+                    <button class="sub-opt" type="button" data-display="intervals" aria-pressed="false">Intervals</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fb-legend" aria-hidden="true">
+                <span class="fb-lg"><i class="sw sw-root"></i>root</span>
+                <span class="fb-lg"><i class="sw sw-tone"></i>chord tone</span>
+                <span class="fb-lg"><i class="sw sw-play"></i>playing</span>
+              </div>
+
+              <div class="fret-scroll">
+                <div class="fretboard" id="sw-board" role="img">
+                  <div class="fb-nums" id="sw-nums"></div>
+                  <div class="fb-neck" id="sw-neck">
+                    <div class="fb-inlays" id="sw-inlays" aria-hidden="true"></div>
+                    <div class="fb-frets" id="sw-frets" aria-hidden="true"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fb-tabwrap" id="sw-tab">
+                <div class="fb-tab">
+                  <div class="tab-labels" aria-hidden="true">
+                    <span>e</span><span>B</span><span>G</span><span>D</span><span>A</span><span>E</span>
+                  </div>
+                  <div class="tab-scroll">
+                    <div class="tab-staff" id="sw-tab-staff"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fb-transport" id="sw-transport">
+                <button class="play-btn" id="sw-play" type="button" aria-pressed="false">Play</button>
+                <button class="ghost-btn" id="sw-loop" type="button" aria-pressed="false">Loop</button>
+                <button class="ghost-btn" id="sw-click" type="button" aria-pressed="false">Click</button>
+                <div class="fb-tfield">
+                  <label class="sb-label" for="sw-voice">Sound</label>
+                  <select class="time-sig" id="sw-voice" aria-label="Sound"></select>
+                </div>
+                <div class="fb-tfield">
+                  <span class="sb-label" id="sw-bpm-label">Tempo</span>
+                  <div class="tempo-entry" role="group" aria-labelledby="sw-bpm-label">
+                    <button class="step-btn" id="sw-bpm-down" type="button" aria-label="Slower by one BPM">−</button>
+                    <input class="tempo-input" id="sw-bpm" type="number" inputmode="numeric"
+                      min="40" max="240" step="1" value="80" aria-label="Tempo in BPM" />
+                    <span class="tempo-unit" aria-hidden="true">BPM</span>
+                    <button class="step-btn" id="sw-bpm-up" type="button" aria-label="Faster by one BPM">+</button>
+                  </div>
+                </div>
+                <div class="fb-tfield">
+                  <span class="sb-label" id="sw-subdiv-label">Subdivision</span>
+                  <div class="sub-row" id="sw-subdiv" role="group" aria-labelledby="sw-subdiv-label">
+                    <button class="sub-opt" type="button" data-sub="1" aria-pressed="true">Quarter</button>
+                    <button class="sub-opt" type="button" data-sub="2" aria-pressed="false">Eighths</button>
+                    <button class="sub-opt" type="button" data-sub="3" aria-pressed="false">Triplets</button>
+                    <button class="sub-opt" type="button" data-sub="4" aria-pressed="false">Sixteenths</button>
+                  </div>
+                </div>
+              </div>
+
+              <p class="tool-status" id="sw-status" aria-live="polite"></p>
+            </div>
+            </div>
+
           </div>
         </section>
 
@@ -5525,9 +5673,11 @@
 
         /* paint one full board (numbers, inlays, wires, strings, dots).
            rootPc: the pitch class to mark as root / measure intervals from
-           (cross positions root away from the selected key) */
-        function paintBoard(numsEl, neckEl, inlaysEl, fretsEl, from, to, shape, rootPc) {
+           (cross positions root away from the selected key);
+           display: dot label mode override (defaults to the scale builder's) */
+        function paintBoard(numsEl, neckEl, inlaysEl, fretsEl, from, to, shape, rootPc, display) {
           if (rootPc == null) rootPc = fbKey;
+          if (!display) display = fbDisplay;
           const template = fretTemplate(from, to);
           [numsEl, neckEl].forEach((el) => {
             el.style.gridTemplateColumns = template;
@@ -5610,9 +5760,9 @@
               if (marked) {
                 const dot = document.createElement("span");
                 dot.className = "fb-dot" + (pc === rootPc ? " root" : "");
-                if (fbDisplay === "notes") {
+                if (display === "notes") {
                   dot.textContent = NOTE_NAMES[pc];
-                } else if (fbDisplay === "intervals") {
+                } else if (display === "intervals") {
                   dot.textContent = FB_DEGREES[(pc - rootPc + 12) % 12];
                 } else if (finger != null) {
                   dot.textContent = String(finger);
@@ -6241,6 +6391,627 @@
           renderFretboard();
         }
 
+        /* ===================== sweep generator ===================== */
+
+        const SW_QUALITIES = [
+          { id: "maj", label: "major", iv: [0, 4, 7] },
+          { id: "min", label: "minor", iv: [0, 3, 7] },
+          { id: "dim", label: "diminished", iv: [0, 3, 6] },
+          { id: "aug", label: "augmented", iv: [0, 4, 8] },
+        ];
+
+        const swRootSel = document.getElementById("sw-root");
+        const swQualSel = document.getElementById("sw-quality");
+        const swStrSel = document.getElementById("sw-strings");
+        const swInvSel = document.getElementById("sw-inv");
+        const swFretInput = document.getElementById("sw-fret");
+        const swNameEl = document.getElementById("sw-name");
+        const swSubEl = document.getElementById("sw-sub");
+        const swStatusEl = document.getElementById("sw-status");
+        const swBoardEl = document.getElementById("sw-board");
+        const swNumsEl = document.getElementById("sw-nums");
+        const swNeckEl = document.getElementById("sw-neck");
+        const swInlaysEl = document.getElementById("sw-inlays");
+        const swFretsEl = document.getElementById("sw-frets");
+        const swTabStaffEl = document.getElementById("sw-tab-staff");
+        const swPlayBtn = document.getElementById("sw-play");
+        const swLoopBtn = document.getElementById("sw-loop");
+        const swClickBtn = document.getElementById("sw-click");
+        const swVoiceSel = document.getElementById("sw-voice");
+        const swBpmInput = document.getElementById("sw-bpm");
+
+        let swRoot = 9; /* A */
+        let swQuality = "min";
+        let swStrings = 5;
+        let swInv = 0;
+        let swFret = 7;
+        let swDisplay = "fingers";
+        let swVoice = "eguitar";
+        let swLoop = false;
+        let swClick = false;
+        let swSubdiv = 1;
+        let swFrom = 0;
+        let swTo = 12;
+        let swPlayTimer = null;
+        let swHiTos = [];
+        let swLoadPending = false;
+
+        for (let k = 0; k < 12; k++) {
+          const opt = document.createElement("option");
+          opt.value = String(k);
+          opt.textContent = NOTE_NAMES[k];
+          swRootSel.appendChild(opt);
+        }
+        FB_VOICES.forEach((v) => {
+          const opt = document.createElement("option");
+          opt.value = v.id;
+          opt.textContent = v.label;
+          swVoiceSel.appendChild(opt);
+        });
+
+        /* hand-tuned fingerings, keyed "strings-quality-inversion", mapping
+           "stringIndex,fretOffsetFromAnchor" to a finger. The generator's
+           layout per shape is root-invariant, so offsets are stable keys.
+           Shapes without an entry fall back to the per-string rule. */
+        const SW_FINGERINGS = {
+          /* 3-string major, root position: middle finger bars G and B at
+             the anchor fret; index takes the low e note, pinky the octave */
+          "3-maj-0": { "2,0": 2, "1,0": 2, "0,-2": 1, "0,3": 4 },
+          /* 3-string minor, root position: the stacked 5-4-3 layout —
+             ring, middle, index across g b e, pinky on the octave */
+          "3-min-0": { "2,0": 3, "1,-1": 2, "0,-2": 1, "0,3": 4 },
+          /* 3-string major, 1st inversion: stacked 9-8-8-12 — middle on
+             the bass note, index bars the b + e pair, pinky the octave
+             (offsets are from the anchor root, 4 below the bass) */
+          "3-maj-1": { "2,4": 2, "1,3": 1, "0,3": 1, "0,7": 4 },
+          /* 3-string major, 2nd inversion: index spans the g + e pair,
+             middle on b, pinky the octave */
+          "3-maj-2": { "2,7": 1, "1,8": 2, "0,7": 1, "0,10": 4 },
+        };
+
+        /* shape overrides, keyed like the fingering table: lowPair false
+           drops the first-string hammer pair so the chord tones stack
+           across the strings instead (3-string minor root: g5 b4 e3 e8) */
+        const SW_SHAPE_OPTS = {
+          "3-min-0": { lowPair: false },
+          "3-maj-1": { lowPair: false },
+        };
+
+        /* the sweep shape: chord tones walked up the string set, one note
+           per string, plus a hammer-on pair on the first string and a
+           pull-off pair on the top string when the gap is ≤ 3 semitones */
+        function swShape() {
+          const q = SW_QUALITIES.find((x) => x.id === swQuality) || SW_QUALITIES[1];
+          const lowest = swStrings - 1;
+          const rootMidi = FB_STRINGS[lowest].midi + swFret;
+          const tones = [];
+          for (let oct = 0; oct < 6; oct++) {
+            q.iv.forEach((i) => tones.push(rootMidi + i + 12 * oct));
+          }
+          let t = 0;
+          if (swStrings === 4) {
+            /* a 4-string shape IS the 3-string shape plus one note on the
+               d string: the chord tone just below the 3-string bass */
+            while (tones[t] < rootMidi + 12 + q.iv[swInv]) t++;
+            t--;
+          } else {
+            while (tones[t] < rootMidi + q.iv[swInv]) t++;
+          }
+          const fingers =
+            SW_FINGERINGS[swStrings + "-" + swQuality + "-" + swInv] || null;
+          /* the 3-string layout governs the g string inside bigger shapes */
+          const opts3 = SW_SHAPE_OPTS["3-" + swQuality + "-" + swInv] || {};
+          const order = [];
+          const notes = new Map();
+          let lo = 99;
+          let hi = -1;
+          for (let si = lowest; si >= 0; si--) {
+            const str = FB_STRINGS[si];
+            const frets = [];
+            const add = (pitch) => {
+              const f = pitch - str.midi;
+              const ok = f >= 0 && f <= FRET_MAX;
+              if (ok) {
+                frets.push({ f, midi: pitch });
+                lo = Math.min(lo, f);
+                hi = Math.max(hi, f);
+              }
+              return ok;
+            };
+            add(tones[t]);
+            t++;
+            const gap = tones[t] - tones[t - 1];
+            /* bigger shapes CONTAIN the 3-string shape: the g string
+               follows the 3-string layout for this quality/inversion,
+               and every shape carries the high-e turnaround pair */
+            let take = false;
+            if (si === 0) {
+              take = true;
+            } else if (si === 2) {
+              take = gap <= 3 && opts3.lowPair !== false;
+            } else if (si === lowest) {
+              /* no hammer on the d string while it anchors the shape */
+              take = gap <= 3 && swStrings !== 4;
+            }
+            if (take && add(tones[t])) t++;
+            if (!frets.length) continue;
+            frets.forEach((n) => {
+              const key = si + "," + (n.f - swFret);
+              notes.set(
+                si + "," + n.f,
+                fingers && fingers[key] != null ? fingers[key] : null
+              );
+            });
+            order.push({ si, frets });
+          }
+          /* default fingering: one finger per fret across the whole shape
+             (same fret = same finger, so bars and rolls share a digit) */
+          notes.forEach((fg, key) => {
+            if (fg == null) {
+              const f = Number(key.split(",")[1]);
+              notes.set(key, fbFingerForOffset(f - lo));
+            }
+          });
+          return { from: lo, to: hi, notes, order };
+        }
+
+        /* up the sweep, a bar line at the turn, then down — same seam
+           policy as the scale builder runs. Slurred notes are prefixed
+           h or p (the source note is the column just before) */
+        function swRun(shape, loop) {
+          const up = [];
+          shape.order.forEach((s) => {
+            s.frets.forEach((n) => up.push({ si: s.si, f: n.f, midi: n.midi }));
+          });
+          const topPair =
+            up.length >= 2 && up[up.length - 1].si === up[up.length - 2].si;
+          const run = up.map((n, idx) => ({
+            si: n.si,
+            f: n.f,
+            midi: n.midi,
+            bar: false,
+            slur: idx === 1 && up[1].si === up[0].si ? "h" : null,
+          }));
+          run.push({ bar: true });
+          for (let i = up.length - 2; i >= (loop ? 1 : 0); i--) {
+            run.push({
+              si: up[i].si,
+              f: up[i].f,
+              midi: up[i].midi,
+              bar: false,
+              slur: topPair && i === up.length - 2 ? "p" : null,
+            });
+          }
+          return run;
+        }
+
+        function swPaintTab(staffEl, shape, loop) {
+          staffEl.textContent = "";
+          const run = swRun(shape, loop);
+          run.forEach((n) => {
+            const row = n.bar ? -1 : n.si;
+            for (let r = 0; r < 6; r++) {
+              const cell = document.createElement("span");
+              cell.className = "tab-cell" + (n.bar ? " bar" : "");
+              if (r === row) {
+                const num = document.createElement("span");
+                const pc = (FB_STRINGS[n.si].midi + n.f) % 12;
+                num.className = "tab-num" + (pc === swRoot ? " root" : "");
+                if (n.slur) {
+                  /* slur prefix: h8 / p3 — the source note is the column before */
+                  const letter = document.createElement("i");
+                  letter.textContent = n.slur;
+                  num.appendChild(letter);
+                  num.appendChild(document.createTextNode(String(n.f)));
+                } else {
+                  num.textContent = String(n.f);
+                }
+                cell.appendChild(num);
+              }
+              staffEl.appendChild(cell);
+            }
+          });
+        }
+
+        function swRender() {
+          const shape = swShape();
+          const clamped = fretClamp(shape.from, Math.min(FRET_MAX, shape.to));
+          swFrom = clamped[0];
+          swTo = clamped[1];
+          const q = SW_QUALITIES.find((x) => x.id === swQuality) || SW_QUALITIES[1];
+          const invLabel = ["root position", "1st inversion", "2nd inversion"][swInv];
+          const noteCount = swRun(shape, false).filter((n) => !n.bar).length;
+          swNameEl.textContent = NOTE_NAMES[swRoot] + " " + q.label + " sweep";
+          swSubEl.textContent =
+            swStrings + " strings · " + invLabel + " · " + noteCount +
+            "-note sweep · frets " + swFrom + "–" + swTo;
+          paintBoard(
+            swNumsEl, swNeckEl, swInlaysEl, swFretsEl,
+            swFrom, swTo, shape, swRoot, swDisplay
+          );
+          swBoardEl.setAttribute(
+            "aria-label",
+            "Fretboard, " + NOTE_NAMES[swRoot] + " " + q.label +
+              " arpeggio sweep, standard tuning, frets " + swFrom + " to " + swTo
+          );
+          swPaintTab(swTabStaffEl, shape, swLoop);
+        }
+
+        function swClearHighlights() {
+          swHiTos.forEach((to) => clearTimeout(to));
+          swHiTos = [];
+          document.querySelectorAll(
+            "#sw-neck .fb-note.playing, #sw-neck .fb-dot.playing, #sw-tab-staff .tab-num.playing"
+          ).forEach((el) => {
+            el.classList.remove("playing");
+          });
+        }
+
+        function swStopPlayback() {
+          if (swPlayTimer) {
+            clearInterval(swPlayTimer);
+            swPlayTimer = null;
+          }
+          swClearHighlights();
+          swPlayBtn.textContent = "Play";
+          swPlayBtn.setAttribute("aria-pressed", "false");
+          swStatusEl.textContent = "";
+        }
+
+        function swStartPlayback() {
+          const ctx = ensureAudio();
+          if (!ctx || swLoadPending) return;
+          const shape = swShape();
+          const voice = FB_VOICES.find((v) => v.id === swVoice) || FB_VOICES[0];
+          ensurePiano();
+          swLoadPending = true;
+          swStatusEl.textContent = "loading the " + voice.label + "…";
+          const loading =
+            voice.id === "piano" ? loadPianoSamples() : loadSoundfont(voice.id);
+          loading.then((samples) => {
+            swLoadPending = false;
+            if (!samples) {
+              swStatusEl.textContent =
+                "couldn't load the " + voice.label +
+                " — check your connection and try again";
+              return;
+            }
+            if (swPlayBtn.getAttribute("aria-pressed") !== "true") return;
+
+            let seq = [];
+            swRun(shape, swLoop).forEach((n, idx) => {
+              if (!n.bar) seq.push({ si: n.si, f: n.f, midi: n.midi, col: idx });
+            });
+            const ncols = swTo - swFrom + 1;
+            let neckCells = Array.from(document.querySelectorAll("#sw-neck .fb-note"));
+            let tabCells = Array.from(swTabStaffEl.children);
+            const busLevel = voice.id === "piano" ? 1.15 : 3.2;
+
+            let idx = 0;
+            let next = ctx.currentTime + 0.15;
+            const beat0 = 60 / Math.max(40, Math.min(240, Number(swBpmInput.value) || 80));
+            for (let b = 0; b < 4; b++) {
+              scheduleClick(next, b === 0 ? 2 : 1, false);
+              const at = next;
+              const n = b + 1;
+              swHiTos.push(
+                setTimeout(() => {
+                  swStatusEl.textContent = "count · " + n;
+                }, Math.max(0, (at - ctx.currentTime) * 1000))
+              );
+              next += beat0;
+            }
+            swHiTos.push(
+              setTimeout(() => {
+                swStatusEl.textContent = "playing · " + swNameEl.textContent;
+              }, Math.max(0, (next - ctx.currentTime) * 1000))
+            );
+            let nextClick = next;
+            let clickBeat = 0;
+            let runEnd = next;
+            const tick = () => {
+              const beat =
+                60 / Math.max(40, Math.min(240, Number(swBpmInput.value) || 80));
+              const spacing = beat / swSubdiv;
+              while (idx < seq.length && next < ctx.currentTime + 0.15) {
+                const n = seq[idx];
+                const last = idx === seq.length - 1 && !swLoop;
+                const ringSec = last
+                  ? Math.min(beat * 2, 2.2)
+                  : Math.min(spacing * 0.85, 1.2);
+                const freq = 440 * Math.pow(2, (n.midi - 69) / 12);
+                buildSampledVoice(samples, freq, 0.5 * busLevel, 0.005, next, ringSec);
+                const cell = neckCells[n.si * ncols + (n.f - swFrom)];
+                const tabCell = tabCells[n.col * 6 + n.si];
+                const delay = Math.max(0, (next - ctx.currentTime) * 1000);
+                swHiTos.push(
+                  setTimeout(() => {
+                    const dot = cell && cell.querySelector(".fb-dot");
+                    const num = tabCell && tabCell.querySelector(".tab-num");
+                    if (cell) cell.classList.add("playing");
+                    if (dot) dot.classList.add("playing");
+                    if (num) num.classList.add("playing");
+                    swHiTos.push(
+                      setTimeout(() => {
+                        if (cell) cell.classList.remove("playing");
+                        if (dot) dot.classList.remove("playing");
+                        if (num) num.classList.remove("playing");
+                      }, last ? ringSec * 1000 : spacing * 900)
+                    );
+                  }, delay)
+                );
+                next += spacing;
+                idx++;
+                runEnd = next;
+              }
+              while (
+                swClick &&
+                nextClick < ctx.currentTime + 0.15 &&
+                nextClick < runEnd + 0.001
+              ) {
+                scheduleClick(nextClick, clickBeat % 4 === 0 ? 2 : 1, false);
+                nextClick += beat;
+                clickBeat++;
+              }
+              if (idx >= seq.length) {
+                const lastStart = next - spacing;
+                const ringSec = Math.min(beat * 2, 2.2);
+                if (swLoop) {
+                  swPaintTab(swTabStaffEl, shape, true);
+                  tabCells = Array.from(swTabStaffEl.children);
+                  neckCells = Array.from(document.querySelectorAll("#sw-neck .fb-note"));
+                  seq = [];
+                  swRun(shape, true).forEach((n2, idx2) => {
+                    if (!n2.bar) {
+                      seq.push({ si: n2.si, f: n2.f, midi: n2.midi, col: idx2 });
+                    }
+                  });
+                  next = lastStart + spacing;
+                  idx = 0;
+                  clickBeat = 0;
+                } else {
+                  swHiTos.push(
+                    setTimeout(
+                      swStopPlayback,
+                      Math.max(0, (lastStart - ctx.currentTime) * 1000) +
+                        ringSec * 1000 + 300
+                    )
+                  );
+                  clearInterval(swPlayTimer);
+                  swPlayTimer = null;
+                }
+              }
+            };
+            swPlayTimer = setInterval(tick, 30);
+            tick();
+          });
+          swPlayBtn.textContent = "Stop";
+          swPlayBtn.setAttribute("aria-pressed", "true");
+        }
+
+        swPlayBtn.addEventListener("click", () => {
+          if (swPlayTimer || swLoadPending) swStopPlayback();
+          else swStartPlayback();
+        });
+
+        /* tap a fret position to hear it, like the scale builder */
+        swNeckEl.addEventListener("click", (e) => {
+          const cell = e.target.closest(".fb-note");
+          if (!cell || cell.dataset.si == null) return;
+          const ctx = ensureAudio();
+          if (!ctx) return;
+          const voice = FB_VOICES.find((v) => v.id === swVoice) || FB_VOICES[0];
+          ensurePiano();
+          const loading =
+            voice.id === "piano" ? loadPianoSamples() : loadSoundfont(voice.id);
+          loading.then((samples) => {
+            if (!samples) {
+              swStatusEl.textContent =
+                "couldn't load the " + voice.label +
+                " — check your connection and try again";
+              return;
+            }
+            const midi =
+              FB_STRINGS[Number(cell.dataset.si)].midi + Number(cell.dataset.f);
+            const freq = 440 * Math.pow(2, (midi - 69) / 12);
+            buildSampledVoice(
+              samples, freq, 0.5 * (voice.id === "piano" ? 1.15 : 3.2),
+              0.005, ctx.currentTime, 1.6
+            );
+          });
+          cell.classList.add("playing");
+          setTimeout(() => cell.classList.remove("playing"), 350);
+        });
+
+        function swSavePrefs() {
+          saveStore({
+            sweeps: {
+              root: swRoot, quality: swQuality, strings: swStrings, inv: swInv,
+              fret: swFret, display: swDisplay, voice: swVoice,
+              bpm: Number(swBpmInput.value) || 80, subdiv: swSubdiv,
+              loop: swLoop, click: swClick,
+            },
+          });
+        }
+
+        /* the root's natural position on the set's lowest string; open and
+           1st-fret anchors lift an octave so the default view is mid-neck */
+        function swNaturalFret() {
+          const open = FB_STRINGS[swStrings - 1].midi % 12;
+          const n = (swRoot - open + 12) % 12;
+          return n < 3 ? n + 12 : n;
+        }
+
+        function swSetFret(v) {
+          swFret = Math.max(0, Math.min(24, Math.round(v)));
+          swFretInput.value = String(swFret);
+          /* the anchor fret decides the sounding root — keep the Root
+             select honest when the shape is slid away from it */
+          swRoot = (FB_STRINGS[swStrings - 1].midi + swFret) % 12;
+          swRootSel.value = String(swRoot);
+          swStopPlayback();
+          swRender();
+          swSavePrefs();
+        }
+
+        swRootSel.addEventListener("change", () => {
+          swStopPlayback();
+          swRoot = Number(swRootSel.value);
+          swFret = swNaturalFret();
+          swFretInput.value = String(swFret);
+          swRender();
+          swSavePrefs();
+        });
+        swQualSel.addEventListener("change", () => {
+          swStopPlayback();
+          swQuality = swQualSel.value;
+          swRender();
+          swSavePrefs();
+        });
+        swStrSel.addEventListener("change", () => {
+          swStopPlayback();
+          swStrings = Number(swStrSel.value);
+          swFret = swNaturalFret();
+          swFretInput.value = String(swFret);
+          swRender();
+          swSavePrefs();
+        });
+        swInvSel.addEventListener("change", () => {
+          swStopPlayback();
+          swInv = Number(swInvSel.value);
+          swRender();
+          swSavePrefs();
+        });
+        document.getElementById("sw-fret-down").addEventListener("click", () =>
+          swSetFret(swFret - 1)
+        );
+        document.getElementById("sw-fret-up").addEventListener("click", () =>
+          swSetFret(swFret + 1)
+        );
+        swFretInput.addEventListener("change", () =>
+          swSetFret(Number(swFretInput.value) || 0)
+        );
+        document.querySelectorAll("#sw-display .sub-opt").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            swDisplay = btn.dataset.display;
+            document.querySelectorAll("#sw-display .sub-opt").forEach((b) => {
+              b.setAttribute(
+                "aria-pressed",
+                String(b.dataset.display === swDisplay)
+              );
+            });
+            swRender();
+            swSavePrefs();
+          });
+        });
+        swVoiceSel.addEventListener("change", () => {
+          swVoice = swVoiceSel.value;
+          swStopPlayback();
+          swSavePrefs();
+        });
+        function swSetBpm(v) {
+          const c = Math.max(40, Math.min(240, Math.round(v)));
+          swBpmInput.value = String(c);
+          swSavePrefs();
+        }
+        document.getElementById("sw-bpm-down").addEventListener("click", () =>
+          swSetBpm((Number(swBpmInput.value) || 80) - 1)
+        );
+        document.getElementById("sw-bpm-up").addEventListener("click", () =>
+          swSetBpm((Number(swBpmInput.value) || 80) + 1)
+        );
+        swBpmInput.addEventListener("change", () =>
+          swSetBpm(Number(swBpmInput.value) || 80)
+        );
+        document.querySelectorAll("#sw-subdiv .sub-opt").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            swSubdiv = Number(btn.dataset.sub) || 1;
+            document.querySelectorAll("#sw-subdiv .sub-opt").forEach((b) => {
+              b.setAttribute(
+                "aria-pressed",
+                String(Number(b.dataset.sub) === swSubdiv)
+              );
+            });
+            swSavePrefs();
+          });
+        });
+        swLoopBtn.addEventListener("click", () => {
+          swLoop = !swLoop;
+          swLoopBtn.setAttribute("aria-pressed", String(swLoop));
+          if (!swPlayTimer && !swLoadPending) swRender();
+          swSavePrefs();
+        });
+        swClickBtn.addEventListener("click", () => {
+          swClick = !swClick;
+          swClickBtn.setAttribute("aria-pressed", String(swClick));
+          swSavePrefs();
+        });
+
+        /* restore saved sweep prefs, then first paint */
+        (function () {
+          const saved = loadStore().sweeps || {};
+          if (Number.isInteger(saved.root) && saved.root >= 0 && saved.root < 12) {
+            swRoot = saved.root;
+          }
+          if (SW_QUALITIES.some((q) => q.id === saved.quality)) {
+            swQuality = saved.quality;
+          }
+          if ([3, 4, 5, 6].includes(saved.strings)) {
+            swStrings = saved.strings;
+          }
+          if ([0, 1, 2].includes(saved.inv)) {
+            swInv = saved.inv;
+          }
+          if (Number.isInteger(saved.fret) && saved.fret >= 0 && saved.fret <= 24) {
+            swFret = saved.fret;
+          } else {
+            swFret = swNaturalFret();
+          }
+          /* trust the fret over the saved root: the anchor decides */
+          swRoot = (FB_STRINGS[swStrings - 1].midi + swFret) % 12;
+          if (["fingers", "notes", "intervals"].includes(saved.display)) {
+            swDisplay = saved.display;
+          }
+          if (FB_VOICES.some((v) => v.id === saved.voice)) {
+            swVoice = saved.voice;
+          }
+          if (saved.bpm != null) {
+            swBpmInput.value = String(
+              Math.max(40, Math.min(240, Math.round(saved.bpm)))
+            );
+          }
+          if ([1, 2, 3, 4].includes(saved.subdiv)) {
+            swSubdiv = saved.subdiv;
+          }
+          if (typeof saved.loop === "boolean") {
+            swLoop = saved.loop;
+            swLoopBtn.setAttribute("aria-pressed", String(swLoop));
+          }
+          if (typeof saved.click === "boolean") {
+            swClick = saved.click;
+            swClickBtn.setAttribute("aria-pressed", String(swClick));
+          }
+          swRootSel.value = String(swRoot);
+          swQualSel.value = swQuality;
+          swStrSel.value = String(swStrings);
+          swInvSel.value = String(swInv);
+          swFretInput.value = String(swFret);
+          swVoiceSel.value = swVoice;
+          document.querySelectorAll("#sw-display .sub-opt").forEach((b) => {
+            b.setAttribute(
+              "aria-pressed",
+              String(b.dataset.display === swDisplay)
+            );
+          });
+          document.querySelectorAll("#sw-subdiv .sub-opt").forEach((b) => {
+            b.setAttribute(
+              "aria-pressed",
+              String(Number(b.dataset.sub) === swSubdiv)
+            );
+          });
+          swRender();
+        })();
+
         /* ---------- tool guides ---------- */
         (function () {
           document.querySelectorAll(".tool-guide-btn").forEach((btn) => {
@@ -6259,7 +7030,7 @@
 
         /* ---------- tool tabs (hash deep-links) ---------- */
 
-        const TOOL_NAMES = ["scale-builder", "song-builder", "drone", "tuner", "metronome"];
+        const TOOL_NAMES = ["scale-builder", "sweeps", "song-builder", "drone", "tuner", "metronome"];
         const tabBtns = document.querySelectorAll(".tool-tab");
         const tabsWrapEl = document.querySelector(".tool-tabs-wrap");
         const tabsStripEl = document.querySelector(".tool-tabs");
@@ -6295,6 +7066,9 @@
           }
           if (name !== "scale-builder" && typeof fbStopPlayback === "function") {
             fbStopPlayback();
+          }
+          if (name !== "sweeps" && typeof swStopPlayback === "function") {
+            swStopPlayback();
           }
           saveStore({ tool: name });
           tabBtns.forEach((b) => {
