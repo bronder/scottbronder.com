@@ -2015,6 +2015,16 @@
         font-size: 0.95rem;
       }
 
+      /* the tap button matches the shrunken step buttons so the transport
+         controls all line up */
+      .fb-tfield .ghost-btn {
+        height: 1.9rem;
+        padding: 0 0.7rem;
+        font-size: 0.72rem;
+        border-radius: 8px;
+        align-self: center;
+      }
+
       .fb-dot {
         transition: transform 0.08s ease, box-shadow 0.08s ease;
       }
@@ -2184,7 +2194,7 @@
               <div class="tool-guide" id="guide-tuner" hidden>
                 <p>a chromatic tuner — pitch detection through your microphone, plus reference tones.</p>
                 <ul>
-                  <li>enable the microphone and play a string; the needle shows how far off you are, in cents, sharp or flat.</li>
+                  <li>enable the microphone and play a string; the needle shows how far off you are, in cents — within ±5¢ the display turns green and calls it in tune.</li>
                   <li>no mic handy? tap a string button to hear its reference tone instead.</li>
                   <li>tuned to a = 440 hz, standard tuning. the mic releases when you switch tools.</li>
                 </ul>
@@ -2241,7 +2251,7 @@
                   <li>40–300 bpm with tap tempo — tap along to a recording to match its pace.</li>
                   <li>time signatures from 1/2 to 12/8, four click sounds, and subdivisions from quarters to sixteenths.</li>
                   <li>click any beat to cycle accent → normal → rest; beat settings subdivides individual beats.</li>
-                  <li>the white ring marks the beat that's playing.</li>
+                  <li>the white ring marks the beat that's playing, and the run state shows the meter and tempo while it runs.</li>
                 </ul>
                 <p class="tool-guide-link">deep-link this tool: <a href="#metronome">tools#metronome</a></p>
               </div>
@@ -2328,7 +2338,7 @@
               <div class="tool-guide" id="guide-drone" hidden>
                 <p>a sustained chord to practice scales, intonation, and improvisation against.</p>
                 <ul>
-                  <li>pick a root and a chord type — the preview names the notes before you start.</li>
+                  <li>pick a root and a chord type — power chords through 7ths, sus, and diminished — the preview names the notes before you start.</li>
                   <li>leave it running while you play single notes or whole solos on top.</li>
                 </ul>
                 <p class="tool-guide-link">deep-link this tool: <a href="#drone">tools#drone</a></p>
@@ -2378,13 +2388,14 @@
               </div>
 
               <div class="tool-guide" id="guide-song-builder" hidden>
-                <p>sketch a chord progression and play along with a backing track.</p>
+                <p>sketch a chord progression, practice it with backing tracks — and sweep it.</p>
                 <ul>
                   <li>pick a key and mode, then click chords from the palette to stack your progression — undo and clear sit beside the grid.</li>
-                  <li>double-click the ruler above the grid to drop section markers; drag the flags to move them, daw-style.</li>
-                  <li>six sounds: warm pad, synthwave, sampled piano, strings, choir, organ.</li>
-                  <li>bass and arpeggio tracks play along, each with its own level control.</li>
-                  <li>play loop runs 60–200 bpm — tap sets the tempo.</li>
+                  <li>drag blocks to reorder, drag their right edge to resize, or use the ‹ › ⧉ × buttons on each block. double-click the ruler to drop section markers; click a flag while playing to jump the loop there.</li>
+                  <li>six sounds: warm pad, synthwave, sampled piano, strings, choir, organ — chord changes crossfade seamlessly.</li>
+                  <li>bass, arpeggio, and étude tracks play along, each with its own checkbox and level. the étude plays each chord as a sweep arpeggio on piano — see its tab with the “show étude” toggle, where inversions voice-lead from chord to chord. choose 8ths, triplets, or 16ths and a 3–6 string shape.</li>
+                  <li>play loop runs 60–200 bpm after a four-click count-in — tap sets the tempo.</li>
+                  <li>everything you build is remembered for your next visit.</li>
                 </ul>
                 <p class="tool-guide-link">deep-link this tool: <a href="#song-builder">tools#song-builder</a></p>
               </div>
@@ -2553,7 +2564,7 @@
                 <ul>
                   <li>17 scales, from the modes to pentatonics to exotics. positions are named for the mode that starts there — and with a major-family scale you also get the harmonic minor and phrygian dominant positions that live in the same key.</li>
                   <li>click any note on the neck to hear it. labels switch between fingers, note names, and intervals.</li>
-                  <li>choosing a position unlocks playback: the tab walks the shape with a count-in, five instrument voices, tempo, and subdivisions.</li>
+                  <li>a position is always chosen, so the tab is always ready: it walks the shape with a count-in, five instrument voices, tempo, and subdivisions. the frets row lets you widen the window around the position.</li>
                   <li>sequence changes what you practice — intervals in 3rds through 6ths, or sliding groups of 3, 4, and 5, up the shape and back down.</li>
                   <li>loop cycles seamlessly, click adds the metronome, and compare octave shows the same shape an octave away.</li>
                   <li>everything you pick is remembered for your next visit.</li>
@@ -2655,6 +2666,7 @@
                       min="40" max="240" step="1" value="120" aria-label="Tempo in BPM" />
                     <span class="tempo-unit" aria-hidden="true">BPM</span>
                     <button class="step-btn" id="fb-bpm-up" type="button" aria-label="Faster by one BPM">+</button>
+                    <button class="ghost-btn" id="fb-tap" type="button">Tap</button>
                   </div>
                 </div>
                 <div class="fb-tfield">
@@ -2715,10 +2727,11 @@
               <div class="tool-guide" id="guide-sweeps" hidden>
                 <p>arpeggio shapes built for sweep picking — one fluid rake across the strings, up and back down.</p>
                 <ul>
-                  <li>pick a root, chord quality, string count (3 to 6), and inversion — the shape, tab, and slur markers follow.</li>
-                  <li>the tab walks the sweep up and back with a bar line at the turn; h and p mark the hammer-on and pull-off that carry the turnaround.</li>
+                  <li>pick a root, chord quality, string count (3 to 6), and inversion — the shape, tab, and slur markers follow. the shape anchors itself mid-neck from the root you choose.</li>
+                  <li>the tab walks the sweep up and back with a bar line at the turn; h and p mark the hammer-on and pull-off that carry the turnaround. loops repeat without doubling the bottom note.</li>
+                  <li>six-string shapes top the five-string grip with a lone low-e note on the 5th, like the classic dim7 layout.</li>
                   <li>loop cycles seamlessly at your tempo, with a click track and count-in, in five voices — same transport as the scale builder.</li>
-                  <li>diminished and augmented shapes are symmetric: the same shape repeats every 3 (or 4) frets, so walk the fret stepper and watch it repeat.</li>
+                  <li>diminished and augmented shapes are symmetric: the same shape repeats every 3 (or 4) frets — walk the root up and watch it repeat.</li>
                   <li>everything is remembered for your next visit.</li>
                 </ul>
                 <p class="tool-guide-link">deep-link this tool: <a href="#sweeps">tools#sweeps</a></p>
@@ -2814,6 +2827,7 @@
                       min="40" max="240" step="1" value="80" aria-label="Tempo in BPM" />
                     <span class="tempo-unit" aria-hidden="true">BPM</span>
                     <button class="step-btn" id="sw-bpm-up" type="button" aria-label="Faster by one BPM">+</button>
+                    <button class="ghost-btn" id="sw-tap" type="button">Tap</button>
                   </div>
                 </div>
                 <div class="fb-tfield">
@@ -6374,6 +6388,23 @@
         document.getElementById("fb-bpm-up").addEventListener("click", () =>
           fbSetBpm((Number(fbBpmInput.value) || 120) + 1)
         );
+        /* tap tempo, shared with the sweep builder: keep taps from the
+           last 3 seconds, average the gaps once there are two */
+        function wireTapTempo(btnId, setBpm) {
+          const btn = document.getElementById(btnId);
+          let taps = [];
+          btn.addEventListener("click", () => {
+            const now = performance.now();
+            taps = taps.filter((t) => now - t < 3000);
+            taps.push(now);
+            if (taps.length > 5) taps.shift();
+            if (taps.length < 2) return;
+            let sum = 0;
+            for (let i = 1; i < taps.length; i++) sum += taps[i] - taps[i - 1];
+            setBpm(Math.round(60000 / (sum / (taps.length - 1))));
+          });
+        }
+        wireTapTempo("fb-tap", fbSetBpm);
         /* typing applies live (the scheduler reads the field each tick);
            blur/Enter commits and normalizes to the 40–240 range */
         fbBpmInput.addEventListener("change", () =>
@@ -7136,6 +7167,7 @@
         document.getElementById("sw-bpm-up").addEventListener("click", () =>
           swSetBpm((Number(swBpmInput.value) || 80) + 1)
         );
+        wireTapTempo("sw-tap", (v) => swSetBpm(v));
         swBpmInput.addEventListener("change", () =>
           swSetBpm(Number(swBpmInput.value) || 80)
         );
