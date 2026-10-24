@@ -1921,6 +1921,64 @@
         padding: 0 0.05rem;
       }
 
+      /* ---------- étude builder: sweep lane under the song grid ---------- */
+      .etude-ctrls {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem 0.9rem;
+        flex-wrap: wrap;
+      }
+
+      .etude-ctrls .sb-field {
+        margin: 0;
+      }
+
+      .etude-scroll {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+
+      .etude-scroll[hidden] {
+        display: none;
+      }
+
+      .etude-lane {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 0.7rem 0.9rem;
+        padding: 0.7rem 0.8rem;
+      }
+
+      .etude-card {
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 0.45rem 0.6rem 0.55rem;
+        background: var(--bg);
+        flex: 0 0 auto;
+      }
+
+      .etude-card.now {
+        border-color: var(--amber);
+      }
+
+      .etude-chord {
+        margin: 0 0 0.3rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--muted);
+        font-family: var(--mono);
+      }
+
+      .etude-card.now .etude-chord {
+        color: var(--amber);
+      }
+
+      .etude-lane .tab-staff {
+        min-width: 0;
+      }
+
       /* ---------- scale builder: playback transport ---------- */
       .fb-transport {
         display: flex;
@@ -2386,6 +2444,36 @@
                 <p class="tool-status" id="song-status" aria-live="polite"></p>
               </div>
 
+              <div class="drone-block" id="etude-block">
+                <div class="seq-head">
+                  <p class="drone-label" id="etude-label">Sweep étude</p>
+                  <div class="etude-ctrls">
+                    <button class="ghost-btn" id="etude-toggle" type="button" aria-pressed="false">Show étude</button>
+                    <div class="sb-field">
+                      <label class="sb-label" for="etude-strings">Strings</label>
+                      <select class="time-sig" id="etude-strings" aria-label="Étude string count">
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5" selected>5</option>
+                        <option value="6">6</option>
+                      </select>
+                    </div>
+                    <div class="sb-field">
+                      <label class="sb-label" for="etude-sub">Rhythm</label>
+                      <select class="time-sig" id="etude-sub" aria-label="Étude note rate">
+                        <option value="2">8ths</option>
+                        <option value="3">triplets</option>
+                        <option value="4" selected>16ths</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="etude-scroll" id="etude-scroll" hidden>
+                  <div class="etude-lane" id="etude-lane"></div>
+                </div>
+                <p class="sb-hint">every chord gets a sweep arpeggio in tab — inversions voice-lead from chord to chord, and the sweeps play along with the loop.</p>
+              </div>
+
               <div class="sb-playrow">
                 <button class="play-btn" id="song-btn" type="button" aria-pressed="false" disabled>Play loop</button>
                 <div class="sb-tempo" role="group" aria-label="Tempo">
@@ -2432,6 +2520,17 @@
                     type="range"
                     min="0" max="100" step="1" value="50"
                     aria-label="Arpeggio volume"
+                  />
+                  <label class="sb-check">
+                    <input type="checkbox" id="track-etude" checked />
+                    <span>Étude</span>
+                  </label>
+                  <input
+                    class="track-vol"
+                    id="etude-vol"
+                    type="range"
+                    min="0" max="100" step="1" value="50"
+                    aria-label="Étude volume"
                   />
                 </div>
               </div>
@@ -2515,8 +2614,6 @@
                   </div>
                 </div>
               </div>
-
-              <p class="field-hint" id="fb-full-hint" hidden>the full neck maps the scale everywhere it fits — pick a position to unlock tab playback, practice sequences, and octave comparison.</p>
 
               <div class="fb-tabwrap" id="fb-tab" hidden>
                 <div class="fb-tab">
@@ -2657,15 +2754,6 @@
                     <option value="1">1st</option>
                     <option value="2">2nd</option>
                   </select>
-                </div>
-                <div class="sb-field">
-                  <span class="sb-label" id="sw-fret-label">Fret</span>
-                  <div class="tempo-entry" role="group" aria-labelledby="sw-fret-label">
-                    <button class="step-btn" id="sw-fret-down" type="button" aria-label="Move shape down one fret">−</button>
-                    <input class="tempo-input" id="sw-fret" type="number" inputmode="numeric"
-                      min="0" max="24" step="1" value="7" aria-label="Anchor fret of the shape" />
-                    <button class="step-btn" id="sw-fret-up" type="button" aria-label="Move shape up one fret">+</button>
-                  </div>
                 </div>
               </div>
 
@@ -4215,6 +4303,12 @@
         let songVoices = [];
         let songTimer = null;
         let songFlashTimer = null;
+        let songCountTimers = [];
+
+        function clearCountIn() {
+          songCountTimers.forEach(clearTimeout);
+          songCountTimers = [];
+        }
         let songSound =
           store.song &&
           ["pad", "synthwave", "piano", "strings", "choir", "organ"].includes(
@@ -4365,6 +4459,7 @@
           }
 
           saveSongPrefs();
+          if (etudeReady) renderEtude();
         }
 
         const BEAT_CHOICES = [1, 2, 4, 8, 12, 16];
@@ -4870,23 +4965,27 @@
           // chain fires early so the crossfade is centered on the boundary
           songTimer = setTimeout(() => playChord((songIdx + 1) % seq.length), ms - CHORD_XFADE_MS);
 
-          scheduleTracks(seq[i], ms);
+          scheduleTracks(seq[i], ms, i);
         }
 
         /* ---------- derived tracks: bass + arpeggio ---------- */
 
-        let trackState = { bass: true, arp: true };
+        let trackState = { bass: true, arp: true, etude: true };
         if (store.song) {
           if (typeof store.song.bass === "boolean") trackState.bass = store.song.bass;
           if (typeof store.song.arp === "boolean") trackState.arp = store.song.arp;
+          if (typeof store.song.etude === "boolean") trackState.etude = store.song.etude;
         }
         // slider 0-100 maps to 0..2x the designed default gain
-        let bassVol = 0.32, arpVol = 0.35;
+        let bassVol = 0.32, arpVol = 0.35, etudeVol = 0.5;
         if (store.song && typeof store.song.bassVol === "number") {
           bassVol = Math.max(0, Math.min(0.64, store.song.bassVol));
         }
         if (store.song && typeof store.song.arpVol === "number") {
           arpVol = Math.max(0, Math.min(0.7, store.song.arpVol));
+        }
+        if (store.song && typeof store.song.etudeVol === "number") {
+          etudeVol = Math.max(0, Math.min(1, store.song.etudeVol));
         }
         let trackTimers = [];
         let bassVoices = [];
@@ -4939,7 +5038,7 @@
 
         // both tracks are computed from the chord the scheduler is already
         // on, so they always harmonize
-        function scheduleTracks(chord, chordMs) {
+        function scheduleTracks(chord, chordMs, idx) {
           clearTrackTimers();
           releaseVoices(bassVoices);
           bassVoices = [];
@@ -4966,6 +5065,7 @@
               }
             }
           }
+          if (idx != null) scheduleEtude(idx, chordMs, chord.beats);
         }
 
         function stopTracks() {
@@ -4974,6 +5074,8 @@
           bassVoices = [];
           releaseVoices(arpVoices);
           arpVoices = [];
+          releaseVoices(etudeVoices);
+          etudeVoices = [];
         }
 
         function playSong() {
@@ -4989,14 +5091,40 @@
           }
           ctx.resume().then(() => {
             ensureDrone();
+            /* four metronome clicks lead the loop in — Stop cancels them */
+            const countIn = (go) => {
+              clearCountIn();
+              const beat =
+                60 / (parseInt(songBpmInput.value, 10) || 80);
+              const t0 = ctx.currentTime + 0.12;
+              for (let b = 0; b < 4; b++) {
+                scheduleClick(t0 + b * beat, b === 0 ? 2 : 1, false);
+                songCountTimers.push(
+                  setTimeout(() => {
+                    if (songPlaying) songStatus.textContent = "count · " + (b + 1);
+                  }, Math.max(0, (t0 + b * beat - ctx.currentTime) * 1000))
+                );
+              }
+              songCountTimers.push(
+                setTimeout(
+                  () => {
+                    if (!songPlaying) return;
+                    songStatus.textContent = "playing…";
+                    go();
+                  },
+                  Math.max(0, (t0 + 4 * beat - ctx.currentTime) * 1000)
+                )
+              );
+            };
+            const needPiano = trackState.arp || trackState.etude;
             const samplesPending =
               (songSound === "piano" && !pianoSamples) ||
               (STYLE_FONTS[songSound] && !fontSamples[songSound]) ||
-              (trackState.arp && !pianoSamples);
+              (needPiano && !pianoSamples);
             if (samplesPending) {
               const label = SOUND_LABELS[songSound] || songSound;
-              if (trackState.arp && !pianoSamples &&
-                  !(songSound === "piano") && !STYLE_FONTS[songSound]) {
+              if (needPiano && !pianoSamples &&
+                  songSound !== "piano" && !STYLE_FONTS[songSound]) {
                 songStatus.textContent = "arp — loading the piano…";
               } else {
                 songStatus.textContent = label + " — loading…";
@@ -5016,7 +5144,7 @@
                   songBtn.textContent = "Play loop";
                   return;
                 }
-                playChord(0);
+                countIn(() => playChord(0));
               });
               songPlaying = true; // block double-starts while loading
               songBtn.setAttribute("aria-pressed", "true");
@@ -5026,7 +5154,7 @@
             songPlaying = true;
             songBtn.setAttribute("aria-pressed", "true");
             songBtn.textContent = "Stop";
-            playChord(0);
+            countIn(() => playChord(0));
           });
         }
 
@@ -5034,6 +5162,7 @@
           songPlaying = false;
           clearTimeout(songTimer);
           clearTimeout(songFlashTimer);
+          clearCountIn();
           stopTracks();
           releaseVoices(songVoices);
           songVoices = [];
@@ -5162,22 +5291,28 @@
               sound: songSound,
               bass: trackState.bass,
               arp: trackState.arp,
+              etude: trackState.etude,
               bassVol,
               arpVol,
+              etudeVol,
             },
           });
         }
 
         const trackBassInput = document.getElementById("track-bass");
         const trackArpInput = document.getElementById("track-arp");
+        const trackEtudeInput = document.getElementById("track-etude");
         trackBassInput.checked = trackState.bass;
         trackArpInput.checked = trackState.arp;
+        trackEtudeInput.checked = trackState.etude;
         const bassVolEl = document.getElementById("bass-vol");
         const arpVolEl = document.getElementById("arp-vol");
+        const etudeVolEl = document.getElementById("etude-vol");
 
         function syncTrackControls() {
           bassVolEl.disabled = !trackState.bass;
           arpVolEl.disabled = !trackState.arp;
+          etudeVolEl.disabled = !trackState.etude;
         }
 
         trackBassInput.addEventListener("change", () => {
@@ -5190,15 +5325,25 @@
           syncTrackControls();
           saveSongPrefs();
         });
+        trackEtudeInput.addEventListener("change", () => {
+          trackState.etude = trackEtudeInput.checked;
+          syncTrackControls();
+          saveSongPrefs();
+        });
 
         bassVolEl.value = Math.round((bassVol / 0.64) * 100);
         arpVolEl.value = Math.round((arpVol / 0.7) * 100);
+        etudeVolEl.value = Math.round(etudeVol * 100);
         bassVolEl.addEventListener("input", () => {
           bassVol = (parseInt(bassVolEl.value, 10) / 100) * 0.64;
           saveSongPrefs();
         });
         arpVolEl.addEventListener("input", () => {
           arpVol = (parseInt(arpVolEl.value, 10) / 100) * 0.7;
+          saveSongPrefs();
+        });
+        etudeVolEl.addEventListener("input", () => {
+          etudeVol = parseInt(etudeVolEl.value, 10) / 100;
           saveSongPrefs();
         });
         syncTrackControls();
@@ -5301,7 +5446,7 @@
         let fretTo = FRET_MAX;
         let fbKey = 9; /* A */
         let fbMode = DEFAULT_MODE;
-        let fbShape = "full";
+        let fbShape = "p1";
 
         function fbCurMode() {
           return SCALE_MODES.find((m) => m.id === fbMode) ||
@@ -5419,7 +5564,7 @@
 
         function buildShapeSelect() {
           const list = fbShapeList();
-          if (!list.some((s) => s.id === fbShape)) fbShape = "full";
+          if (!list.some((s) => s.id === fbShape)) fbShape = "p1";
           fbShapeSel.textContent = "";
           const addOpt = (parent, id, label) => {
             const opt = document.createElement("option");
@@ -5427,7 +5572,6 @@
             opt.textContent = label;
             parent.appendChild(opt);
           };
-          addOpt(fbShapeSel, "full", "Full neck");
           let group = null;
           list.forEach((s) => {
             if (s.group && s.group !== group) {
@@ -5881,7 +6025,6 @@
           fbTabToggleEl.setAttribute("aria-pressed", String(fbShowTab));
           fbTabEl.hidden = !shape || !fbShowTab;
           fbTransportEl.hidden = !shape;
-          fbFullHintEl.hidden = !!shape;
           if (shape) paintTab(fbTabStaffEl, shape, fbLoop);
 
           /* octave comparison: collapsed behind a toggle unless opened */
@@ -5926,12 +6069,11 @@
           });
         }
 
-        /* snap the fret window to the active shape (falling back to full) */
+        /* snap the fret window to the active shape */
         function applyShapeWindow() {
-          if (fbShape === "full") return;
           const shape = fbComputeShape(fbShape);
           if (!shape) {
-            fbShape = "full";
+            fbShape = "p1";
             buildShapeSelect();
             return;
           }
@@ -5945,11 +6087,6 @@
           const clamped = fretClamp(from, to);
           fretFrom = clamped[0];
           fretTo = clamped[1];
-          if (save && fbShape !== "full") {
-            /* manual range change leaves shape mode */
-            fbShape = "full";
-            buildShapeSelect();
-          }
           buildFretSelects();
           renderFretboard();
           if (save) saveScalePrefs();
@@ -5989,7 +6126,6 @@
         /* ---------- scale builder: play the tab ---------- */
 
         const fbTransportEl = document.getElementById("fb-transport");
-        const fbFullHintEl = document.getElementById("fb-full-hint");
         const fbPlayBtn = document.getElementById("fb-play");
         const fbVoiceSel = document.getElementById("fb-voice");
         const fbPatternSel = document.getElementById("fb-pattern");
@@ -6404,7 +6540,6 @@
         const swQualSel = document.getElementById("sw-quality");
         const swStrSel = document.getElementById("sw-strings");
         const swInvSel = document.getElementById("sw-inv");
-        const swFretInput = document.getElementById("sw-fret");
         const swNameEl = document.getElementById("sw-name");
         const swSubEl = document.getElementById("sw-sub");
         const swStatusEl = document.getElementById("sw-status");
@@ -6539,38 +6674,56 @@
           "6-dim-0": { shift: 1, anchorPair: false, pairs: [4] },
           "6-dim-1": { shift: 1, anchorPair: false, pairs: [4] },
           "6-dim-2": { shift: 1, anchorPair: false, pairs: [4] },
+          /* 6-string major/minor root mirror the dim design: the lone
+             low-e note plays the 5th (not the root) below the A-anchored
+             5-string shape, which keeps its hammer pair — Am:
+             E12 A12h15 D14 G14 B13 e12h17; A major: E12 A12h16 D14
+             G14 B14 e12h17 (the 4-semitone root pair needs forcing) */
+          "6-min-0": { shift: 2, anchorPair: false, pairs: [4] },
+          "6-maj-0": { shift: 2, anchorPair: false, pairs: [4], forcePairs: [4] },
+          /* 6-string major 1st inversion drops the low-e hammer pair: with
+             it, the walk 3rd→5th lands on the 2nd inversion's start and the
+             two shapes become the same thing. Lone 3rd instead, falling to
+             the low register — the exact mirror of the minor 1st inversion
+             (maj: E9 A7 D7 G6 B5 e5h9 · min: E8 A7 D7 G5 B5 e5h8) */
+          "6-maj-1": { anchorPair: false },
         };
 
         /* the sweep shape: chord tones walked up the string set, one note
            per string, plus a hammer-on pair on the first string and a
            pull-off pair on the top string when the gap is ≤ 3 semitones */
         function swShape() {
-          const q = SW_QUALITIES.find((x) => x.id === swQuality) || SW_QUALITIES[1];
-          const lowest = swStrings - 1;
-          const rootMidi = FB_STRINGS[lowest].midi + swFret;
+          return buildSweepShape(swStrings, swQuality, swInv, swFret);
+        }
+
+        /* the sweep generator, parameterized so other tools (the étude
+           lane) can build shapes for arbitrary chords — same opts and
+           fingering tables, keyed by the passed values */
+        function buildSweepShape(strings, quality, inv, fret) {
+          const q = SW_QUALITIES.find((x) => x.id === quality) || SW_QUALITIES[1];
+          const lowest = strings - 1;
+          const rootMidi = FB_STRINGS[lowest].midi + fret;
           const tones = [];
           for (let oct = 0; oct < 6; oct++) {
             q.iv.forEach((i) => tones.push(rootMidi + i + 12 * oct));
           }
           let t = 0;
-          if (swStrings === 4) {
+          if (strings === 4) {
             /* a 4-string shape IS the 3-string shape plus one note on the
                d string: the chord tone just below the 3-string bass */
-            while (tones[t] < rootMidi + 12 + q.iv[swInv]) t++;
+            while (tones[t] < rootMidi + 12 + q.iv[inv]) t++;
             t--;
           } else {
-            while (tones[t] < rootMidi + q.iv[swInv]) t++;
+            while (tones[t] < rootMidi + q.iv[inv]) t++;
           }
           /* shift walks the tone sequence past (or before) its anchor
              tone — diminished starts one tone late on 3 strings and one
              early on 4 so every string stacks +3 */
-          const shiftOpt =
-            SW_SHAPE_OPTS[swStrings + "-" + swQuality + "-" + swInv] || {};
+          const shiftOpt = SW_SHAPE_OPTS[strings + "-" + quality + "-" + inv] || {};
           if (shiftOpt.shift) t += shiftOpt.shift;
-          const fingers =
-            SW_FINGERINGS[swStrings + "-" + swQuality + "-" + swInv] || null;
+          const fingers = SW_FINGERINGS[strings + "-" + quality + "-" + inv] || null;
           /* the 3-string layout governs the g string inside bigger shapes */
-          const opts3 = SW_SHAPE_OPTS["3-" + swQuality + "-" + swInv] || {};
+          const opts3 = SW_SHAPE_OPTS["3-" + quality + "-" + inv] || {};
           const order = [];
           const notes = new Map();
           let lo = 99;
@@ -6595,8 +6748,7 @@
                follows the 3-string layout for this quality/inversion,
                and every shape carries the high-e turnaround pair */
             let take = false;
-            const myOpts =
-              SW_SHAPE_OPTS[swStrings + "-" + swQuality + "-" + swInv] || {};
+            const myOpts = SW_SHAPE_OPTS[strings + "-" + quality + "-" + inv] || {};
             if (si === 0) {
               take = true;
             } else if (si === 2) {
@@ -6612,16 +6764,18 @@
                  shapes); anchorPair true forces the pair even past the
                  3-semitone gap (5-string major root hammers root→3rd) */
               take =
-                swStrings !== 4 &&
+                strings !== 4 &&
                 (myOpts.anchorPair === true ||
                   (gap <= 3 && myOpts.anchorPair !== false));
             } else if (myOpts.pairs && myOpts.pairs.indexOf(si) !== -1) {
-              take = gap <= 3;
+              take =
+                gap <= 3 ||
+                (myOpts.forcePairs && myOpts.forcePairs.indexOf(si) !== -1);
             }
             if (take && add(tones[t])) t++;
             if (!frets.length) continue;
             frets.forEach((n) => {
-              const key = si + "," + (n.f - swFret);
+              const key = si + "," + (n.f - fret);
               notes.set(
                 si + "," + n.f,
                 fingers && fingers[key] != null ? fingers[key] : null
@@ -6912,7 +7066,7 @@
           saveStore({
             sweeps: {
               root: swRoot, quality: swQuality, strings: swStrings, inv: swInv,
-              fret: swFret, display: swDisplay, voice: swVoice,
+              display: swDisplay, voice: swVoice,
               bpm: Number(swBpmInput.value) || 80, subdiv: swSubdiv,
               loop: swLoop, click: swClick,
             },
@@ -6927,23 +7081,10 @@
           return n < 3 ? n + 12 : n;
         }
 
-        function swSetFret(v) {
-          swFret = Math.max(0, Math.min(24, Math.round(v)));
-          swFretInput.value = String(swFret);
-          /* the anchor fret decides the sounding root — keep the Root
-             select honest when the shape is slid away from it */
-          swRoot = (FB_STRINGS[swStrings - 1].midi + swFret) % 12;
-          swRootSel.value = String(swRoot);
-          swStopPlayback();
-          swRender();
-          swSavePrefs();
-        }
-
         swRootSel.addEventListener("change", () => {
           swStopPlayback();
           swRoot = Number(swRootSel.value);
           swFret = swNaturalFret();
-          swFretInput.value = String(swFret);
           swRender();
           swSavePrefs();
         });
@@ -6957,7 +7098,6 @@
           swStopPlayback();
           swStrings = Number(swStrSel.value);
           swFret = swNaturalFret();
-          swFretInput.value = String(swFret);
           swRender();
           swSavePrefs();
         });
@@ -6967,15 +7107,6 @@
           swRender();
           swSavePrefs();
         });
-        document.getElementById("sw-fret-down").addEventListener("click", () =>
-          swSetFret(swFret - 1)
-        );
-        document.getElementById("sw-fret-up").addEventListener("click", () =>
-          swSetFret(swFret + 1)
-        );
-        swFretInput.addEventListener("change", () =>
-          swSetFret(Number(swFretInput.value) || 0)
-        );
         document.querySelectorAll("#sw-display .sub-opt").forEach((btn) => {
           btn.addEventListener("click", () => {
             swDisplay = btn.dataset.display;
@@ -7047,13 +7178,7 @@
           if ([0, 1, 2].includes(saved.inv)) {
             swInv = saved.inv;
           }
-          if (Number.isInteger(saved.fret) && saved.fret >= 0 && saved.fret <= 24) {
-            swFret = saved.fret;
-          } else {
-            swFret = swNaturalFret();
-          }
-          /* trust the fret over the saved root: the anchor decides */
-          swRoot = (FB_STRINGS[swStrings - 1].midi + swFret) % 12;
+          swFret = swNaturalFret();
           if (["fingers", "notes", "intervals"].includes(saved.display)) {
             swDisplay = saved.display;
           }
@@ -7080,7 +7205,6 @@
           swQualSel.value = swQuality;
           swStrSel.value = String(swStrings);
           swInvSel.value = String(swInv);
-          swFretInput.value = String(swFret);
           swVoiceSel.value = swVoice;
           document.querySelectorAll("#sw-display .sub-opt").forEach((b) => {
             b.setAttribute(
@@ -7095,6 +7219,221 @@
             );
           });
           swRender();
+        })();
+
+        /* ---------- étude builder: sweep lane under the song grid ----------
+           every chord in the progression gets a sweep arpeggio in tab,
+           generated by the same engine the sweep builder uses. Inversions
+           voice-lead: each chord picks the shape whose entry note is
+           closest to the previous chord's top note. */
+        var etudeReady = false; /* renderGrid runs before this section initializes */
+
+        const etudeToggleBtn = document.getElementById("etude-toggle");
+        const etudeScrollEl = document.getElementById("etude-scroll");
+        const etudeLaneEl = document.getElementById("etude-lane");
+        const etudeStringsSel = document.getElementById("etude-strings");
+        const etudeSubSel = document.getElementById("etude-sub");
+        const savedEtude = loadStore().etude || {};
+
+        let etudeOn = false;
+        let etudeStrings = [3, 4, 5, 6].includes(savedEtude.strings)
+          ? savedEtude.strings
+          : 5;
+        let etudeSub = [2, 3, 4].includes(savedEtude.sub) ? savedEtude.sub : 4;
+        let etudePlans = [];
+        let etudeVoices = []; /* sampled plucks must be tracked or their looping sustain rings past Stop */
+
+        /* song-builder chords beyond the sweep engine's triads collapse to
+           their nearest triad — the sweep spells the harmony, not the color */
+        const ETUDE_QUALITY = {
+          "5": "maj", maj: "maj", "7": "maj", maj7: "maj",
+          sus4: "maj", sus2: "maj",
+          min: "min", m7: "min",
+          dim: "dim", aug: "aug",
+        };
+
+        /* root indexes DRONE_ROOTS, whose pitch classes start at E —
+           always go through the table, never use the index as a pc */
+        function etudeRootPc(chord) {
+          return DRONE_ROOTS[chord.root].midi % 12;
+        }
+
+        function etudeNaturalFret(chord, strings) {
+          const open = FB_STRINGS[strings - 1].midi % 12;
+          const n = (etudeRootPc(chord) - open + 12) % 12;
+          return n < 3 ? n + 12 : n;
+        }
+
+        function etudeShapeFor(chord, prevTopMidi) {
+          const quality = ETUDE_QUALITY[chord.quality] || "maj";
+          let best = null;
+          for (const oct of [0, 12]) {
+            const fret = etudeNaturalFret(chord, etudeStrings) + oct;
+            for (let inv = 0; inv < 3; inv++) {
+              const shape = buildSweepShape(etudeStrings, quality, inv, fret);
+              if (!shape.order.length || shape.to > FRET_MAX) continue;
+              /* the sweep loops over long chords — build the seam-friendly
+                 run (descent stops one note short so the bottom note
+                 isn't repeated between passes) */
+              const run = swRun(shape, true).filter((n) => !n.bar);
+              if (run.length < 3) continue;
+              /* voice-lead: land the entry note nearest the previous
+                 chord's exit; the first chord simply takes root position */
+              const score = prevTopMidi == null
+                ? inv * 100 + oct
+                : Math.abs(run[0].midi - prevTopMidi) + oct * 2;
+              if (!best || score < best.score) {
+                best = { score, shape, run, root: etudeRootPc(chord) };
+              }
+            }
+          }
+          return best;
+        }
+
+        function etudePaintTab(staffEl, plan) {
+          staffEl.textContent = "";
+          swRun(plan.shape, true).forEach((n, col) => {
+            const row = n.bar ? -1 : n.si;
+            for (let r = 0; r < 6; r++) {
+              const cell = document.createElement("span");
+              cell.className = "tab-cell" + (n.bar ? " bar" : "");
+              if (r === row) {
+                const num = document.createElement("span");
+                num.className =
+                  "tab-num" +
+                  ((FB_STRINGS[n.si].midi + n.f) % 12 === plan.root ? " root" : "");
+                num.dataset.run = String(col);
+                if (n.slur) {
+                  const letter = document.createElement("i");
+                  letter.textContent = n.slur;
+                  num.appendChild(letter);
+                  num.appendChild(document.createTextNode(String(n.f)));
+                } else {
+                  num.textContent = String(n.f);
+                }
+                cell.appendChild(num);
+              }
+              staffEl.appendChild(cell);
+            }
+          });
+        }
+
+        function renderEtude() {
+          etudeLaneEl.textContent = "";
+          etudePlans = [];
+          let prevTop = null;
+          /* plans are always computed — the audio track plays from them even
+             when the tab lane is hidden; cards are only built when shown */
+          seq.forEach((c, i) => {
+            const plan = etudeShapeFor(c, prevTop);
+            if (!plan) return;
+            prevTop = plan.run[plan.run.length - 1].midi;
+            etudePlans.push({
+              notes: plan.run.filter((n) => !n.bar),
+              cols: plan.run.map((n, col) => (n.bar ? null : col)).filter(Boolean),
+              frets: plan.shape.from + "–" + plan.shape.to,
+            });
+            if (!etudeOn) return;
+            const card = document.createElement("div");
+            card.className =
+              "etude-card" + (songPlaying && i === songIdx ? " now" : "");
+            card.dataset.i = String(i);
+            const label = document.createElement("p");
+            label.className = "etude-chord";
+            label.textContent =
+              chordName(c.root, c.quality) + " · " + c.beats +
+              (c.beats === 1 ? " beat" : " beats");
+            const staff = document.createElement("div");
+            staff.className = "tab-staff";
+            etudePaintTab(staff, plan);
+            card.appendChild(label);
+            card.appendChild(staff);
+            etudeLaneEl.appendChild(card);
+          });
+        }
+
+        let etudeFlashTimer = null;
+
+        function etudeFlash(idx, col) {
+          const card = etudeLaneEl.querySelector('.etude-card[data-i="' + idx + '"]');
+          const num = card && card.querySelector('.tab-num[data-run="' + col + '"]');
+          if (!num) return;
+          num.classList.add("playing");
+          clearTimeout(etudeFlashTimer);
+          etudeFlashTimer = setTimeout(() => {
+            num.classList.remove("playing");
+          }, Math.max(120, (60000 / parseInt(songBpmInput.value, 10)) / etudeSub / 2));
+        }
+
+        /* étude notes ride the derived-track scheduling: one sweep run per
+           chord, repeating at the chosen rate until the chord runs out.
+           Piano plucks, like the arpeggio track — samples arrive async */
+        function scheduleEtude(idx, chordMs, beats) {
+          if (!trackState.etude || !etudePlans[idx]) return;
+          const plan = etudePlans[idx];
+          if (!pianoSamples) {
+            ensurePiano();
+            loadPianoSamples();
+            return;
+          }
+          ensurePiano(); /* buildSampledVoice connects through the piano bus */
+          const spacing = chordMs / beats / etudeSub;
+          const count = Math.max(1, Math.round(chordMs / spacing));
+          for (let k = 0; k < count; k++) {
+            const ni = k % plan.notes.length;
+            const note = plan.notes[ni];
+            trackTimers.push(
+              setTimeout(() => {
+                if (!songPlaying) return;
+                const freq = 440 * Math.pow(2, (note.midi - 69) / 12);
+                /* each pluck rings about one note-slot — and every voice
+                   is tracked so Stop kills the looping sustain */
+                etudeVoices.push(
+                  buildSampledVoice(
+                    pianoSamples, freq, etudeVol, 0.004,
+                    audioCtx.currentTime,
+                    Math.min(1.2, spacing / 500 * 1.6)
+                  )
+                );
+                etudeFlash(idx, plan.cols[ni]);
+              }, k * spacing)
+            );
+          }
+        }
+
+        function saveEtudePrefs() {
+          saveStore({ etude: { on: etudeOn, strings: etudeStrings, sub: etudeSub } });
+        }
+
+        etudeToggleBtn.addEventListener("click", () => {
+          etudeOn = !etudeOn;
+          etudeToggleBtn.textContent = etudeOn ? "Hide étude" : "Show étude";
+          etudeToggleBtn.setAttribute("aria-pressed", String(etudeOn));
+          etudeScrollEl.hidden = !etudeOn;
+          renderEtude();
+          saveEtudePrefs();
+        });
+        etudeStringsSel.addEventListener("change", () => {
+          etudeStrings = Number(etudeStringsSel.value);
+          renderEtude();
+          saveEtudePrefs();
+        });
+        etudeSubSel.addEventListener("change", () => {
+          etudeSub = Number(etudeSubSel.value);
+          saveEtudePrefs();
+        });
+
+        /* restore saved étude prefs, then first paint (the lane stays
+           hidden until the toggle turns it on) */
+        (function () {
+          if (typeof savedEtude.on === "boolean") etudeOn = savedEtude.on;
+          etudeStringsSel.value = String(etudeStrings);
+          etudeSubSel.value = String(etudeSub);
+          etudeToggleBtn.textContent = etudeOn ? "Hide étude" : "Show étude";
+          etudeToggleBtn.setAttribute("aria-pressed", String(etudeOn));
+          etudeScrollEl.hidden = !etudeOn;
+          renderEtude();
+          etudeReady = true;
         })();
 
         /* ---------- tool guides ---------- */
