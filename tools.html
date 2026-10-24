@@ -6467,6 +6467,22 @@
           /* 3-string major, 2nd inversion: index spans the g + e pair,
              middle on b, pinky the octave */
           "3-maj-2": { "2,7": 1, "1,8": 2, "0,7": 1, "0,10": 4 },
+          /* 5-string major, 2nd inversion: index on the low a note and
+             fret 17 (g + e), then one finger per fret up top — middle
+             18, ring 19, pinky 20 */
+          "5-maj-2": { "4,7": 1, "4,12": 4, "3,11": 3, "2,9": 1, "1,10": 2, "0,9": 1, "0,12": 4 },
+          /* 5-string major, root: index hammers to the ring on the a
+             pair, then the fingers ROLL down the fret-10 notes — ring
+             on d, middle on g, index on b and the low e */
+          "5-maj-0": { "4,0": 1, "4,4": 3, "3,2": 3, "2,2": 2, "1,2": 1, "0,0": 1, "0,5": 4 },
+          /* 5-string minor, 1st inversion: index hammers to the ring,
+             ring stays on d, then the index barres the fret-13 notes
+             on g, b and the low e — pinky tops the pair */
+          "5-min-1": { "4,3": 1, "4,7": 3, "3,7": 3, "2,5": 1, "1,5": 1, "0,5": 1, "0,8": 4 },
+          /* 5-string minor, 2nd inversion: same grip as the major 2nd —
+             index hammers to the pinky (20s), index on the 17s,
+             middle on the 18s */
+          "5-min-2": { "4,7": 1, "4,12": 4, "3,10": 2, "2,9": 1, "1,10": 2, "0,8": 1, "0,12": 4 },
           /* 3-string diminished: index + ring hammer pair on g, middle
              on b, index + pinky on the high-e pull pair */
           "3-dim-0": { "2,0": 1, "2,3": 3, "1,2": 2, "0,0": 1, "0,3": 4 },
@@ -6494,6 +6510,20 @@
         const SW_SHAPE_OPTS = {
           "3-min-0": { lowPair: false },
           "3-maj-1": { lowPair: false },
+          /* 5-string major root: the classic box — hammer root→3rd on
+             the anchor string (a 4-semitone gap), one tone per string,
+             5th + octave pair on high e: A8h12 D10 G10 B10 e8h13.
+             2nd inversion is the same idea a fifth up: 5th→octave
+             hammer (5 semitones) then A15h20 D19 G17 B18 e17h20 */
+          "5-maj-0": { anchorPair: true },
+          "5-maj-2": { anchorPair: true },
+          /* 5-string minor mirrors major: every inversion leads with
+             the anchor hammer pair (3rd→5th on inv 1, 5th→octave on
+             inv 2 — 4 and 5 semitones): A11h15 D15 G13 B13 e13h16 and
+             A15h20 D18 G17 B18 e16h20; the root pair is a 3-semitone
+             gap so the default rule already takes it */
+          "5-min-1": { anchorPair: true },
+          "5-min-2": { anchorPair: true },
           /* diminished is ONE system for every string count: the dim7
              ladder stacking +3 per string from the anchor, hammer pairs
              on a, g and high e, singles on d and b. 3- and 5-string
@@ -6579,8 +6609,12 @@
               take = gap <= 3 && lowPair;
             } else if (si === lowest) {
               /* no hammer on the anchoring bass string (d anchors 4-string
-                 shapes; the dim a-string bass is a lone anchor note) */
-              take = gap <= 3 && swStrings !== 4 && myOpts.anchorPair !== false;
+                 shapes); anchorPair true forces the pair even past the
+                 3-semitone gap (5-string major root hammers root→3rd) */
+              take =
+                swStrings !== 4 &&
+                (myOpts.anchorPair === true ||
+                  (gap <= 3 && myOpts.anchorPair !== false));
             } else if (myOpts.pairs && myOpts.pairs.indexOf(si) !== -1) {
               take = gap <= 3;
             }
