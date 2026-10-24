@@ -6467,17 +6467,25 @@
           /* 3-string major, 2nd inversion: index spans the g + e pair,
              middle on b, pinky the octave */
           "3-maj-2": { "2,7": 1, "1,8": 2, "0,7": 1, "0,10": 4 },
-          /* 3-string diminished: ring on g, middle on b, index + pinky
-             on the high-e pull pair — same fingers every inversion since
-             the shape just slides 3 frets */
-          "3-dim-0": { "2,3": 3, "1,2": 2, "0,0": 1, "0,3": 4 },
-          "3-dim-1": { "2,6": 3, "1,5": 2, "0,3": 1, "0,6": 4 },
-          "3-dim-2": { "2,9": 3, "1,8": 2, "0,6": 1, "0,9": 4 },
-          /* 4-string diminished: one finger per fret — middle takes the
-             d and b, index hammers g/e, pinky tops each pair */
-          "4-dim-0": { "3,3": 3, "2,1": 1, "2,4": 4, "1,3": 3, "0,1": 1, "0,4": 4 },
-          "4-dim-1": { "3,6": 3, "2,4": 1, "2,7": 4, "1,6": 3, "0,4": 1, "0,7": 4 },
-          "4-dim-2": { "3,9": 3, "2,7": 1, "2,10": 4, "1,9": 3, "0,7": 1, "0,10": 4 },
+          /* 3-string diminished: index + ring hammer pair on g, middle
+             on b, index + pinky on the high-e pull pair */
+          "3-dim-0": { "2,0": 1, "2,3": 3, "1,2": 2, "0,0": 1, "0,3": 4 },
+          "3-dim-1": { "2,3": 1, "2,6": 3, "1,5": 2, "0,3": 1, "0,6": 4 },
+          "3-dim-2": { "2,6": 1, "2,9": 3, "1,8": 2, "0,6": 1, "0,9": 4 },
+          /* 4-string: the same shape plus the d single (middle) below */
+          "4-dim-0": { "3,0": 2, "2,-2": 1, "2,1": 3, "1,0": 2, "0,-2": 1, "0,1": 4 },
+          "4-dim-1": { "3,3": 2, "2,1": 1, "2,4": 3, "1,3": 2, "0,1": 1, "0,4": 4 },
+          "4-dim-2": { "3,6": 2, "2,4": 1, "2,7": 3, "1,6": 2, "0,4": 1, "0,7": 4 },
+          /* 5-string: + the a hammer pair (index + pinky) below */
+          "5-dim-0": { "4,0": 1, "4,3": 4, "3,1": 2, "2,-1": 1, "2,2": 3, "1,1": 2, "0,-1": 1, "0,2": 4 },
+          "5-dim-1": { "4,3": 1, "4,6": 4, "3,4": 2, "2,2": 1, "2,5": 3, "1,4": 2, "0,2": 1, "0,5": 4 },
+          "5-dim-2": { "4,6": 1, "4,9": 4, "3,7": 2, "2,5": 1, "2,8": 3, "1,7": 2, "0,5": 1, "0,8": 4 },
+          /* 6-string: + a lone ring-finger low-e note on top of the
+             5-string shape (scott's tab: E14 A12h15 D13 G11h14 B13
+             e11h14, anchor 11) */
+          "6-dim-0": { "5,3": 3, "4,1": 1, "4,4": 4, "3,2": 2, "2,0": 1, "2,3": 3, "1,2": 2, "0,0": 1, "0,3": 4 },
+          "6-dim-1": { "5,6": 3, "4,4": 1, "4,7": 4, "3,5": 2, "2,3": 1, "2,6": 3, "1,5": 2, "0,3": 1, "0,6": 4 },
+          "6-dim-2": { "5,9": 3, "4,7": 1, "4,10": 4, "3,8": 2, "2,6": 1, "2,9": 3, "1,8": 2, "0,6": 1, "0,9": 4 },
         };
 
         /* shape overrides, keyed like the fingering table: lowPair false
@@ -6486,30 +6494,21 @@
         const SW_SHAPE_OPTS = {
           "3-min-0": { lowPair: false },
           "3-maj-1": { lowPair: false },
-          /* the diminished pattern walks the dim7 starting one tone past
-             the inversion's bass, one note per string: b5 or higher on g,
-             the next tone on b, then the pull pair on e — every
-             inversion is this same shape shifted 3 frets */
-          "3-dim-0": { lowPair: false, shift: 1 },
-          "3-dim-1": { lowPair: false, shift: 1 },
-          "3-dim-2": { lowPair: false, shift: 1 },
-          /* the 4-string dim shape sits two dim7 steps lower so the tones
-             stack +3 per string with hammer/pull pairs on g and e:
-             d+3, g+1 g+4, b+3, e+1 e+4 */
-          "4-dim-0": { shift: -2, lowPair: true },
-          "4-dim-1": { shift: -2, lowPair: true },
-          "4-dim-2": { shift: -2, lowPair: true },
-          /* the 5-string dim walks the same dim7 ladder from the a
-             string: a hammer pair on a, single d, then the 3-string
-             pattern above (pairs on g and high e) */
-          "5-dim-0": { lowPair: true },
-          "5-dim-1": { lowPair: true },
-          "5-dim-2": { lowPair: true },
-          /* the 6-string dim walks the full dim7 ladder from the low e:
-             pairs on e a g and high e, single notes on d and b */
-          "6-dim-0": { lowPair: true, pairs: [4] },
-          "6-dim-1": { lowPair: true, pairs: [4] },
-          "6-dim-2": { lowPair: true, pairs: [4] },
+          /* diminished is ONE system for every string count: the dim7
+             ladder stacking +3 per string from the anchor, hammer pairs
+             on a, g and high e, singles on d and b. 3- and 5-string
+             shapes need no overrides (the g pair is the default rule);
+             the 4-string walk starts three dim7 steps lower than the
+             generator's octave-up pick so d lands on the anchor root */
+          "4-dim-0": { shift: -3 },
+          "4-dim-1": { shift: -3 },
+          "4-dim-2": { shift: -3 },
+          /* the 6-string shape tops the 5-string one with a LONE low-e
+             note one dim7 step past the anchor: skip the root, no
+             anchor pair, and the a string takes a hammer pair */
+          "6-dim-0": { shift: 1, anchorPair: false, pairs: [4] },
+          "6-dim-1": { shift: 1, anchorPair: false, pairs: [4] },
+          "6-dim-2": { shift: 1, anchorPair: false, pairs: [4] },
         };
 
         /* the sweep shape: chord tones walked up the string set, one note
@@ -6572,7 +6571,7 @@
               take = true;
             } else if (si === 2) {
               /* the g string follows the 3-string layout unless this
-                 exact shape overrides it (4-string dim keeps the pair) */
+                 exact shape overrides it */
               const lowPair =
                 myOpts.lowPair !== undefined
                   ? myOpts.lowPair
