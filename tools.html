@@ -216,10 +216,30 @@
 
       .tool-tabs {
         display: flex;
-        gap: 0.25rem;
+        gap: 1.5rem;
         border-bottom: 1px solid var(--line);
         overflow-x: auto;
         scrollbar-width: none;
+      }
+
+      .tool-tab-group {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+      }
+
+      .tool-group-label {
+        font-family: var(--mono);
+        font-size: 0.58rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--faint);
+        padding: 0 0.95rem 0.15rem;
+      }
+
+      .tool-group-tabs {
+        display: flex;
+        gap: 0.25rem;
       }
 
       .tool-tabs::-webkit-scrollbar {
@@ -262,8 +282,56 @@
       }
 
       .tool-panel[data-tool="song-builder"],
-      .tool-panel[data-tool="scale-builder"] {
+      .tool-panel[data-tool="scale-builder"],
+      .tool-panel[data-tool="licks"] {
         max-width: 64rem;
+      }
+
+      .licks-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 9rem;
+        border: 1px dashed var(--line);
+        border-radius: 10px;
+      }
+
+      .licks-empty p {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--faint);
+      }
+
+      /* wrapped tab: one staff row per system, string labels on every row */
+      .licks-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+      }
+
+      .licks-rows .fb-tab {
+        align-items: stretch;
+      }
+
+      /* fixed column tracks so a wrapped system never overflows its row */
+      .licks-rows .tab-staff {
+        grid-auto-columns: 1.8rem;
+      }
+
+      @media (max-width: 720px) {
+        .licks-rows .tab-staff {
+          grid-auto-columns: 1.35rem;
+        }
+
+        .licks-rows .tab-num {
+          font-size: 0.7rem;
+          padding: 0 0.08rem;
+        }
+      }
+
+      .licks-rows .tab-cell {
+        overflow: visible;
       }
 
       .tool-card {
@@ -2129,6 +2197,11 @@
         .tool-tabs {
           flex-wrap: wrap;
           overflow-x: visible;
+          gap: 0.75rem;
+        }
+
+        .tool-group-tabs {
+          flex-wrap: wrap;
         }
 
         .tool-tabs-wrap::before,
@@ -2167,12 +2240,23 @@
         <section aria-label="Guitar tools">
           <div class="tool-tabs-wrap">
             <div class="tool-tabs" role="tablist" aria-label="Tools">
-            <button class="tool-tab active" type="button" role="tab" aria-selected="true" data-tool="scale-builder">scale builder</button>
-            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="sweeps">sweep builder</button>
-            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="song-builder">song builder</button>
-            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="drone">drone</button>
-            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="tuner">tuner</button>
-            <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="metronome">metronome</button>
+              <div class="tool-tab-group">
+                <span class="tool-group-label" aria-hidden="true">write</span>
+                <div class="tool-group-tabs">
+                  <button class="tool-tab active" type="button" role="tab" aria-selected="true" data-tool="scale-builder">scale builder</button>
+                  <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="sweeps">sweep builder</button>
+                  <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="song-builder">song builder</button>
+                </div>
+              </div>
+              <div class="tool-tab-group">
+                <span class="tool-group-label" aria-hidden="true">practice</span>
+                <div class="tool-group-tabs">
+                  <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="licks">licks</button>
+                  <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="drone">drone</button>
+                  <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="tuner">tuner</button>
+                  <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="metronome">metronome</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -2324,6 +2408,41 @@
               </div>
 
               <p class="tool-status" id="metro-status" aria-live="polite"></p>
+            </div>
+            </div>
+
+            <div class="tool-panel" data-tool="licks" hidden>
+            <!-- ===================== licks ===================== -->
+            <div class="tool-card">
+              <div class="tool-head">
+                <h3 class="tool-title">Licks</h3>
+                <span class="tool-meta" id="licks-meta"></span>
+                <span class="tool-head-side">
+                  <button class="ghost-btn" id="licks-load-btn" type="button">load tab</button>
+                  <button class="ghost-btn" id="licks-clear-btn" type="button" hidden>×</button>
+                  <input type="file" id="licks-file" accept=".tab,.txt,.gp,.gpx,.pdf" hidden>
+                  <button class="ghost-btn tool-guide-btn" type="button" aria-expanded="false" aria-controls="guide-licks">?</button>
+                </span>
+              </div>
+
+              <div class="tool-guide" id="guide-licks" hidden>
+                <ul>
+                  <li>Load a plain-text ASCII tab file (TablEdit-style <code>.tab</code> export): six string lines per block, measures between <code>|</code> bars. <code>.gp</code>/<code>.gpx</code> files from Guitar Pro 7/8 and text-based tab <code>.pdf</code>s work too.</li>
+                  <li>Hammer-ons and pull-offs (<code>8h-13</code>, <code>13p-10</code>) and slides (<code>/</code>) are kept in the rendering.</li>
+                  <li>Scanned PDFs (images of tab) can't be read — only PDFs with selectable text.</li>
+                  <li>This is a viewer — keep the metronome tool running in its own tab for timing.</li>
+                </ul>
+              </div>
+
+              <div id="licks-empty" class="licks-empty">
+                <p>load a <code>.tab</code> file to start</p>
+              </div>
+
+              <div class="fb-tabwrap" id="licks-wrap" hidden>
+                <div class="licks-rows" id="licks-rows"></div>
+              </div>
+
+              <p class="tool-status" id="licks-status" aria-live="polite"></p>
             </div>
             </div>
 
@@ -7484,9 +7603,417 @@
           });
         })();
 
+        /* ---------- licks: display-only ASCII .tab viewer ---------- */
+
+        (function licksTool() {
+          const rowsEl = document.getElementById("licks-rows");
+          const wrapEl = document.getElementById("licks-wrap");
+          const emptyEl = document.getElementById("licks-empty");
+          const metaEl = document.getElementById("licks-meta");
+          const statusEl = document.getElementById("licks-status");
+          const loadBtn = document.getElementById("licks-load-btn");
+          const clearBtn = document.getElementById("licks-clear-btn");
+          const fileInput = document.getElementById("licks-file");
+          if (!rowsEl || !fileInput) return;
+
+          /* TablEdit-style ASCII tab: blocks of 6 lines low-E-first,
+             measures between "|" bars, digits = frets, h/p = hammer/pull
+             into the NEXT note on that string, "/" = slide. */
+          function parseAsciiTab(text) {
+            const lines = text.split(/\r?\n/);
+            const meta = {};
+            const blocks = [];
+            let pending = [];
+            for (const raw of lines) {
+              const m = raw.match(/^\s*(Title|Artist|Album|Author|Tabber):\s*(.*)$/i);
+              if (m && !pending.length) {
+                if (m[2]) meta[m[1].toLowerCase()] = m[2];
+                continue;
+              }
+              if (/^[EBGDAe]\|/.test(raw)) {
+                pending.push(raw);
+              } else if (pending.length) {
+                if (pending.length === 6) blocks.push(pending);
+                pending = [];
+              }
+            }
+            if (pending.length === 6) blocks.push(pending);
+
+            const notes = [];
+            let measures = 0;
+            blocks.forEach((block, bi) => {
+              /* each block line: "E|---measure---|---measure---|" */
+              const parsed = block.map((line, li) => {
+                const segs = line.slice(1).split("|");
+                /* tab blocks read top-to-bottom = high e to low E; the
+                   letter alone lies (TablEdit capitalizes both E strings) */
+                return { si: li, segs };
+              });
+              const nMeas = Math.max(...parsed.map((p) => {
+                const meas = p.segs.slice(1);
+                if (meas.length && meas[meas.length - 1] === "") meas.pop();
+                return meas.length;
+              }));
+              for (let m = 0; m < nMeas; m++) {
+                measures++;
+                if (notes.length) notes.push({ bar: true });
+                /* per measure: {col: [{si, f, slur}]} — same col = chord */
+                const cols = new Map();
+                parsed.forEach(({ si, segs }) => {
+                  const seg = segs[m + 1] || "";
+                  const re = /(\d+)(h|p|\/)?/g;
+                  const hits = [];
+                  let hit;
+                  while ((hit = re.exec(seg))) {
+                    hits.push({
+                      si,
+                      f: parseInt(hit[1], 10),
+                      slur: hit[2] || null,
+                      col: hit.index - Math.floor(hit[1].length / 2)
+                    });
+                  }
+                  /* the marker trails its note in ASCII (14p-10): the slur
+                     belongs to the destination note, not the source */
+                  for (let i = 0; i < hits.length - 1; i++) {
+                    if (hits[i].slur) {
+                      hits[i + 1].slur = hits[i].slur;
+                      hits[i].slur = null;
+                    }
+                  }
+                  hits.forEach((note) => {
+                    if (!cols.has(note.col)) cols.set(note.col, []);
+                    cols.get(note.col).push(note);
+                  });
+                });
+                [...cols.keys()].sort((a, b) => a - b).forEach((col) => {
+                  cols.get(col).sort((a, b) => a.si - b.si).forEach((n) => notes.push(n));
+                });
+              }
+            });
+            return { meta, notes, measures };
+          }
+
+          let licksName = "";
+          let licksNotes = null;
+
+          function licksWrapTarget() {
+            const avail = (wrapEl && !wrapEl.hidden ? wrapEl.clientWidth : 0) ||
+              (document.querySelector(".tool-panel[data-tool='licks']") || document.body).clientWidth ||
+              800;
+            const track = window.matchMedia("(max-width: 720px)").matches ? 21.6 : 28.8;
+            /* subtract the string-label column + gap */
+            const cols = Math.floor((avail - 34) / track);
+            return Math.max(8, Math.min(cols, 27));
+          }
+
+          function licksPaintTab(container, notes, target) {
+            container.textContent = "";
+            /* wrap into staff systems: break at a barline once a row is
+               wide, hard-break if a measure runs very long */
+            const TARGET = target;
+            const HARD = TARGET + 12;
+            const rows = [[]];
+            notes.forEach((n) => {
+              rows[rows.length - 1].push(n);
+              const len = rows[rows.length - 1].length;
+              if (n.bar && len >= TARGET) rows.push([]);
+              else if (len >= HARD) rows.push([]);
+            });
+            if (rows.length && !rows[rows.length - 1].length) rows.pop();
+            rows.forEach((row) => {
+              const tabRow = document.createElement("div");
+              tabRow.className = "fb-tab";
+              const labels = document.createElement("div");
+              labels.className = "tab-labels";
+              labels.setAttribute("aria-hidden", "true");
+              ["e", "B", "G", "D", "A", "E"].forEach((s) => {
+                const sp = document.createElement("span");
+                sp.textContent = s;
+                labels.appendChild(sp);
+              });
+              const scroll = document.createElement("div");
+              scroll.className = "tab-scroll";
+              const staff = document.createElement("div");
+              staff.className = "tab-staff";
+              row.forEach((n) => {
+                for (let r = 0; r < 6; r++) {
+                  const cell = document.createElement("span");
+                  cell.className = "tab-cell" + (n.bar ? " bar" : "");
+                  if (r === n.si) {
+                    const num = document.createElement("span");
+                    num.className = "tab-num";
+                    if (n.slur) {
+                      const letter = document.createElement("i");
+                      letter.textContent = n.slur;
+                      num.appendChild(letter);
+                    }
+                    num.appendChild(document.createTextNode(String(n.f)));
+                    cell.appendChild(num);
+                  }
+                  staff.appendChild(cell);
+                }
+              });
+              scroll.appendChild(staff);
+              tabRow.appendChild(labels);
+              tabRow.appendChild(scroll);
+              container.appendChild(tabRow);
+            });
+          }
+
+          function licksRender() {
+            if (!licksNotes) return;
+            let target = licksWrapTarget();
+            licksPaintTab(rowsEl, licksNotes, target);
+            /* estimate off (fonts, paddings)? shrink until every row fits */
+            let guard = 3;
+            while (guard-- > 0) {
+              const over = [...rowsEl.querySelectorAll(".tab-scroll")].find(
+                (s) => s.scrollWidth > s.clientWidth + 2
+              );
+              if (!over) break;
+              const cols = over.querySelectorAll(".tab-cell").length / 6;
+              target = Math.max(6, Math.floor(target * (over.clientWidth / over.scrollWidth)) - 1);
+              if (target >= cols) target = cols - 1;
+              licksPaintTab(rowsEl, licksNotes, target);
+            }
+          }
+
+          function licksShow(name, meta, notes, measures) {
+            licksName = name;
+            licksNotes = notes;
+            metaEl.textContent = [meta && meta.title, meta && meta.artist].filter(Boolean).join(" — ");
+            emptyEl.hidden = true;
+            wrapEl.hidden = false;
+            clearBtn.hidden = false;
+            licksRender();
+            statusEl.textContent = name
+              ? name + " · " + measures + (measures === 1 ? " measure" : " measures") +
+                " · " + notes.filter((n) => !n.bar).length + " notes"
+              : "";
+            saveStore({ licks: { name, meta: meta || {}, notes, measures } });
+          }
+
+          function licksReset() {
+            metaEl.textContent = "";
+            statusEl.textContent = "";
+            rowsEl.textContent = "";
+            licksName = "";
+            licksNotes = null;
+            emptyEl.hidden = false;
+            wrapEl.hidden = true;
+            clearBtn.hidden = true;
+          }
+
+          /* ---------- Guitar Pro (.gp/.gpx = zip with Content/score.gpif) ---------- */
+
+          async function gpZipRead(buf, wanted) {
+            const dv = new DataView(buf);
+            let eocd = -1;
+            for (let i = dv.byteLength - 22; i >= 0 && i > dv.byteLength - 66000; i--) {
+              if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+            }
+            if (eocd < 0) throw new Error("not a zip");
+            const count = dv.getUint16(eocd + 10, true);
+            let off = dv.getUint32(eocd + 16, true);
+            const dec = new TextDecoder();
+            const out = {};
+            for (let i = 0; i < count; i++) {
+              if (dv.getUint32(off, true) !== 0x02014b50) break;
+              const method = dv.getUint16(off + 10, true);
+              const csize = dv.getUint32(off + 20, true);
+              const nlen = dv.getUint16(off + 28, true);
+              const elen = dv.getUint16(off + 30, true);
+              const clen = dv.getUint16(off + 32, true);
+              const lho = dv.getUint32(off + 42, true);
+              const name = dec.decode(new Uint8Array(buf, off + 46, nlen));
+              if (wanted === name) {
+                const lnlen = dv.getUint16(lho + 26, true);
+                const lelen = dv.getUint16(lho + 28, true);
+                const start = lho + 30 + lnlen + lelen;
+                let data = new Uint8Array(buf, start, csize);
+                if (method === 8) {
+                  const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+                  data = new Uint8Array(await new Response(stream).arrayBuffer());
+                }
+                return data;
+              }
+              off += 46 + nlen + elen + clen;
+            }
+            return null;
+          }
+
+          function parseGpif(xmlText) {
+            const doc = new DOMParser().parseFromString(xmlText, "application/xml");
+            if (doc.querySelector("parsererror")) throw new Error("bad score.gpif");
+            const meta = {
+              title: (doc.querySelector("Score > Title") || {}).textContent || "",
+              artist: (doc.querySelector("Score > Artist") || {}).textContent || ""
+            };
+            const beats = {};
+            doc.querySelectorAll("Beats > Beat").forEach((b) => { beats[b.getAttribute("id")] = b; });
+            const noteProp = (n, name) => {
+              for (const p of n.querySelectorAll("Properties > Property")) {
+                if (p.getAttribute("name") === name) return p;
+              }
+              return null;
+            };
+            const notes = [];
+            let measures = 0;
+            doc.querySelectorAll("MasterBars > MasterBar").forEach((mb) => {
+              measures++;
+              if (notes.length) notes.push({ bar: true });
+              const barIds = ((mb.querySelector("Bars") || {}).textContent || "").trim().split(/\s+/);
+              barIds.forEach((barId) => {
+                const bar = doc.querySelector('Bars > Bar[id="' + barId + '"]');
+                if (!bar) return;
+                const voiceIds = ((bar.querySelector("Voices") || {}).textContent || "").trim().split(/\s+/);
+                voiceIds.forEach((voiceId) => {
+                  const voice = doc.querySelector('Voices > Voice[id="' + voiceId + '"]');
+                  if (!voice) return;
+                  const beatIds = ((voice.querySelector("Beats") || {}).textContent || "").trim().split(/\s+/);
+                  beatIds.forEach((beatId) => {
+                    const beat = beats[beatId];
+                    if (!beat) return;
+                    const nIds = ((beat.querySelector("Notes") || {}).textContent || "").trim().split(/\s+/);
+                    nIds.forEach((nId) => {
+                      const n = doc.querySelector('Notes > Note[id="' + nId + '"]');
+                      if (!n) return;
+                      const si = parseInt((noteProp(n, "String") || {}).textContent || "", 10);
+                      const f = parseInt((noteProp(n, "Fret") || {}).textContent || "", 10);
+                      if (Number.isNaN(si) || Number.isNaN(f)) return;
+                      /* gpif numbers strings 0 (low E) to 5 (high e);
+                         our rows are 0 (high e) to 5 (low E) */
+                      const slur = noteProp(n, "HammerOn") ? "h" : noteProp(n, "PullOff") ? "p" : null;
+                      notes.push({ si: 5 - si, f, slur });
+                    });
+                  });
+                });
+              });
+            });
+            return { meta, notes, measures };
+          }
+
+          /* ---------- PDF (pdf.js text extraction, then the ASCII parser) ---------- */
+
+          function loadPdfJs() {
+            if (window.pdfjsLib) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+              const s = document.createElement("script");
+              s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+              s.onload = resolve;
+              s.onerror = () => reject(new Error("could not load pdf.js"));
+              document.head.appendChild(s);
+            }).then(() => {
+              window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+                "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+            });
+          }
+
+          async function pdfToText(buf) {
+            await loadPdfJs();
+            const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+            const lines = [];
+            for (let p = 1; p <= pdf.numPages; p++) {
+              const page = await pdf.getPage(p);
+              const tc = await page.getTextContent();
+              const rows = new Map();
+              tc.items.forEach((it) => {
+                if (!it.str || !it.transform) return;
+                const y = Math.round(it.transform[5]);
+                if (!rows.has(y)) rows.set(y, []);
+                rows.get(y).push({ x: it.transform[4], s: it.str });
+              });
+              [...rows.keys()].sort((a, b) => b - a).forEach((y) => {
+                const txt = rows.get(y).sort((a, b) => a.x - b.x).map((o) => o.s).join("");
+                if (txt.trim()) lines.push(txt);
+              });
+            }
+            return lines.join("\n");
+          }
+
+          window.licksClearSelection = function licksClearSelection() {};
+
+          loadBtn.addEventListener("click", () => fileInput.click());
+          fileInput.addEventListener("change", () => {
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) return;
+            const ext = (file.name.split(".").pop() || "").toLowerCase();
+            const fail = (msg) => { statusEl.textContent = msg; };
+            if (ext === "gp" || ext === "gpx") {
+              statusEl.textContent = "reading " + file.name + "…";
+              file.arrayBuffer().then((buf) => {
+                if (buf.byteLength < 4 || new Uint8Array(buf)[0] !== 0x50 || new Uint8Array(buf)[1] !== 0x4b) {
+                  fail("this looks like an older Guitar Pro file (GP5 or earlier) — only GP7/GP8 .gp/.gpx is supported");
+                  return;
+                }
+                return gpZipRead(buf, "Content/score.gpif").then((data) => {
+                  if (!data) {
+                    fail("no score.gpif inside — is this a GP7/GP8 export?");
+                    return;
+                  }
+                  const parsed = parseGpif(new TextDecoder().decode(data));
+                  if (!parsed.notes.length) {
+                    fail("no notes found in " + file.name);
+                    return;
+                  }
+                  licksShow(file.name, parsed.meta, parsed.notes, parsed.measures);
+                });
+              }).catch((e) => fail("could not read " + file.name + " — " + e.message));
+            } else if (ext === "pdf") {
+              statusEl.textContent = "reading " + file.name + "…";
+              file.arrayBuffer().then((buf) => pdfToText(buf)).then((text) => {
+                const parsed = parseAsciiTab(text);
+                if (!parsed.notes.length) {
+                  fail("no tab text found in this PDF — it may be a scanned image");
+                  return;
+                }
+                licksShow(file.name, parsed.meta, parsed.notes, parsed.measures);
+              }).catch((e) => fail("could not read " + file.name + " — " + e.message));
+            } else {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const parsed = parseAsciiTab(String(reader.result || ""));
+                if (!parsed.notes.length) {
+                  fail("no tab lines found — expected six string lines starting with E|A|D|G|B|e");
+                  return;
+                }
+                licksShow(file.name, parsed.meta, parsed.notes, parsed.measures);
+              };
+              reader.onerror = () => fail("could not read " + file.name);
+              reader.readAsText(file);
+            }
+            fileInput.value = "";
+          });
+          clearBtn.addEventListener("click", () => {
+            licksReset();
+            saveStore({ licks: null });
+          });
+
+          /* re-wrap the saved lick when the viewport changes size */
+          let licksResizeTimer = 0;
+          window.addEventListener("resize", () => {
+            clearTimeout(licksResizeTimer);
+            licksResizeTimer = setTimeout(licksRender, 200);
+          });
+
+          const saved = store.licks;
+          if (saved && saved.notes && saved.notes.length) {
+            licksName = saved.name || "";
+            licksNotes = saved.notes;
+            metaEl.textContent = [saved.meta && saved.meta.title, saved.meta && saved.meta.artist].filter(Boolean).join(" — ");
+            emptyEl.hidden = true;
+            wrapEl.hidden = false;
+            clearBtn.hidden = false;
+            statusEl.textContent = licksName + " · " + saved.measures +
+              (saved.measures === 1 ? " measure" : " measures") +
+              " · " + saved.notes.filter((n) => !n.bar).length + " notes";
+            licksRender();
+          }
+        })();
+
         /* ---------- tool tabs (hash deep-links) ---------- */
 
-        const TOOL_NAMES = ["scale-builder", "sweeps", "song-builder", "drone", "tuner", "metronome"];
+        const TOOL_NAMES = ["scale-builder", "sweeps", "song-builder", "licks", "drone", "tuner", "metronome"];
         const tabBtns = document.querySelectorAll(".tool-tab");
         const tabsWrapEl = document.querySelector(".tool-tabs-wrap");
         const tabsStripEl = document.querySelector(".tool-tabs");
@@ -7525,6 +8052,9 @@
           }
           if (name !== "sweeps" && typeof swStopPlayback === "function") {
             swStopPlayback();
+          }
+          if (name !== "licks" && typeof licksClearSelection === "function") {
+            licksClearSelection();
           }
           saveStore({ tool: name });
           tabBtns.forEach((b) => {
