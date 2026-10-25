@@ -2943,6 +2943,7 @@
                   <li>six-string shapes top the five-string grip with a lone low-e note on the 5th, like the classic dim7 layout.</li>
                   <li>loop cycles seamlessly at your tempo, with a click track and count-in, in five voices — same transport as the scale builder.</li>
                   <li>diminished and augmented shapes are symmetric: the same shape repeats every 3 (or 4) frets — walk the root up and watch it repeat.</li>
+                  <li>major-7 and minor-7 keep the triad patterns and add the 7th — the 5-string minor-7 root is the classic Gambale grip — and carry a fourth inversion with the 7th in the bass.</li>
                   <li>everything is remembered for your next visit.</li>
                 </ul>
                 <p class="tool-guide-link">deep-link this tool: <a href="#sweeps">tools#sweeps</a></p>
@@ -2957,7 +2958,9 @@
                   <label class="sb-label" for="sw-quality">Quality</label>
                   <select class="time-sig" id="sw-quality" aria-label="Chord quality">
                     <option value="maj">Major</option>
+                    <option value="maj7">Major 7</option>
                     <option value="min" selected>Minor</option>
+                    <option value="min7">Minor 7</option>
                     <option value="dim">Diminished</option>
                     <option value="aug">Augmented</option>
                   </select>
@@ -2977,6 +2980,7 @@
                     <option value="0" selected>Root</option>
                     <option value="1">1st</option>
                     <option value="2">2nd</option>
+                    <option value="3" hidden>3rd</option>
                   </select>
                 </div>
               </div>
@@ -6774,7 +6778,9 @@
 
         const SW_QUALITIES = [
           { id: "maj", label: "major", iv: [0, 4, 7] },
+          { id: "maj7", label: "major 7", iv: [0, 4, 7, 11] },
           { id: "min", label: "minor", iv: [0, 3, 7] },
+          { id: "min7", label: "minor 7", iv: [0, 3, 7, 10] },
           { id: "dim", label: "diminished", iv: [0, 3, 6, 9] },
           { id: "aug", label: "augmented", iv: [0, 4, 8] },
         ];
@@ -6930,6 +6936,27 @@
              the low register — the exact mirror of the minor 1st inversion
              (maj: E9 A7 D7 G6 B5 e5h9 · min: E8 A7 D7 G5 B5 e5h8) */
           "6-maj-1": { anchorPair: false },
+          /* 7th chords mostly inherit the triad layouts for free — the
+             5-string minor-7 root IS the classic Gambale grip unaided
+             (A12h15 D14 G12h14 B13 e12h15). Only these need help: the
+             major-7 root hammers root→3rd on the anchor string like the
+             major triad does (A12h16 D14 G13h14 B14 e12h16) */
+          "5-maj7-0": { anchorPair: true },
+          /* 6-string 7th roots hammer 5th→root up the low e (E12h17 —
+             pairSkips hops the ladder past the 7th between them), the a
+             string dropping to the lone 3rd: maj7 E12h17 A16 D14 G13h14
+             B14 e12h16 · min7 E12h17 A15 D14 G12h14 B13 e12h15 */
+          "6-maj7-0": { shift: 2, anchorPair: true, pairSkips: { 5: 1 } },
+          "6-min7-0": { shift: 2, anchorPair: true, pairSkips: { 5: 1 } },
+          /* 4-string 7th roots start one tone early so d sits just under
+             the g pair (maj7: D14 G13h14 B14 e12h16 · min7: D14 G12h14
+             B13 e12h15); the 3rd inversions keep the 7th in the bass
+             instead of collapsing onto the root shape an octave up
+             (maj7: D18 G14 B14 e12h16 · min7: D22 G21h24 B22 e20h24) */
+          "4-maj7-0": { shift: -1 },
+          "4-min7-0": { shift: -1 },
+          "4-maj7-3": { shift: -3 },
+          "4-min7-3": { shift: -1 },
         };
 
         /* the sweep shape: chord tones walked up the string set, one note
@@ -6973,6 +7000,7 @@
           let hi = -1;
           for (let si = lowest; si >= 0; si--) {
             const str = FB_STRINGS[si];
+            const myOpts = SW_SHAPE_OPTS[strings + "-" + quality + "-" + inv] || {};
             const frets = [];
             const add = (pitch) => {
               const f = pitch - str.midi;
@@ -6984,6 +7012,10 @@
               }
               return ok;
             };
+            /* skips jumps the ladder past tones on a given string — the
+               6-string 7th roots ride the 5th on low e, then hop over
+               the 7th so the a string takes the root pair */
+            if (myOpts.skips && myOpts.skips[si]) t += myOpts.skips[si];
             add(tones[t]);
             t++;
             const gap = tones[t] - tones[t - 1];
@@ -6991,7 +7023,6 @@
                follows the 3-string layout for this quality/inversion,
                and every shape carries the high-e turnaround pair */
             let take = false;
-            const myOpts = SW_SHAPE_OPTS[strings + "-" + quality + "-" + inv] || {};
             if (si === 0) {
               take = true;
             } else if (si === 2) {
@@ -7015,7 +7046,13 @@
                 gap <= 3 ||
                 (myOpts.forcePairs && myOpts.forcePairs.indexOf(si) !== -1);
             }
-            if (take && add(tones[t])) t++;
+            if (take) {
+              /* pairSkips hops the ladder mid-string before the pair
+                 note — the 6-string maj7 root hammers 5th→root on the
+                 low e (E12h17), skipping the 7th sitting between them */
+              if (myOpts.pairSkips && myOpts.pairSkips[si]) t += myOpts.pairSkips[si];
+              if (add(tones[t])) t++;
+            }
             if (!frets.length) continue;
             frets.forEach((n) => {
               const key = si + "," + (n.f - fret);
@@ -7101,7 +7138,7 @@
           swFrom = clamped[0];
           swTo = clamped[1];
           const q = SW_QUALITIES.find((x) => x.id === swQuality) || SW_QUALITIES[1];
-          const invLabel = ["root position", "1st inversion", "2nd inversion"][swInv];
+          const invLabel = ["root position", "1st inversion", "2nd inversion", "3rd inversion"][swInv];
           const noteCount = swRun(shape, false).filter((n) => !n.bar).length;
           swNameEl.textContent = NOTE_NAMES[swRoot] + " " + q.label + " sweep";
           swSubEl.textContent =
@@ -7324,6 +7361,19 @@
           return n < 3 ? n + 12 : n;
         }
 
+        /* the 7th chords carry a 4th chord tone, so their inversions go
+           one deeper — dim7's 3rd inversion would just be its root shape
+           shifted, so it stays a three-inversion quality */
+        function swSyncInvOptions() {
+          const inv3 = swQuality === "maj7" || swQuality === "min7";
+          const opt = swInvSel.querySelector('option[value="3"]');
+          if (opt) opt.hidden = !inv3;
+          if (!inv3 && swInv > 2) {
+            swInv = 0;
+            swInvSel.value = "0";
+          }
+        }
+
         swRootSel.addEventListener("change", () => {
           swStopPlayback();
           swRoot = Number(swRootSel.value);
@@ -7334,6 +7384,7 @@
         swQualSel.addEventListener("change", () => {
           swStopPlayback();
           swQuality = swQualSel.value;
+          swSyncInvOptions();
           swRender();
           swSavePrefs();
         });
@@ -7419,9 +7470,10 @@
           if ([3, 4, 5, 6].includes(saved.strings)) {
             swStrings = saved.strings;
           }
-          if ([0, 1, 2].includes(saved.inv)) {
+          if ([0, 1, 2, 3].includes(saved.inv)) {
             swInv = saved.inv;
           }
+          swSyncInvOptions();
           swFret = swNaturalFret();
           if (["fingers", "notes", "intervals"].includes(saved.display)) {
             swDisplay = saved.display;
@@ -7490,9 +7542,9 @@
         /* song-builder chords beyond the sweep engine's triads collapse to
            their nearest triad — the sweep spells the harmony, not the color */
         const ETUDE_QUALITY = {
-          "5": "maj", maj: "maj", "7": "maj", maj7: "maj",
+          "5": "maj", maj: "maj", "7": "maj", maj7: "maj7",
           sus4: "maj", sus2: "maj",
-          min: "min", m7: "min",
+          min: "min", m7: "min7",
           dim: "dim", aug: "aug",
         };
 
