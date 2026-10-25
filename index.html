@@ -306,32 +306,139 @@
         color: var(--faint);
       }
 
-      /* ---------- toolbench link ---------- */
-      .toolbench-link {
+      /* ---------- toolbench showcase ---------- */
+      .toolbench-showcase {
         display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.6rem 1.5rem;
+        flex-direction: column;
+        gap: 0.9rem;
+      }
+
+      /* the tab card — a real sweep-builder shape, rendered in the
+         tools' own tab language */
+      .tb-tab-card {
+        --tb-row: 1.35rem;
+        display: block;
         border: 1px solid rgba(255, 255, 255, 0.09);
         border-radius: 12px;
         background: var(--panel);
-        padding: 1.15rem 1.3rem;
+        padding: 0.85rem 1.1rem 0.7rem;
         text-decoration: none;
+        overflow: hidden;
         transition: border-color 0.15s ease, background-color 0.15s ease;
       }
 
-      .toolbench-link:hover,
-      .toolbench-link:focus-visible {
+      .tb-tab-card:hover,
+      .tb-tab-card:focus-visible {
         border-color: rgba(245, 182, 70, 0.55);
         background: rgba(245, 182, 70, 0.04);
       }
 
-      .tb-main {
-        min-width: 0;
+      .tb-tab {
+        position: relative;
+        display: inline-flex;
+        align-items: stretch;
+        gap: 0;
+        min-width: 100%;
+      }
+
+      .tb-strs {
+        display: grid;
+        grid-template-rows: repeat(5, var(--tb-row));
+        flex: none;
+      }
+
+      .tb-strs span {
+        font-family: var(--mono);
+        font-size: 0.65rem;
+        color: var(--faint);
         display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-        margin-right: auto;
+        align-items: center;
+        padding-right: 0.5rem;
+      }
+
+      .tb-staff {
+        position: relative;
+        display: inline-grid;
+        grid-template-rows: repeat(5, var(--tb-row));
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(2.1rem, auto);
+        align-items: center;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent calc(var(--tb-row) / 2 - 0.5px),
+          rgba(255, 255, 255, 0.1) calc(var(--tb-row) / 2 - 0.5px),
+          rgba(255, 255, 255, 0.1) calc(var(--tb-row) / 2 + 0.5px),
+          transparent calc(var(--tb-row) / 2 + 0.5px),
+          transparent var(--tb-row)
+        );
+        padding: 0 0.4rem;
+        flex: 1;
+      }
+
+      .tb-note {
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        color: var(--text);
+        grid-row: var(--r);
+        grid-column: var(--c);
+        white-space: nowrap;
+        text-align: center;
+      }
+
+      .tb-note i {
+        font-style: normal;
+        font-size: 0.68rem;
+        color: var(--muted);
+        margin: 0 1px;
+      }
+
+      /* chord-tone roots pick up the amber accent */
+      .tb-note b {
+        font-weight: 600;
+        color: var(--amber);
+      }
+
+      .tb-bar {
+        grid-row: 1 / -1;
+        grid-column: 6;
+        width: 2px;
+        border-radius: 1px;
+        background: rgba(255, 255, 255, 0.22);
+        justify-self: center;
+        align-self: stretch;
+        margin: 0.3rem 0;
+      }
+
+      /* the playhead — a pick sweeping up the run and back */
+      .tb-playhead {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 2px;
+        border-radius: 1px;
+        background: var(--amber);
+        box-shadow: 0 0 10px rgba(245, 182, 70, 0.65);
+        animation: tb-sweep 8s ease-in-out infinite alternate;
+      }
+
+      @keyframes tb-sweep {
+        0% { left: 0.4rem; opacity: 0; }
+        4% { opacity: 1; }
+        46% { opacity: 1; }
+        50% { left: calc(100% - 0.4rem); opacity: 0; }
+        54% { opacity: 1; }
+        96% { opacity: 1; }
+        100% { left: 0.4rem; opacity: 0; }
+      }
+
+      .tb-tab-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.2rem 0.9rem;
+        margin-top: 0.55rem;
       }
 
       .tb-name {
@@ -346,20 +453,8 @@
         font-size: 0.9rem;
       }
 
-      .tb-side {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.5rem 1.25rem;
-      }
-
-      .tb-note {
-        font-family: var(--mono);
-        font-size: 0.75rem;
-        color: var(--muted);
-      }
-
-      .tb-action {
+      .tb-open {
+        margin-left: auto;
         font-family: var(--mono);
         font-size: 0.85rem;
         color: var(--muted);
@@ -367,9 +462,72 @@
         transition: color 0.15s ease;
       }
 
-      .toolbench-link:hover .tb-action,
-      .toolbench-link:focus-visible .tb-action {
+      .tb-tab-card:hover .tb-open,
+      .tb-tab-card:focus-visible .tb-open {
         color: var(--amber);
+      }
+
+      /* the tool grid */
+      .tb-tools {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+        gap: 0.6rem;
+      }
+
+      .tb-tool {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 0.8rem 0.85rem;
+        text-decoration: none;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .tb-tool:hover,
+      .tb-tool:focus-visible {
+        border-color: rgba(245, 182, 70, 0.45);
+        background: rgba(245, 182, 70, 0.04);
+      }
+
+      .tb-tool svg {
+        width: 20px;
+        height: 20px;
+        stroke: var(--muted);
+        fill: none;
+        stroke-width: 1.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        transition: stroke 0.15s ease;
+      }
+
+      .tb-tool:hover svg,
+      .tb-tool:focus-visible svg {
+        stroke: var(--amber);
+      }
+
+      .tb-tool-name {
+        font-family: var(--mono);
+        font-size: 0.88rem;
+        color: var(--text);
+      }
+
+      .tb-tool-desc {
+        font-size: 0.78rem;
+        color: var(--faint);
+        line-height: 1.35;
+      }
+
+      .tb-note-free {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .tb-playhead { animation: none; opacity: 0.8; }
       }
 
       /* ---------- setlist ---------- */
@@ -543,12 +701,17 @@
           flex: 1 1 auto;
         }
 
-        .toolbench-link {
-          gap: 0.5rem 1rem;
+        .tb-tab {
+          overflow-x: auto;
         }
 
-        .tb-main {
-          flex-basis: 100%;
+        .tb-tab-meta {
+          flex-direction: column;
+          gap: 0.15rem;
+        }
+
+        .tb-open {
+          margin-left: 0;
         }
 
         .track {
@@ -629,17 +792,63 @@
         <section aria-label="Guitar tools">
           <div class="section-head">
             <h2 class="section-title"><b>01</b> — the toolbench</h2>
+            <span class="tb-note-free">Free tools, right in your browser.</span>
           </div>
-          <a class="toolbench-link" href="tools.html">
-            <span class="tb-main">
-              <span class="tb-name">Guitar toolbench</span>
-              <span class="tb-desc">Scale builder, sweep builder, song builder, drone, tuner, and metronome.</span>
-            </span>
-            <span class="tb-side">
-              <span class="tb-note">Free tools, right in your browser.</span>
-              <span class="tb-action">Open tools →</span>
-            </span>
-          </a>
+          <div class="toolbench-showcase">
+            <a class="tb-tab-card" href="tools.html#sweeps">
+              <div class="tb-tab" aria-hidden="true">
+                <div class="tb-strs">
+                  <span>e</span><span>B</span><span>G</span><span>D</span><span>A</span>
+                </div>
+                <div class="tb-staff">
+                  <i class="tb-playhead"></i>
+                  <span class="tb-note" style="--r: 5; --c: 1"><b>12</b><i>h</i>15</span><span class="tb-note" style="--r: 4; --c: 2">14</span><span class="tb-note" style="--r: 3; --c: 3">12<i>h</i>14</span><span class="tb-note" style="--r: 2; --c: 4">13</span><span class="tb-note" style="--r: 1; --c: 5">12<i>h</i>15</span><span class="tb-note" style="--r: 1; --c: 7">15<i>p</i>12</span><span class="tb-note" style="--r: 2; --c: 8">13</span><span class="tb-note" style="--r: 3; --c: 9"><b>14</b><i>p</i>12</span><span class="tb-note" style="--r: 4; --c: 10">14</span><span class="tb-note" style="--r: 5; --c: 11">15</span>
+                </div>
+              </div>
+              <div class="tb-tab-meta">
+                <span class="tb-name">sweep builder</span>
+                <span class="tb-desc">A minor 7 — one fluid rake up the strings and back.</span>
+                <span class="tb-open">Open tools →</span>
+              </div>
+            </a>
+            <div class="tb-tools">
+              <a class="tb-tool" href="tools.html#scale-builder">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="15" cy="12" r="2.2"/></svg>
+                <span class="tb-tool-name">scale builder</span>
+                <span class="tb-tool-desc">fretboard, modes, and play-along audio</span>
+              </a>
+              <a class="tb-tool" href="tools.html#sweeps">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M9 19 19 9M5 15 15 5"/></svg>
+                <span class="tb-tool-name">sweep builder</span>
+                <span class="tb-tool-desc">arpeggio shapes with tab and slur marks</span>
+              </a>
+              <a class="tb-tool" href="tools.html#song-builder">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="5" height="6" rx="1"/><rect x="10" y="9" width="4" height="6" rx="1"/><rect x="16" y="9" width="5" height="6" rx="1"/></svg>
+                <span class="tb-tool-name">song builder</span>
+                <span class="tb-tool-desc">a DAW-style chord grid with bass and arp</span>
+              </a>
+              <a class="tb-tool" href="tools.html#licks">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14M5 13h14M5 18h9"/><circle cx="17" cy="18" r="2"/></svg>
+                <span class="tb-tool-name">licks</span>
+                <span class="tb-tool-desc">91 bundled lesson tabs, GP imports too</span>
+              </a>
+              <a class="tb-tool" href="tools.html#drone">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c2-5 4-5 6 0s4 5 6 0 4-5 6 0"/></svg>
+                <span class="tb-tool-name">drone</span>
+                <span class="tb-tool-desc">chords that hum underneath your practice</span>
+              </a>
+              <a class="tb-tool" href="tools.html#tuner">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17a8 8 0 0 1 16 0"/><path d="M12 17 17 9"/><circle cx="12" cy="17" r="1.4"/></svg>
+                <span class="tb-tool-name">tuner</span>
+                <span class="tb-tool-desc">pitch detection through your mic, ±5¢</span>
+              </a>
+              <a class="tb-tool" href="tools.html#metronome">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 20 12 4l3 16zM7 20h10"/><path d="M15 9c2 1 3 2.5 3 4"/></svg>
+                <span class="tb-tool-name">metronome</span>
+                <span class="tb-tool-desc">subdivisions, accents, tap-free tempo</span>
+              </a>
+            </div>
+          </div>
         </section>
 
         <section class="setlist-wrap" id="selected-work" aria-label="Recent work">
