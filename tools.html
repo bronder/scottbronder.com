@@ -303,6 +303,96 @@
         color: var(--faint);
       }
 
+      /* bundled licks: chips above the staff */
+      .licks-lib {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+      }
+
+      .lick-lib-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.2rem 0 0.35rem;
+      }
+
+      .lick-lib-group[hidden] {
+        display: none;
+      }
+
+      .lick-lib-group-details {
+        border-left: 1px solid var(--line);
+        padding-left: 0.7rem;
+      }
+
+      .lick-lib-group-details > summary {
+        cursor: pointer;
+        list-style: none;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 0.15rem 0;
+        user-select: none;
+      }
+
+      .lick-lib-group-details > summary:hover {
+        color: var(--text);
+      }
+
+      .lick-lib-group-details > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .lick-lib-group-details > summary::before {
+        content: "▸ ";
+        color: var(--faint);
+      }
+
+      .lick-lib-group-details[open] > summary::before {
+        content: "▾ ";
+      }
+
+      /* the open section carries the amber accent, like the active tab/chip */
+      .lick-lib-group-details[open] {
+        border-left-color: var(--amber);
+      }
+
+      .lick-lib-group-details[open] > summary {
+        color: var(--amber);
+      }
+
+      .lick-lib-group-details[open] > summary::before {
+        color: var(--amber);
+      }
+
+      .lick-lib-chip {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        padding: 0.32rem 0.7rem;
+        border: 1px solid rgba(122, 162, 247, 0.45);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+      }
+
+      .lick-lib-chip:hover {
+        color: var(--text);
+      }
+
+      .lick-lib-chip.active {
+        border-color: var(--amber);
+        color: var(--amber);
+        background: rgba(245, 182, 70, 0.08);
+      }
+
       /* wrapped tab: one staff row per system, string labels on every row */
       .licks-rows {
         display: flex;
@@ -2434,8 +2524,10 @@
                 </ul>
               </div>
 
+              <div class="licks-lib" id="licks-lib" role="group" aria-label="Bundled licks"></div>
+
               <div id="licks-empty" class="licks-empty">
-                <p>load a <code>.tab</code> file to start</p>
+                <p>pick a lick above, or load a <code>.tab</code>/<code>.gp</code>/<code>.pdf</code> file</p>
               </div>
 
               <div class="fb-tabwrap" id="licks-wrap" hidden>
@@ -2978,6 +3070,7 @@
       </footer>
     </div>
 
+    <script src="licks-library.js"></script>
     <script>
       (() => {
         "use strict";
@@ -7711,7 +7804,8 @@
             /* wrap into staff systems: break at a barline once a row is
                wide, hard-break if a measure runs very long */
             const TARGET = target;
-            const HARD = TARGET + 12;
+            /* a single measure can outgrow the row: break anywhere once full */
+            const HARD = TARGET;
             const rows = [[]];
             notes.forEach((n) => {
               rows[rows.length - 1].push(n);
@@ -7791,6 +7885,7 @@
                 " · " + notes.filter((n) => !n.bar).length + " notes"
               : "";
             saveStore({ licks: { name, meta: meta || {}, notes, measures } });
+            licksSyncChips();
           }
 
           function licksReset() {
@@ -7802,6 +7897,7 @@
             emptyEl.hidden = false;
             wrapEl.hidden = true;
             clearBtn.hidden = true;
+            licksSyncChips();
           }
 
           /* ---------- Guitar Pro (.gp/.gpx = zip with Content/score.gpif) ---------- */
@@ -7859,6 +7955,7 @@
             };
             const notes = [];
             let measures = 0;
+            const lastFret = {};
             doc.querySelectorAll("MasterBars > MasterBar").forEach((mb) => {
               measures++;
               if (notes.length) notes.push({ bar: true });
@@ -7882,8 +7979,14 @@
                       const f = parseInt((noteProp(n, "Fret") || {}).textContent || "", 10);
                       if (Number.isNaN(si) || Number.isNaN(f)) return;
                       /* gpif numbers strings 0 (low E) to 5 (high e);
-                         our rows are 0 (high e) to 5 (low E) */
-                      const slur = noteProp(n, "HammerOn") ? "h" : noteProp(n, "PullOff") ? "p" : null;
+                         our rows are 0 (high e) to 5 (low E). HopoDestination
+                         marks the slur target; direction by fret comparison. */
+                      let slur = null;
+                      if (noteProp(n, "HopoDestination")) {
+                        const prev = lastFret[si];
+                        if (prev !== undefined) slur = f > prev ? "h" : "p";
+                      }
+                      lastFret[si] = f;
                       notes.push({ si: 5 - si, f, slur });
                     });
                   });
@@ -7932,6 +8035,61 @@
           }
 
           window.licksClearSelection = function licksClearSelection() {};
+
+          /* bundled, pre-parsed licks from licks-library.js */
+          const libEl = document.getElementById("licks-lib");
+          if (libEl && Array.isArray(window.LICKS_LIBRARY)) {
+            const LIB_GROUPS = [
+              ["pentatonic", "pentatonic"],
+              ["scales", "scales & sequences"],
+              ["sweeps", "arpeggios & sweeps"],
+              ["legato", "legato"],
+              ["skipping", "string skipping"],
+              ["misc", "technique & misc"]
+            ];
+            LIB_GROUPS.forEach(([gid, glabel], gi) => {
+              const entries = window.LICKS_LIBRARY.filter((e) => e.g === gid);
+              if (!entries.length) return;
+              const groupDetails = document.createElement("details");
+              groupDetails.className = "lick-lib-group-details";
+              /* accordion: opening a group folds the others back up */
+              groupDetails.addEventListener("toggle", () => {
+                if (!groupDetails.open) return;
+                libEl.querySelectorAll(".lick-lib-group-details").forEach((other) => {
+                  if (other !== groupDetails) other.open = false;
+                });
+              });
+              const summary = document.createElement("summary");
+              summary.textContent = glabel + " · " + entries.length;
+              groupDetails.appendChild(summary);
+              const group = document.createElement("div");
+              group.className = "lick-lib-group";
+              groupDetails.appendChild(group);
+              /* first group starts open so the tool isn't all folds */
+              if (gi === 0 && !(store.licks && store.licks.notes)) groupDetails.open = true;
+              libEl.appendChild(groupDetails);
+              entries.forEach((entry) => {
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "lick-lib-chip";
+                chip.dataset.lib = entry.name;
+                chip.textContent = entry.label;
+                chip.addEventListener("click", () => {
+                  /* library notes use the compact {s,f,l} / {b} encoding */
+                  const notes = entry.notes.map((n) =>
+                    n.b ? { bar: true } : { si: n.s, f: n.f, slur: n.l || null }
+                  );
+                  licksShow(entry.name, entry.meta, notes, entry.measures);
+                });
+                group.appendChild(chip);
+              });
+            });
+          }
+          function licksSyncChips() {
+            document.querySelectorAll(".lick-lib-chip").forEach((chip) => {
+              chip.classList.toggle("active", chip.dataset.lib === licksName);
+            });
+          }
 
           loadBtn.addEventListener("click", () => fileInput.click());
           fileInput.addEventListener("change", () => {
@@ -8007,6 +8165,7 @@
             statusEl.textContent = licksName + " · " + saved.measures +
               (saved.measures === 1 ? " measure" : " measures") +
               " · " + saved.notes.filter((n) => !n.bar).length + " notes";
+            licksSyncChips();
             licksRender();
           }
         })();
