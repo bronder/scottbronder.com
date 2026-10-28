@@ -8406,6 +8406,7 @@
           const libEl = document.getElementById("licks-lib");
           if (libEl && Array.isArray(window.LICKS_LIBRARY)) {
             const LIB_GROUPS = [
+              ["newest", "newest"],
               ["pentatonic", "pentatonic"],
               ["scales", "scales & sequences"],
               ["sweeps", "arpeggios & sweeps"],
@@ -8414,7 +8415,10 @@
               ["misc", "technique & misc"]
             ];
             LIB_GROUPS.forEach(([gid, glabel], gi) => {
-              const entries = window.LICKS_LIBRARY.filter((e) => e.g === gid);
+              /* newest shows most-recent-first: hand-added entries append
+                 to the end of the library array */
+              let entries = window.LICKS_LIBRARY.filter((e) => e.g === gid);
+              if (gid === "newest") entries = entries.slice().reverse();
               if (!entries.length) return;
               const groupDetails = document.createElement("details");
               groupDetails.className = "lick-lib-group-details";
