@@ -2543,7 +2543,7 @@
                   <li>Load a plain-text ASCII tab file (TablEdit-style <code>.tab</code> export): six string lines per block, measures between <code>|</code> bars. <code>.gp</code>/<code>.gpx</code> files from Guitar Pro 7/8 and text-based tab <code>.pdf</code>s work too.</li>
                   <li>Hammer-ons and pull-offs (<code>8h-13</code>, <code>13p-10</code>) and slides (<code>/</code>) are kept in the rendering.</li>
                   <li>Scanned PDFs (images of tab) can't be read — only PDFs with selectable text.</li>
-                  <li>This is a viewer — keep the metronome tool running in its own tab for timing.</li>
+                  <li>Play the lick with the transport: set the tempo (tap along to a recording), pick how many notes land per beat — eighths to sextuplets — loop it, and add the click. The tab lights up as it plays.</li>
                 </ul>
               </div>
 
@@ -2555,6 +2555,37 @@
 
               <div class="fb-tabwrap" id="licks-wrap" hidden>
                 <div class="licks-rows" id="licks-rows"></div>
+              </div>
+
+              <div class="fb-transport" id="licks-transport" hidden>
+                <button class="play-btn" id="licks-play" type="button" aria-pressed="false">Play</button>
+                <button class="ghost-btn" id="licks-loop" type="button" aria-pressed="false">Loop</button>
+                <button class="ghost-btn" id="licks-click" type="button" aria-pressed="false">Click</button>
+                <div class="fb-tfield">
+                  <label class="sb-label" for="licks-voice">Sound</label>
+                  <select class="time-sig" id="licks-voice" aria-label="Sound"></select>
+                </div>
+                <div class="fb-tfield">
+                  <span class="sb-label" id="licks-bpm-label">Tempo</span>
+                  <div class="tempo-entry" role="group" aria-labelledby="licks-bpm-label">
+                    <button class="step-btn" id="licks-bpm-down" type="button" aria-label="Slower by one BPM">−</button>
+                    <input class="tempo-input" id="licks-bpm" type="number" inputmode="numeric"
+                      min="40" max="240" step="1" value="80" aria-label="Tempo in BPM" />
+                    <span class="tempo-unit" aria-hidden="true">BPM</span>
+                    <button class="step-btn" id="licks-bpm-up" type="button" aria-label="Faster by one BPM">+</button>
+                    <button class="ghost-btn" id="licks-tap" type="button">Tap</button>
+                  </div>
+                </div>
+                <div class="fb-tfield">
+                  <span class="sb-label" id="licks-sub-label">Notes per beat</span>
+                  <div class="sub-row" id="licks-subdiv" role="group" aria-labelledby="licks-sub-label">
+                    <button class="sub-opt" type="button" data-sub="1" aria-pressed="false">Quarter</button>
+                    <button class="sub-opt" type="button" data-sub="2" aria-pressed="false">8ths</button>
+                    <button class="sub-opt" type="button" data-sub="3" aria-pressed="false">Triplets</button>
+                    <button class="sub-opt" type="button" data-sub="4" aria-pressed="true">16ths</button>
+                    <button class="sub-opt" type="button" data-sub="6" aria-pressed="false">Sextuplets</button>
+                  </div>
+                </div>
               </div>
 
               <p class="tool-status" id="licks-status" aria-live="polite"></p>
@@ -7948,11 +7979,13 @@
           }
 
           function licksShow(name, meta, notes, measures) {
+            licksStopPlayback();
             licksName = name;
             licksNotes = notes;
             metaEl.textContent = [meta && meta.title, meta && meta.artist].filter(Boolean).join(" — ");
             emptyEl.hidden = true;
             wrapEl.hidden = false;
+            transportEl.hidden = false;
             clearBtn.hidden = false;
             licksRender();
             statusEl.textContent = name
@@ -7964,6 +7997,7 @@
           }
 
           function licksReset() {
+            licksStopPlayback();
             metaEl.textContent = "";
             statusEl.textContent = "";
             rowsEl.textContent = "";
@@ -7971,9 +8005,266 @@
             licksNotes = null;
             emptyEl.hidden = false;
             wrapEl.hidden = true;
+            transportEl.hidden = true;
             clearBtn.hidden = true;
             licksSyncChips();
           }
+
+          /* ---------- licks player ---------- */
+
+          const transportEl = document.getElementById("licks-transport");
+          const playBtn = document.getElementById("licks-play");
+          const loopBtn = document.getElementById("licks-loop");
+          const clickBtn = document.getElementById("licks-click");
+          const voiceSel = document.getElementById("licks-voice");
+          const bpmInput = document.getElementById("licks-bpm");
+
+          let licksVoice = "eguitar";
+          let licksLoop = false;
+          let licksClick = false;
+          let licksSub = 4; /* notes per beat */
+          let licksPlayTimer = null;
+          let licksHiTos = [];
+          let licksLoadPending = false;
+
+          FB_VOICES.forEach((v) => {
+            const opt = document.createElement("option");
+            opt.value = v.id;
+            opt.textContent = v.label;
+            voiceSel.appendChild(opt);
+          });
+
+          function licksClearHi() {
+            licksHiTos.forEach((t) => clearTimeout(t));
+            licksHiTos = [];
+            document.querySelectorAll("#licks-rows .tab-cell.playing, #licks-rows .tab-num.playing").forEach((el) => {
+              el.classList.remove("playing");
+            });
+          }
+
+          function licksStopPlayback() {
+            if (licksPlayTimer) {
+              clearInterval(licksPlayTimer);
+              licksPlayTimer = null;
+            }
+            licksClearHi();
+            playBtn.textContent = "Play";
+            playBtn.setAttribute("aria-pressed", "false");
+          }
+          window.licksStopPlayback = licksStopPlayback;
+
+          /* even-spacing playback: notes land uniformly at (beat / notes
+             per beat) — the practice model for runs without parsed rhythm */
+          function licksStartPlayback() {
+            const ctx = ensureAudio();
+            if (!ctx || licksLoadPending || !licksNotes) return;
+            const voice = FB_VOICES.find((v) => v.id === licksVoice) || FB_VOICES[0];
+            ensurePiano();
+            licksLoadPending = true;
+            statusEl.textContent = "loading the " + voice.label + "…";
+            const loading =
+              voice.id === "piano" ? loadPianoSamples() : loadSoundfont(voice.id);
+            loading.then((samples) => {
+              licksLoadPending = false;
+              if (!samples) {
+                statusEl.textContent =
+                  "couldn't load the " + voice.label +
+                  " — check your connection and try again";
+                return;
+              }
+              if (playBtn.getAttribute("aria-pressed") !== "true") return;
+
+              let seq = [];
+              licksNotes.forEach((n, idx) => {
+                if (!n.bar) seq.push({ si: n.si, f: n.f, col: idx });
+              });
+              let cells = Array.from(rowsEl.querySelectorAll(".tab-cell"));
+              const busLevel = voice.id === "piano" ? 1.15 : 3.2;
+
+              let idx = 0;
+              let next = ctx.currentTime + 0.15;
+              const beat0 = 60 / Math.max(40, Math.min(240, Number(bpmInput.value) || 80));
+              for (let b = 0; b < 4; b++) {
+                scheduleClick(next, b === 0 ? 2 : 1, false);
+                const at = next;
+                const n = b + 1;
+                licksHiTos.push(
+                  setTimeout(() => {
+                    statusEl.textContent = "count · " + n;
+                  }, Math.max(0, (at - ctx.currentTime) * 1000))
+                );
+                next += beat0;
+              }
+              licksHiTos.push(
+                setTimeout(() => {
+                  statusEl.textContent = "playing · " + (licksName || "lick");
+                }, Math.max(0, (next - ctx.currentTime) * 1000))
+              );
+              let nextClick = next;
+              let clickBeat = 0;
+              let runEnd = next;
+              const tick = () => {
+                const beat =
+                  60 / Math.max(40, Math.min(240, Number(bpmInput.value) || 80));
+                const spacing = beat / licksSub;
+                while (idx < seq.length && next < ctx.currentTime + 0.15) {
+                  const n = seq[idx];
+                  const last = idx === seq.length - 1 && !licksLoop;
+                  const ringSec = last
+                    ? Math.min(beat * 2, 2.2)
+                    : Math.min(spacing * 0.85, 1.2);
+                  const midi = FB_STRINGS[n.si].midi + n.f;
+                  const freq = 440 * Math.pow(2, (midi - 69) / 12);
+                  buildSampledVoice(
+                    samples, freq, 0.5 * busLevel, 0.005, next, ringSec
+                  );
+                  const tabCell = cells[n.col * 6 + n.si];
+                  const delay = Math.max(0, (next - ctx.currentTime) * 1000);
+                  licksHiTos.push(
+                    setTimeout(() => {
+                      const num = tabCell && tabCell.querySelector(".tab-num");
+                      if (tabCell) tabCell.classList.add("playing");
+                      if (num) num.classList.add("playing");
+                      licksHiTos.push(
+                        setTimeout(() => {
+                          if (tabCell) tabCell.classList.remove("playing");
+                          if (num) num.classList.remove("playing");
+                        }, last ? ringSec * 1000 : spacing * 900)
+                      );
+                    }, delay)
+                  );
+                  next += spacing;
+                  idx++;
+                  runEnd = next;
+                }
+                while (
+                  licksClick &&
+                  nextClick < ctx.currentTime + 0.15 &&
+                  nextClick < runEnd + 0.001
+                ) {
+                  scheduleClick(nextClick, clickBeat % 4 === 0 ? 2 : 1, false);
+                  nextClick += beat;
+                  clickBeat++;
+                }
+                if (idx >= seq.length) {
+                  const lastStart = next - spacing;
+                  const ringSec = Math.min(beat * 2, 2.2);
+                  if (licksLoop) {
+                    /* the rows can re-wrap on resize between cycles */
+                    cells = Array.from(rowsEl.querySelectorAll(".tab-cell"));
+                    next = lastStart + spacing;
+                    idx = 0;
+                    clickBeat = 0;
+                  } else {
+                    licksHiTos.push(
+                      setTimeout(
+                        licksStopPlayback,
+                        Math.max(0, (lastStart - ctx.currentTime) * 1000) +
+                          ringSec * 1000 + 300
+                      )
+                    );
+                    clearInterval(licksPlayTimer);
+                    licksPlayTimer = null;
+                  }
+                }
+              };
+              licksPlayTimer = setInterval(tick, 30);
+              tick();
+            });
+            playBtn.textContent = "Stop";
+            playBtn.setAttribute("aria-pressed", "true");
+          }
+
+          playBtn.addEventListener("click", () => {
+            if (licksPlayTimer || licksLoadPending) licksStopPlayback();
+            else licksStartPlayback();
+          });
+
+          function licksSavePlayerPrefs() {
+            saveStore({
+              licksPlayer: {
+                voice: licksVoice,
+                bpm: Number(bpmInput.value) || 80,
+                sub: licksSub,
+                loop: licksLoop,
+                click: licksClick,
+              },
+            });
+          }
+
+          loopBtn.addEventListener("click", () => {
+            licksLoop = !licksLoop;
+            loopBtn.setAttribute("aria-pressed", String(licksLoop));
+            licksSavePlayerPrefs();
+          });
+          clickBtn.addEventListener("click", () => {
+            licksClick = !licksClick;
+            clickBtn.setAttribute("aria-pressed", String(licksClick));
+            licksSavePlayerPrefs();
+          });
+          voiceSel.addEventListener("change", () => {
+            licksVoice = voiceSel.value;
+            licksStopPlayback();
+            licksSavePlayerPrefs();
+          });
+          function licksSetBpm(v) {
+            const c = Math.max(40, Math.min(240, Math.round(v)));
+            bpmInput.value = String(c);
+            licksSavePlayerPrefs();
+          }
+          document.getElementById("licks-bpm-down").addEventListener("click", () =>
+            licksSetBpm((Number(bpmInput.value) || 80) - 1)
+          );
+          document.getElementById("licks-bpm-up").addEventListener("click", () =>
+            licksSetBpm((Number(bpmInput.value) || 80) + 1)
+          );
+          bpmInput.addEventListener("change", () =>
+            licksSetBpm(Number(bpmInput.value) || 80)
+          );
+          wireTapTempo("licks-tap", licksSetBpm);
+          document.querySelectorAll("#licks-subdiv .sub-opt").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              licksSub = Number(btn.dataset.sub) || 4;
+              document.querySelectorAll("#licks-subdiv .sub-opt").forEach((b) => {
+                b.setAttribute(
+                  "aria-pressed",
+                  String(Number(b.dataset.sub) === licksSub)
+                );
+              });
+              licksSavePlayerPrefs();
+            });
+          });
+
+          /* restore player prefs */
+          (function () {
+            const saved = loadStore().licksPlayer || {};
+            if (FB_VOICES.some((v) => v.id === saved.voice)) {
+              licksVoice = saved.voice;
+            }
+            if (saved.bpm != null) {
+              bpmInput.value = String(
+                Math.max(40, Math.min(240, Math.round(saved.bpm)))
+              );
+            }
+            if ([1, 2, 3, 4, 6].includes(saved.sub)) {
+              licksSub = saved.sub;
+            }
+            if (typeof saved.loop === "boolean") {
+              licksLoop = saved.loop;
+              loopBtn.setAttribute("aria-pressed", String(licksLoop));
+            }
+            if (typeof saved.click === "boolean") {
+              licksClick = saved.click;
+              clickBtn.setAttribute("aria-pressed", String(licksClick));
+            }
+            voiceSel.value = licksVoice;
+            document.querySelectorAll("#licks-subdiv .sub-opt").forEach((b) => {
+              b.setAttribute(
+                "aria-pressed",
+                String(Number(b.dataset.sub) === licksSub)
+              );
+            });
+          })();
 
           /* ---------- Guitar Pro (.gp/.gpx = zip with Content/score.gpif) ---------- */
 
@@ -8154,6 +8445,20 @@
                   const notes = entry.notes.map((n) =>
                     n.b ? { bar: true } : { si: n.s, f: n.f, slur: n.l || null }
                   );
+                  /* a few legato lessons were generated without slur marks
+                     (their GP files carried no hopo data) — derive them from
+                     same-string steps so the notation reads legato */
+                  if (entry.g === "legato" && !notes.some((n) => n && n.slur)) {
+                    let prev = null;
+                    notes.forEach((n) => {
+                      if (!n || n.bar) return;
+                      if (prev && prev.si === n.si && Math.abs(n.f - prev.f) > 0 &&
+                          Math.abs(n.f - prev.f) <= 3) {
+                        n.slur = n.f > prev.f ? "h" : "p";
+                      }
+                      prev = n;
+                    });
+                  }
                   licksShow(entry.name, entry.meta, notes, entry.measures);
                 });
                 group.appendChild(chip);
@@ -8236,6 +8541,7 @@
             metaEl.textContent = [saved.meta && saved.meta.title, saved.meta && saved.meta.artist].filter(Boolean).join(" — ");
             emptyEl.hidden = true;
             wrapEl.hidden = false;
+            transportEl.hidden = false;
             clearBtn.hidden = false;
             statusEl.textContent = licksName + " · " + saved.measures +
               (saved.measures === 1 ? " measure" : " measures") +
@@ -8286,6 +8592,9 @@
           }
           if (name !== "sweeps" && typeof swStopPlayback === "function") {
             swStopPlayback();
+          }
+          if (name !== "licks" && typeof licksStopPlayback === "function") {
+            licksStopPlayback();
           }
           if (name !== "licks" && typeof licksClearSelection === "function") {
             licksClearSelection();
