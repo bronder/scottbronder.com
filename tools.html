@@ -4108,8 +4108,8 @@
           strings: "string_ensemble_1",
           choir: "choir_aahs",
           organ: "drawbar_organ",
-          eguitar: "electric_guitar_clean",
-          aguitar: "acoustic_guitar_steel",
+          oguitar: "overdriven_guitar",
+          distfat: "distortion_guitar",
           nylon: "acoustic_guitar_nylon",
           violin: "violin",
         };
@@ -4143,9 +4143,13 @@
         function loadSoundfont(style) {
           const ctx = ensureAudio();
           if (!ctx) return Promise.resolve(null);
+          if (style === "shred") return Promise.resolve("shred"); /* synthesized, no samples */
           if (!STYLE_FONTS[style]) return Promise.resolve(null);
           if (fontLoads[style]) return fontLoads[style];
-          fontLoads[style] = fetch(SOUND_FONT_BASE + STYLE_FONTS[style] + "-mp3.js")
+          const fontBase = style === "distfat"
+            ? "https://gleitz.github.io/midi-js-soundfonts/FatBoy/"
+            : SOUND_FONT_BASE;
+          fontLoads[style] = fetch(fontBase + STYLE_FONTS[style] + "-mp3.js")
             .then((res) => res.text())
             .then((text) =>
               Promise.all(
@@ -4175,6 +4179,7 @@
 
         function samplesForStyle(style) {
           if (style === "piano") return pianoSamples;
+          if (style === "shred") return "shred"; /* routes to the synth voice */
           return fontSamples[style] || null;
         }
 
@@ -4196,7 +4201,68 @@
           return Math.round(69 + 12 * Math.log2(f / 440));
         }
 
+        /* synthesized high-gain guitar: detuned saws -> soft-clip waveshaper
+           -> cab filters -> compressor. one shared amp bus; each note feeds it
+           through its own envelope, so pick dynamics drive the distortion */
+        let shredAmpIn = null;
+        function shredBus() {
+          if (shredAmpIn) return shredAmpIn;
+          const pre = audioCtx.createGain();
+          pre.gain.value = 3;
+          const shaper = audioCtx.createWaveShaper();
+          const n = 1024, curve = new Float32Array(n);
+          for (let i = 0; i < n; i++) {
+            const x = (i / (n - 1)) * 2 - 1;
+            curve[i] = Math.tanh(2.5 * x);
+          }
+          shaper.curve = curve;
+          shaper.oversample = "4x";
+          const hp = audioCtx.createBiquadFilter();
+          hp.type = "highpass"; hp.frequency.value = 75;
+          const body = audioCtx.createBiquadFilter();
+          body.type = "peaking"; body.frequency.value = 110; body.Q.value = 1; body.gain.value = 5;
+          const lp = audioCtx.createBiquadFilter();
+          lp.type = "lowpass"; lp.frequency.value = 3600; lp.Q.value = 0.7;
+          const pres = audioCtx.createBiquadFilter();
+          pres.type = "peaking"; pres.frequency.value = 2300; pres.Q.value = 1; pres.gain.value = 4;
+          const comp = audioCtx.createDynamicsCompressor();
+          comp.threshold.value = -20; comp.ratio.value = 6;
+          comp.attack.value = 0.003; comp.release.value = 0.12;
+          const out = audioCtx.createGain();
+          out.gain.value = 0.55;
+          pre.connect(shaper); shaper.connect(hp); hp.connect(body);
+          body.connect(lp); lp.connect(pres); pres.connect(comp); comp.connect(out);
+          out.connect(pianoCtl.out);
+          shredAmpIn = pre;
+          return shredAmpIn;
+        }
+
+        function buildShredVoice(freq, level, attack, when, stopAfter) {
+          const now = audioCtx.currentTime;
+          const t0 = when != null ? when : now;
+          const bus = shredBus();
+          const o1 = audioCtx.createOscillator();
+          const o2 = audioCtx.createOscillator();
+          o1.type = "sawtooth"; o2.type = "sawtooth";
+          o1.frequency.value = freq; o2.frequency.value = freq;
+          o1.detune.value = -7; o2.detune.value = 7;
+          const vgain = audioCtx.createGain();
+          vgain.gain.setValueAtTime(0.0001, t0);
+          vgain.gain.linearRampToValueAtTime(level * 0.9, t0 + Math.max(attack, 0.004));
+          if (stopAfter != null) {
+            vgain.gain.setValueAtTime(level * 0.9, t0 + stopAfter);
+            vgain.gain.linearRampToValueAtTime(0.0001, t0 + stopAfter + 0.04);
+          }
+          o1.connect(vgain); o2.connect(vgain);
+          vgain.connect(bus);
+          o1.start(t0); o2.start(t0);
+          const stopAt = t0 + (stopAfter != null ? stopAfter + 0.1 : 6);
+          o1.stop(stopAt); o2.stop(stopAt);
+          return { vgain, oscs: [o1, o2] };
+        }
+
         function buildSampledVoice(samples, freq, level, attack, when, stopAfter) {
+          if (samples === "shred") return buildShredVoice(freq, level, attack, when, stopAfter);
           const now = audioCtx.currentTime;
           const t0 = when != null ? when : now;
           const midi = freqToMidi(freq);
@@ -6416,13 +6482,13 @@
         const fbBpmInput = document.getElementById("fb-bpm");
 
         const FB_VOICES = [
-          { id: "eguitar", label: "electric guitar" },
-          { id: "aguitar", label: "steel-string guitar" },
+          { id: "distfat", label: "distortion guitar (fatboy)" },
+          { id: "shred", label: "shred lead (synth)" },
           { id: "nylon", label: "nylon guitar" },
           { id: "violin", label: "violin" },
           { id: "piano", label: "piano" },
         ];
-        let fbVoice = "eguitar";
+        let fbVoice = "shred";
         /* practice sequences: plain up/down run, interval pairs where k is
            the scale-step gap between each pair's low and high note, or
            g-note groups that slide up the scale (1-2-3, 2-3-4, …) */
@@ -6864,7 +6930,7 @@
         let swInv = 0;
         let swFret = 7;
         let swDisplay = "fingers";
-        let swVoice = "eguitar";
+        let swVoice = "shred";
         let swLoop = false;
         let swClick = false;
         let swSubdiv = 1;
@@ -8019,7 +8085,7 @@
           const voiceSel = document.getElementById("licks-voice");
           const bpmInput = document.getElementById("licks-bpm");
 
-          let licksVoice = "eguitar";
+          let licksVoice = "shred";
           let licksLoop = false;
           let licksClick = false;
           let licksSub = 4; /* notes per beat */
