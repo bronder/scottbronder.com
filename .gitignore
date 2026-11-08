@@ -1,0 +1,7 @@
+# Local tool config (machine-specific, not shared)
+.claude/settings.local.json
+.claude/worktrees/
+
+# Python
+__pycache__/
+*.pyc

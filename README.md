@@ -35,3 +35,13 @@ automatically.
 
 Everything lives in `index.html` — text, styles, and the favicon are all
 inline, so it's a single small file with no external requests.
+
+## Refreshing the setlist screenshots
+
+The setlist cards use hero screenshots stored in `img/work/`. To recapture them
+(needs Edge or Chrome, plus `pip install pillow`):
+
+```sh
+python scripts/capture-work.py            # all sites
+python scripts/capture-work.py dean-cascione   # just one
+```
