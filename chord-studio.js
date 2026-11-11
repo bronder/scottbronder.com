@@ -1054,6 +1054,31 @@ function csFunctionOf(sym){
   return 2;                             // V vii
 }
 
+// block labels can speak chord names, roman numerals, or both
+let csLabelMode='chords';
+const csLabelSel=document.getElementById('cs-labels');
+if(csLabelSel){
+  csLabelSel.addEventListener('change',()=>{
+    csLabelMode=['chords','numerals','both'].includes(csLabelSel.value) ? csLabelSel.value : 'chords';
+    renderGrid();
+    saveCsPrefs();
+  });
+}
+
+function csBlockLabel(sym){
+  if(csLabelMode==='chords') return sym;
+  const pc=parseChord(sym);
+  const data=paletteData();
+  const d=pc ? data.findIndex(x=>{
+    const q=parseChord(x.sym);
+    return q && q.root===pc.root;
+  }) : -1;
+  const roman=d>=0 ? data[d].roman : null;
+  if(!roman) return sym; // outside the key keeps its name
+  if(csLabelMode==='numerals') return roman;
+  return roman+' · '+sym;
+}
+
 function csHexA(hex, a){
   const n=parseInt(hex.slice(1), 16);
   return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
@@ -1315,7 +1340,7 @@ function renderBlock(c,i,startBeat,move,fresh){
 
   const name=document.createElement('span');
   name.className='blk-name';
-  name.textContent=c.sym;
+  name.textContent=csBlockLabel(c.sym);
 
   // duration as a clickable select — drag-to-resize still works
   const dur=document.createElement('select');
@@ -1839,6 +1864,7 @@ function saveCsPrefs(){
       sound:soundPreset,
       vol:csVolume,
       beatsPerMeasure:BEATS_PER_MEASURE,
+      labels:csLabelMode,
       theme:csThemeKey,
       speedStep:csSpeedStep,
       stopAfter:csStopAfter,
@@ -1890,6 +1916,10 @@ function loadCsPrefs(){
     csVolume=Math.max(0, Math.min(1, p.vol));
     if(csVolSlider) csVolSlider.value=String(Math.round(csVolume*100));
     csApplyVolume();
+  }
+  if(['chords','numerals','both'].includes(p.labels)){
+    csLabelMode=p.labels;
+    if(csLabelSel) csLabelSel.value=csLabelMode;
   }
   if([2,3,4,5,6,7,8].includes(p.beatsPerMeasure)){
     BEATS_PER_MEASURE=p.beatsPerMeasure;
