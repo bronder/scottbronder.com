@@ -1819,6 +1819,7 @@ function saveCsPrefs(){
       theme:csThemeKey,
       speedStep:csSpeedStep,
       stopAfter:csStopAfter,
+      swing:csSwing,
       click:csClickOn,
       arp:csArpOn,
       arpRate:csArpRate,
@@ -1871,6 +1872,10 @@ function loadCsPrefs(){
   if([0,2,4,6].includes(p.speedStep)){
     csSpeedStep=p.speedStep;
     if(csSpeedSel) csSpeedSel.value=String(csSpeedStep);
+  }
+  if([0,0.33,0.66].includes(p.swing)){
+    csSwing=p.swing;
+    if(csSwingSel) csSwingSel.value=String(csSwing);
   }
   if([0,4,8,16].includes(p.stopAfter)){
     csStopAfter=p.stopAfter;
@@ -2521,8 +2526,10 @@ function csArpSchedule(){
   }
   const horizon=Tone.now()+0.3;
   const step=60/bpm/csArpRate;
+  const swing=(csArpRate===2 && csSwing>0) ? csSwing*step : 0; // lean the off-eighths
   while(csArpAnchor.at + (csArpNextPos-csArpAnchor.pos) < horizon){
-    const t=Math.max(csArpAnchor.at + (csArpNextPos-csArpAnchor.pos), Tone.now()+0.01);
+    let t=Math.max(csArpAnchor.at + (csArpNextPos-csArpAnchor.pos), Tone.now()+0.01);
+    t+=(csArpSlot % 2===1) ? swing : 0;
     const seg=posToSeg(csArpNextPos);
     const chord=NOTES[seg ? seg.idx : 0];
     if(chord){
@@ -2578,6 +2585,15 @@ if(csNameInput){
 }
 
 const csArpBtn=document.getElementById('cs-arp');
+let csSwing=0; // 0 straight, 0.33 gentle, 0.66 hard — off-eighth delay ratio
+const csSwingSel=document.getElementById('cs-swing');
+if(csSwingSel){
+  csSwingSel.addEventListener('change',()=>{
+    csSwing=[0,0.33,0.66].includes(Number(csSwingSel.value)) ? Number(csSwingSel.value) : 0;
+    saveCsPrefs();
+  });
+}
+
 const csArpRateSel=document.getElementById('cs-arp-rate');
 function csSyncArpUI(){
   if(csArpBtn){
