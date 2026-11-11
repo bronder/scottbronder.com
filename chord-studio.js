@@ -1937,6 +1937,7 @@ function saveCsPrefs(){
       click:csClickOn,
       arp:csArpOn,
       arpRate:csArpRate,
+      arpPattern:csArpPattern,
       bassMode:csBassMode,
       name:csName,
     }));
@@ -2013,6 +2014,10 @@ function loadCsPrefs(){
     if(csStopSel) csStopSel.value=String(csStopAfter);
   }
   if(typeof p.arp==='boolean') csArpOn=p.arp;
+  if(['up','down','updown','wander'].includes(p.arpPattern)){
+    csArpPattern=p.arpPattern;
+    if(csArpPatSel) csArpPatSel.value=csArpPattern;
+  }
   if(['held','pulse','walk'].includes(p.bassMode)){
     csBassMode=p.bassMode;
     if(csBassSel) csBassSel.value=csBassMode;
@@ -2686,11 +2691,34 @@ let csClickLastCur=null;
 
 let csArpOn=false;
 let csArpRate=2; // notes per beat: 1 quarters, 2 eighths, 4 sixteenths
+let csArpPattern='updown'; // up | down | updown | wander
 let csArpSynth=null;
 let csArpAnchor=null;
 let csArpNextPos=null;
 let csArpSlot=0;
-const CS_ARP_PATTERN=[0,1,2,3,2,1]; // up and down the voices
+let csArpLastVoice=0;
+
+// the arp's path through the chord's voices, per pattern mode
+function csArpVoice(slot){
+  if(csArpPattern==='up') return slot % 4;
+  if(csArpPattern==='down') return 3 - (slot % 4);
+  if(csArpPattern==='wander'){
+    // a lazy random walk that tends back toward the middle voices
+    const step=[-1,-1,1,1,2,-2][Math.floor(Math.random()*6)];
+    csArpLastVoice=Math.max(0, Math.min(3, csArpLastVoice+step));
+    return csArpLastVoice;
+  }
+  return [0,1,2,3,2,1][slot % 6]; // up and down
+}
+
+const csArpPatSel=document.getElementById('cs-arp-pattern');
+if(csArpPatSel){
+  csArpPatSel.addEventListener('change',()=>{
+    csArpPattern=['up','down','updown','wander'].includes(csArpPatSel.value) ? csArpPatSel.value : 'updown';
+    csArpSlot=0;
+    saveCsPrefs();
+  });
+}
 
 async function csEnsureArp(){
   if(csArpSynth || !window.Tone || !Tone.Synth) return csArpSynth;
@@ -2731,7 +2759,7 @@ function csArpSchedule(){
     const seg=posToSeg(csArpNextPos);
     const chord=NOTES[seg ? seg.idx : 0];
     if(chord){
-      const voice=CS_ARP_PATTERN[csArpSlot % CS_ARP_PATTERN.length];
+      const voice=csArpVoice(csArpSlot);
       // a breath of humanity: timing wanders ±3ms, touch wanders a little more
       const jt=t+(Math.random()-0.5)*0.006;
       const jv=0.7+(Math.random()-0.5)*0.12;
