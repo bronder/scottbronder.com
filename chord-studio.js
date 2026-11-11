@@ -675,6 +675,39 @@ function ensureLegacySynth(){
   }
 }
 
+/* ---------- bloom bells: the chord change made audible ---------- */
+
+let csBloomIdx=-1;
+let csBloomSynth=null;
+
+function csEnsureBloom(){
+  if(csBloomSynth || !window.Tone || !Tone.Synth) return csBloomSynth;
+  try{
+    csBloomSynth=new Tone.Synth({
+      oscillator:{type:'sine'},
+      envelope:{attack:0.004, decay:1.4, sustain:0, release:1.8},
+    });
+    const rv=new Tone.Reverb({decay:7, preDelay:0.03, wet:0.55});
+    rv.connect(toneMaster || Tone.Destination);
+    csBloomSynth.connect(rv);
+    csBloomSynth.volume.value=-20;
+  }catch{
+    csBloomSynth=null;
+  }
+  return csBloomSynth;
+}
+
+function csBloom(idx){
+  if(!toneMaster) return;
+  const s=csBloomSynth || csEnsureBloom();
+  if(!s) return;
+  const chord=NOTES[idx];
+  if(!chord) return;
+  [0,1,2].forEach((ti,k)=>{
+    try{ s.triggerAttackRelease(midiToFreq(chord[ti]+19), 0.5, Tone.now()+0.03+k*0.07, 0.45); }catch{}
+  });
+}
+
 function updateSynth(){
   if(padVoices && window.Tone){
     if(playing && N>0){
@@ -684,6 +717,13 @@ function updateSynth(){
       const seg=posToSeg(pos);
       // while the chords are sweeping, open the top end and lift the shimmer
       const gliding=seg.local > seg.dur-sweepDur(seg.dur);
+      // every chord change gets its moment: a soft ascending bell grace of
+      // the incoming harmony, a nineteenth above the top voices
+      if(seg.idx!==csBloomIdx){
+        const wasFirst=csBloomIdx===-1;
+        csBloomIdx=seg.idx;
+        if(!wasFirst || seg.local>0.15) csBloom(seg.idx);
+      }
       if(gliding!==sweepUp && sweepEQ && sweepLP){
         sweepUp=gliding;
         sweepEQ.gain.rampTo(gliding?5:0, 0.25);
@@ -962,6 +1002,7 @@ function setPlaying(on, immediate){
     releaseAll();
     csClearNow();
     csResetMeter();
+    csBloomIdx=-1;
   }
   playBtn.innerHTML = on
     ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>'
