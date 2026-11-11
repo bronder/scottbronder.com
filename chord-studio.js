@@ -463,10 +463,12 @@ async function initTone(){
   // pad bus: chorus -> ensemble chorus -> [formant] -> widener -> sweep EQ -> wah -> reverb
   const padBus=reg(new Tone.Gain(1));
   // the tide: a two-minute amplitude swell across the whole pad bed, too
-  // slow to track, big enough that the scape is never twice the same size
+  // slow to track, big enough that the scape is never twice the same size.
+  // csTideGate rides just after it for the re-bow dips at chord changes
   const tide=reg(new Tone.LFO({frequency:1/125, min:0.86, max:1.0}));
   tide.connect(padBus.gain);
   tide.start();
+  csTideGate=reg(new Tone.Gain(1));
   chorus.connect(chorus2);
   chorus2.connect(midShape || widener);
   if(midShape){ midShape.connect(widener); }
@@ -488,7 +490,8 @@ async function initTone(){
   (P.layers||[]).forEach(spec=>{
     (spec.tones||[0,1,2,3]).forEach(t=> pads.push(makeVoice(spec, t, padBus)));
   });
-  padBus.connect(chorus);
+  padBus.connect(csTideGate);
+  csTideGate.connect(chorus);
   // sampled real-instrument layers share the same hall reverb
   if(P.sampled){
     if(P.sampled.inst) ensureSoundfont(P.sampled.inst);
@@ -632,6 +635,7 @@ async function switchSound(){
   sfCache={}; sfLastSegIdx=-1; sfBus=null; sfFailed=false;
   csJam=null; csJamHeld.clear();
   csBloomSynth=null; csBloomIdx=-1;
+  csTideGate=null;
   padVoices=null; bassVoice=null; subVoice=null; shimVoices=null;
   sweepEQ=null; sweepLP=null; toneMaster=null; toneReady=null; sweepUp=false; voicesActive=false;
   if(wasPlaying) ensureSynth();
@@ -691,6 +695,7 @@ function ensureLegacySynth(){
 
 let csBloomIdx=-1;
 let csBloomSynth=null;
+let csTideGate=null; // post-tide gain node the re-bow dips at chord changes
 
 function csEnsureBloom(){
   if(csBloomSynth || !window.Tone || !Tone.Synth) return csBloomSynth;
@@ -737,7 +742,19 @@ function updateSynth(){
       if(seg.idx!==csBloomIdx){
         const wasFirst=csBloomIdx===-1;
         csBloomIdx=seg.idx;
-        if(!wasFirst || seg.local>0.15) csBloom(seg.idx);
+        if(!wasFirst || seg.local>0.15){
+          csBloom(seg.idx);
+          // the re-bow: the pad bed dips a breath and swells back, the way a
+          // string section takes the bow again on a new chord — the change
+          // is felt in the body of the scape, not only its sparkle
+          if(csTideGate){
+            try{
+              csTideGate.gain.cancelScheduledValues(Tone.now());
+              csTideGate.gain.rampTo(0.78, 0.12);
+              csTideGate.gain.rampTo(1, 0.9);
+            }catch{}
+          }
+        }
       }
       if(gliding!==sweepUp && sweepEQ && sweepLP){
         sweepUp=gliding;
