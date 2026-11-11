@@ -1931,14 +1931,7 @@ function saveCsPrefs(){
       labels:csLabelMode,
       glide:csGlide,
       theme:csThemeKey,
-      speedStep:csSpeedStep,
-      stopAfter:csStopAfter,
-      swing:csSwing,
       click:csClickOn,
-      arp:csArpOn,
-      arpRate:csArpRate,
-      arpPattern:csArpPattern,
-      bassMode:csBassMode,
       name:csName,
     }));
   }catch{}
@@ -2001,34 +1994,8 @@ function loadCsPrefs(){
     if(csThemeSel) csThemeSel.value=csThemeKey;
   }
   if(typeof p.click==='boolean') csClickOn=p.click;
-  if([0,2,4,6].includes(p.speedStep)){
-    csSpeedStep=p.speedStep;
-    if(csSpeedSel) csSpeedSel.value=String(csSpeedStep);
-  }
-  if([0,0.33,0.66].includes(p.swing)){
-    csSwing=p.swing;
-    if(csSwingSel) csSwingSel.value=String(csSwing);
-  }
-  if([0,4,8,16].includes(p.stopAfter)){
-    csStopAfter=p.stopAfter;
-    if(csStopSel) csStopSel.value=String(csStopAfter);
-  }
-  if(typeof p.arp==='boolean') csArpOn=p.arp;
-  if(['up','down','updown','wander'].includes(p.arpPattern)){
-    csArpPattern=p.arpPattern;
-    if(csArpPatSel) csArpPatSel.value=csArpPattern;
-  }
-  if(['held','pulse','walk'].includes(p.bassMode)){
-    csBassMode=p.bassMode;
-    if(csBassSel) csBassSel.value=csBassMode;
-  }
-  if([1,2,4].includes(p.arpRate)){
-    csArpRate=p.arpRate;
-    if(csArpRateSel) csArpRateSel.value=String(csArpRate);
-  }
   if(typeof p.name==='string') csName=p.name.trim().slice(0,40);
   if(csNameInput) csNameInput.value=csName;
-  csSyncArpUI();
   csSyncClickBtn();
 }
 
@@ -2687,89 +2654,6 @@ let csClickAnchor=null; // {at, pos} maps transport seconds to audio time
 let csClickNextPos=null; // transport time of the next beat to schedule
 let csClickLastCur=null;
 
-/* ---------- arpeggio motion: the chords learn to move ---------- */
-
-let csArpOn=false;
-let csArpRate=2; // notes per beat: 1 quarters, 2 eighths, 4 sixteenths
-let csArpPattern='updown'; // up | down | updown | wander
-let csArpSynth=null;
-let csArpAnchor=null;
-let csArpNextPos=null;
-let csArpSlot=0;
-let csArpLastVoice=0;
-
-// the arp's path through the chord's voices, per pattern mode
-function csArpVoice(slot){
-  if(csArpPattern==='up') return slot % 4;
-  if(csArpPattern==='down') return 3 - (slot % 4);
-  if(csArpPattern==='wander'){
-    // a lazy random walk that tends back toward the middle voices
-    const step=[-1,-1,1,1,2,-2][Math.floor(Math.random()*6)];
-    csArpLastVoice=Math.max(0, Math.min(3, csArpLastVoice+step));
-    return csArpLastVoice;
-  }
-  return [0,1,2,3,2,1][slot % 6]; // up and down
-}
-
-const csArpPatSel=document.getElementById('cs-arp-pattern');
-if(csArpPatSel){
-  csArpPatSel.addEventListener('change',()=>{
-    csArpPattern=['up','down','updown','wander'].includes(csArpPatSel.value) ? csArpPatSel.value : 'updown';
-    csArpSlot=0;
-    saveCsPrefs();
-  });
-}
-
-async function csEnsureArp(){
-  if(csArpSynth || !window.Tone || !Tone.Synth) return csArpSynth;
-  try{
-    await Tone.start();
-    csArpSynth=new Tone.Synth({
-      oscillator:{type:'triangle'},
-      envelope:{attack:0.005, decay:0.28, sustain:0.12, release:0.4},
-    });
-    const echo=new Tone.FeedbackDelay({delayTime:'8n.', feedback:0.28, wet:0.22});
-    csArpSynth.connect(echo);
-    echo.toDestination();
-    csArpSynth.volume.value=-14;
-  }catch{
-    csArpSynth=null;
-  }
-  return csArpSynth;
-}
-
-function csArpSchedule(){
-  if(!csArpOn || N===0 || !window.Tone) return;
-  if(!csArpSynth){ csEnsureArp(); return; }
-  if(csArpAnchor && csClickLastCur!==null && Math.abs(cur-csClickLastCur)>0.25){
-    csArpAnchor=null; // re-anchor on seeks, like the click
-  }
-  if(!csArpAnchor){
-    csArpAnchor={at:Tone.now()+0.05, pos:cur};
-    const step=60/bpm/csArpRate;
-    csArpNextPos=Math.ceil((cur-step)*bpm/60*csArpRate+1e-6)*step;
-    csArpSlot=0;
-  }
-  const horizon=Tone.now()+0.3;
-  const step=60/bpm/csArpRate;
-  const swing=(csArpRate===2 && csSwing>0) ? csSwing*step : 0; // lean the off-eighths
-  while(csArpAnchor.at + (csArpNextPos-csArpAnchor.pos) < horizon){
-    let t=Math.max(csArpAnchor.at + (csArpNextPos-csArpAnchor.pos), Tone.now()+0.01);
-    t+=(csArpSlot % 2===1) ? swing : 0;
-    const seg=posToSeg(csArpNextPos);
-    const chord=NOTES[seg ? seg.idx : 0];
-    if(chord){
-      const voice=csArpVoice(csArpSlot);
-      // a breath of humanity: timing wanders ±3ms, touch wanders a little more
-      const jt=t+(Math.random()-0.5)*0.006;
-      const jv=0.7+(Math.random()-0.5)*0.12;
-      try{ csArpSynth.triggerAttackRelease(midiToFreq(chord[voice]+12), '16n', jt, jv); }catch{}
-    }
-    csArpSlot++;
-    csArpNextPos+=step;
-  }
-}
-
 async function csEnsureClick(){
   if(csClickSynth || !window.Tone || !Tone.MembraneSynth) return csClickSynth;
   try{
@@ -2809,40 +2693,6 @@ function csClickSchedule(){
 if(csNameInput){
   csNameInput.addEventListener('input',()=>{
     csName=csNameInput.value.trim();
-    saveCsPrefs();
-  });
-}
-
-const csArpBtn=document.getElementById('cs-arp');
-let csSwing=0; // 0 straight, 0.33 gentle, 0.66 hard — off-eighth delay ratio
-const csSwingSel=document.getElementById('cs-swing');
-if(csSwingSel){
-  csSwingSel.addEventListener('change',()=>{
-    csSwing=[0,0.33,0.66].includes(Number(csSwingSel.value)) ? Number(csSwingSel.value) : 0;
-    saveCsPrefs();
-  });
-}
-
-const csArpRateSel=document.getElementById('cs-arp-rate');
-function csSyncArpUI(){
-  if(csArpBtn){
-    csArpBtn.setAttribute('aria-pressed', String(csArpOn));
-    csArpBtn.textContent=csArpOn?'On':'Off';
-  }
-}
-if(csArpBtn){
-  csArpBtn.addEventListener('click', async ()=>{
-    csArpOn=!csArpOn;
-    csSyncArpUI();
-    if(csArpOn) await csEnsureArp();
-    csArpAnchor=null;
-    saveCsPrefs();
-  });
-}
-if(csArpRateSel){
-  csArpRateSel.addEventListener('change',()=>{
-    csArpRate=Number(csArpRateSel.value)||2;
-    csArpAnchor=null; // re-grid at the new subdivision
     saveCsPrefs();
   });
 }
@@ -2964,129 +2814,6 @@ function csResetMeter(){
   if(csMeterFill) csMeterFill.style.width='0%';
 }
 
-/* ---------- bass patterns: the drone learns to move ---------- */
-
-let csBassMode='held'; // held | pulse | walk
-let csBassSynth=null;
-let csBassAnchor=null;
-let csBassNextPos=null;
-let csBassBeatIdx=0;
-let csBassMuted=false; // pad's own bass voice silenced while a pattern plays
-
-async function csEnsureBass(){
-  if(csBassSynth || !window.Tone || !Tone.Synth) return csBassSynth;
-  try{
-    await Tone.start();
-    csBassSynth=new Tone.Synth({
-      oscillator:{type:'triangle'},
-      envelope:{attack:0.008, decay:0.4, sustain:0.35, release:0.5},
-    });
-    csBassSynth.toDestination();
-    csBassSynth.volume.value=-10;
-  }catch{
-    csBassSynth=null;
-  }
-  return csBassSynth;
-}
-
-function csBassPatternOn(){
-  return csBassMode==='pulse' || csBassMode==='walk';
-}
-
-function csSyncPadBass(){
-  // hand the low end to the pattern (or take it back)
-  const want=csBassPatternOn();
-  if(want!==csBassMuted && bassVoice){
-    try{ bassVoice.volume.rampTo(want ? -Infinity : -6, 0.25); }catch{}
-    csBassMuted=want;
-  }
-}
-
-function csBassSchedule(){
-  if(!csBassPatternOn() || N===0 || !window.Tone) return;
-  if(!csBassSynth){ csEnsureBass(); return; }
-  if(csBassAnchor && csClickLastCur!==null && Math.abs(cur-csClickLastCur)>0.25){
-    csBassAnchor=null;
-  }
-  if(!csBassAnchor){
-    csBassAnchor={at:Tone.now()+0.05, pos:cur};
-    csBassNextPos=Math.ceil(cur*bpm/60+1e-6)*60/bpm;
-    csBassBeatIdx=Math.round(csBassNextPos*bpm/60);
-  }
-  const horizon=Tone.now()+0.3;
-  while(csBassAnchor.at + (csBassNextPos-csBassAnchor.pos) < horizon){
-    const t=Math.max(csBassAnchor.at + (csBassNextPos-csBassAnchor.pos), Tone.now()+0.01);
-    const seg=posToSeg(csBassNextPos);
-    const chord=NOTES[seg ? seg.idx : 0];
-    if(chord){
-      // walk: root on the downbeat, the fifth on beat three; pulse: roots
-      const useFifth=csBassMode==='walk' && (csBassBeatIdx % BEATS_PER_MEASURE)===Math.ceil(BEATS_PER_MEASURE/2);
-      const m=chord[4]+(useFifth ? 7 : 0);
-      try{ csBassSynth.triggerAttackRelease(midiToFreq(m), '8n', t, 0.85); }catch{}
-    }
-    csBassBeatIdx++;
-    csBassNextPos+=60/bpm;
-  }
-}
-
-const csBassSel=document.getElementById('cs-bass-mode');
-if(csBassSel){
-  csBassSel.addEventListener('change',()=>{
-    csBassMode=['held','pulse','walk'].includes(csBassSel.value) ? csBassSel.value : 'held';
-    csBassAnchor=null;
-    csSyncPadBass();
-    saveCsPrefs();
-  });
-}
-
-/* ---------- speed trainer: the loop pushes you a little faster ---------- */
-
-let csSpeedStep=0;   // bpm added per two passes; 0 = off
-let csSpeedPasses=0;
-let csSpeedPrevCur=0;
-
-const csSpeedSel=document.getElementById('cs-trainer');
-if(csSpeedSel){
-  csSpeedSel.addEventListener('change',()=>{
-    csSpeedStep=[0,2,4,6].includes(Number(csSpeedSel.value)) ? Number(csSpeedSel.value) : 0;
-    csSpeedPasses=0;
-    saveCsPrefs();
-  });
-}
-
-function csTrainerTick(){
-  if(playing && cur < csSpeedPrevCur-0.5){
-    // a wrap shows up as the position jumping backwards
-    csSpeedPasses++;
-    if(csSpeedStep && csSpeedPasses%2===0){
-      const next=Math.min(Number(tempo.max), bpm+csSpeedStep);
-      if(next!==bpm){
-        tempo.value=String(next);
-        tempo.dispatchEvent(new Event('input',{bubbles:true}));
-        if(csStatus) csStatus.textContent='trainer: '+next+' bpm';
-      }
-    }
-    if(csStopAfter && csSpeedPasses>=csStopAfter){
-      setPlaying(false);
-      if(csStatus) csStatus.textContent='done — '+csStopAfter+' loops';
-      csSpeedPasses=0;
-      csSpeedPrevCur=cur;
-      return;
-    }
-  }
-  csSpeedPrevCur=cur;
-}
-
-let csStopAfter=0; // auto-stop after N loop passes; 0 = forever
-const csStopSel=document.getElementById('cs-autostop');
-if(csStopSel){
-  csStopSel.addEventListener('change',()=>{
-    csStopAfter=[0,4,8,16].includes(Number(csStopSel.value)) ? Number(csStopSel.value) : 0;
-    csSpeedPasses=0;
-    saveCsPrefs();
-  });
-}
-
 function tick(now){
   const dt=Math.min(0.05,(now-last)/1000);
   last=now;
@@ -3101,11 +2828,7 @@ function tick(now){
     draw();
     updateSynth();
     csClickSchedule();
-    csArpSchedule();
-    csBassSchedule();
-    csSyncPadBass();
     csUpdateMeter();
-    csTrainerTick();
   }else if(csJamView || csHoverView){
     draw(); // the freeze-frame breathes (glow pulse) while held or hovered
     csUpdateMeter();
