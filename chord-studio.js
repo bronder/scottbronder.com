@@ -1040,11 +1040,30 @@ function csSyncUndo(){
   if(csUndoBtn) csUndoBtn.disabled=csHistory.length===0;
 }
 
+// the chart as roman numerals in the selected key — null if any chord's
+// root sits outside it (better silent than wrong). roots, not spellings:
+// a G triad is still degree I when the palette shows Gmaj7
+function csRomanReadout(){
+  if(!PROG.length) return null;
+  const data=paletteData();
+  const parts=PROG.map(c=>{
+    const pc=parseChord(c.sym);
+    if(!pc) return null;
+    const d=data.findIndex(x=>{
+      const q=parseChord(x.sym);
+      return q && q.root===pc.root;
+    });
+    return d>=0 ? data[d].roman : null;
+  });
+  return parts.every(p=>p) ? parts.join('–') : null;
+}
+
 function csIdleStatus(){
   if(!csStatus) return;
-  csStatus.textContent=PROG.length
-    ? PROG.length+' chord'+(PROG.length>1?'s':'')+' · '+totalBeats()+' beats'
-    : '';
+  if(!PROG.length){ csStatus.textContent=''; return; }
+  const roman=csRomanReadout();
+  csStatus.textContent=PROG.length+' chord'+(PROG.length>1?'s':'')+' · '+totalBeats()+' beats'+
+    (roman ? ' · '+roman : '');
 }
 
 // single data-changed pipeline: re-voice, clamp transport, redraw everything, persist
