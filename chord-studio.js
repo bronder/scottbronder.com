@@ -948,6 +948,13 @@ let MARKERS=[];
 const csGridScroll=document.getElementById('cs-grid-scroll');
 const csGridTrack=document.getElementById('cs-grid-track');
 const csStatus=document.getElementById('cs-status');
+const csNameInput=document.getElementById('cs-name');
+let csName=''; // rides along: share links, poster, MIDI track name, filenames
+
+function csFileSlug(){
+  const base=csName ? csName.trim() : PROG.slice(0,6).map(c=>c.sym).join('-');
+  return base.replace(/[^A-Za-z0-9-]+/g,'').slice(0,40) || 'progression';
+}
 const csUndoBtn=document.getElementById('cs-undo');
 const csMenuBtn=document.getElementById('cs-menu-btn');
 const csMenuEl=document.getElementById('cs-menu');
@@ -1647,6 +1654,7 @@ function saveCsPrefs(){
       bpm:Math.max(40, Math.min(240, Math.round(bpm)||90)),
       sound:soundPreset,
       click:csClickOn,
+      name:csName,
     }));
   }catch{}
 }
@@ -1686,6 +1694,8 @@ function loadCsPrefs(){
   }
   if(SOUND_PRESETS[p.sound]) soundPreset=p.sound;
   if(typeof p.click==='boolean') csClickOn=p.click;
+  if(typeof p.name==='string') csName=p.name.trim().slice(0,40);
+  if(csNameInput) csNameInput.value=csName;
   csSyncClickBtn();
 }
 
@@ -1698,6 +1708,7 @@ function csEncodeShare(){
     p:PROG.map(c=>[c.sym, c.beats]),
     b:Math.round(bpm),
     s:soundPreset,
+    n:csName || undefined,
     m:MARKERS.length ? MARKERS.map(x=>[x.beat, x.label]) : undefined,
   });
   return btoa(json).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -1722,6 +1733,7 @@ function csDecodeShare(str){
       bpm:Number.isFinite(d.b) ? Math.max(40, Math.min(240, Math.round(d.b))) : null,
       sound:SOUND_PRESETS[d.s] ? d.s : null,
       markers,
+      name:(typeof d.n==='string' && d.n.trim()) ? d.n.trim().slice(0,40) : '',
     };
   }catch{
     return null;
@@ -1746,6 +1758,14 @@ function csRenderPoster(){
   const td=totalDur();
   const yFor=m=>H*0.86-((m-40)/40)*H*0.72;
   const x0=W*0.08, x1=W*0.92;
+  // a named progression gets its title set into the poster's sky
+  if(csName){
+    c.font='800 34px Figtree, sans-serif';
+    c.fillStyle='rgba(238,240,243,0.92)';
+    c.textAlign='center';
+    c.fillText(csName, W/2, H*0.075);
+    c.textAlign='left';
+  }
   // chord boundaries + names across the full loop
   c.font='700 22px Figtree, sans-serif';
   let acc=0;
@@ -1801,6 +1821,13 @@ function csEncodeMidi(){
   const PPQ=480;
   const mpqn=Math.round(60000000/bpm);
   const events=[{tick:0, bytes:[0xFF,0x51,0x03,(mpqn>>16)&0xff,(mpqn>>8)&0xff,mpqn&0xff]}];
+  if(csName){
+    // track name meta, ASCII-safe
+    const ascii=csName.replace(/[^\x20-\x7E]/g,'').slice(0,40);
+    if(ascii){
+      events.push({tick:0, bytes:[0xFF,0x03,ascii.length, ...[...ascii].map(ch=>ch.charCodeAt(0)&0x7f)]});
+    }
+  }
   let start=0;
   PROG.forEach((c,i)=>{
     const on=Math.round(start*PPQ);
@@ -1831,7 +1858,7 @@ function csEncodeMidi(){
 if(csMidiBtn){
   csMidiBtn.addEventListener('click',()=>{
     if(N===0) return;
-    const name='chord-studio-'+(PROG.slice(0,6).map(c=>c.sym).join('-').replace(/[^A-Za-z0-9-]+/g,'').slice(0,40) || 'progression')+'.mid';
+    const name='chord-studio-'+csFileSlug()+'.mid';
     const blob=new Blob([csEncodeMidi()], {type:'audio/midi'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
@@ -1849,7 +1876,7 @@ if(csSaveBtn){
   csSaveBtn.addEventListener('click',()=>{
     if(N===0) return;
     const off=csRenderPoster();
-    const name='chord-studio-'+(PROG.slice(0,6).map(c=>c.sym).join('-').replace(/[^A-Za-z0-9-]+/g,'').slice(0,40) || 'progression')+'.png';
+    const name='chord-studio-'+csFileSlug()+'.png';
     const save=url=>{
       const a=document.createElement('a');
       a.href=url;
@@ -2188,6 +2215,13 @@ function csClickSchedule(){
   }
 }
 
+if(csNameInput){
+  csNameInput.addEventListener('input',()=>{
+    csName=csNameInput.value.trim();
+    saveCsPrefs();
+  });
+}
+
 const csClickBtn=document.getElementById('cs-click');
 function csSyncClickBtn(){
   if(!csClickBtn) return;
@@ -2253,6 +2287,8 @@ if(csGridTrack){
     }
     if(shared.bpm){ bpm=shared.bpm; tempo.value=String(bpm); }
     if(shared.sound) soundPreset=shared.sound;
+    csName=shared.name || '';
+    if(csNameInput) csNameInput.value=csName;
     history.replaceState(null,'','#chord-studio');
     csSharedLoaded=true;
     const rb=document.getElementById('cs-restore');
