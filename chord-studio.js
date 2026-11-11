@@ -35,18 +35,18 @@ const SOUND_PRESETS={
       // the shelf: a mile-wide supersaw that blooms upward over seconds
       // (six voices and 60 cents of spread — wider walls beat against
       // each other and read as distortion; this width still sounds huge)
-      {type:'fatsawtooth',count:6,spread:60,attack:1.4,sustain:0.9,release:4.5,glide:0.10,
+      {type:'fatsawtooth',count:6,spread:60,attack:1.4,sustain:0.9,release:8,glide:0.10,
         filterBase:220,filterSus:0.5,filterOct:3.2,fEnvA:1.2,vol:-18,haas:true},
       // the depth beneath it: darker, slower, wider still
-      {type:'fatsawtooth',count:5,spread:40,attack:2.2,sustain:0.85,release:5.5,glide:0.12,
+      {type:'fatsawtooth',count:5,spread:40,attack:2.2,sustain:0.85,release:11,glide:0.12,
         filterBase:160,filterSus:0.45,filterOct:2.6,fEnvA:1.8,vol:-22,haas:true},
       // glassy tops: soft triangles an octave up on the melody voices
       {partials:[{up:0,gain:1,wave:{type:'fattriangle',count:3,spread:18}},{up:12,gain:0.22}],
-        attack:1.8,sustain:0.9,release:4,glide:0.10,vol:-24,tones:[0,1]},
+        attack:1.8,sustain:0.9,release:7,glide:0.10,vol:-24,tones:[0,1]},
       // the ice: a whisper of pure sines two octaves above the top voices,
       // slower still to arrive — the light off the glacier's face
       {partials:[{up:24,gain:1,wave:{type:'sine'}},{up:19,gain:0.4,wave:{type:'sine'}}],
-        attack:2.8,sustain:0.85,release:5,glide:0.14,vol:-27,tones:[0]}
+        attack:2.8,sustain:0.85,release:9,glide:0.14,vol:-27,tones:[0]}
     ],
     breath:[70,240],
     vibrato:{depth:6,rate:4.4},
@@ -58,18 +58,18 @@ const SOUND_PRESETS={
     layers:[
       // the pipes: organ partial stack with the quinte stop (a fifth) drawn
       {partials:[{up:0,gain:1},{up:12,gain:0.5},{up:19,gain:0.28},{up:24,gain:0.3},{up:-12,gain:0.55}],
-        attack:0.9,sustain:1,release:3.5,glide:0.05,vol:-20},
+        attack:0.9,sustain:1,release:8,glide:0.05,vol:-20},
       // the crypt: sub-octave drone beneath, slower to swell than the nave above
       {partials:[{up:-24,gain:1,wave:{type:'sine'}},{up:-12,gain:0.3,wave:{type:'sine'}}],
-        attack:2.5,sustain:0.95,release:5,glide:0.06,vol:-18,tones:[2,3]},
+        attack:2.5,sustain:0.95,release:9,glide:0.06,vol:-18,tones:[2,3]},
       // the choir: soft triangles singing an "ah" through the preset's
       // formant, an octave above the melody — voices in the nave
       {partials:[{up:12,gain:1,wave:{type:'fattriangle',count:3,spread:12}},{up:19,gain:0.25,wave:{type:'sine'}}],
-        attack:1.6,sustain:0.9,release:4.5,glide:0.09,vol:-23,tones:[0,1]},
+        attack:1.6,sustain:0.9,release:8,glide:0.09,vol:-23,tones:[0,1]},
       // the lantern: the rose window — pure high sines on the melody voice,
       // faint, and slower to arrive than everything else in the building
       {partials:[{up:24,gain:1,wave:{type:'sine'}},{up:28,gain:0.35,wave:{type:'sine'}}],
-        attack:3.2,sustain:0.8,release:5.5,glide:0.15,vol:-29,tones:[0]}
+        attack:3.2,sustain:0.8,release:9,glide:0.15,vol:-29,tones:[0]}
     ],
     midShape:{type:'peaking',frequency:820,gain:5,Q:1.4},
     chorus:{frequency:0.15,depth:0.4,wet:0.35},
