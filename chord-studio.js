@@ -1480,6 +1480,52 @@ function loadCsPrefs(){
   if(SOUND_PRESETS[p.sound]) soundPreset=p.sound;
 }
 
+/* ---------- share links: the whole progression rides in the hash ---------- */
+
+// URL-safe base64 of {p:[[sym,beats]...], b:bpm, s:sound}; symbols are ASCII
+// so btoa is safe. decode validates exactly like the local prefs loader
+function csEncodeShare(){
+  const json=JSON.stringify({
+    p:PROG.map(c=>[c.sym, c.beats]),
+    b:Math.round(bpm),
+    s:soundPreset,
+  });
+  return btoa(json).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+function csDecodeShare(str){
+  try{
+    const b64=str.replace(/-/g,'+').replace(/_/g,'/');
+    const d=JSON.parse(atob(b64+'='.repeat((4-b64.length%4)%4)));
+    if(!d || !Array.isArray(d.p)) return null;
+    const prog=d.p.filter(c=>
+      Array.isArray(c) && typeof c[0]==='string' && parseChord(c[0]) &&
+      Number.isInteger(c[1]) && c[1]>=1 && c[1]<=64
+    ).slice(0,MAX_CHORDS).map(c=>[c[0].trim(), c[1]]);
+    if(!prog.length) return null;
+    return {
+      prog,
+      bpm:Number.isFinite(d.b) ? Math.max(40, Math.min(240, Math.round(d.b))) : null,
+      sound:SOUND_PRESETS[d.s] ? d.s : null,
+    };
+  }catch{
+    return null;
+  }
+}
+
+const csShareBtn=document.getElementById('cs-share');
+if(csShareBtn){
+  csShareBtn.addEventListener('click',async ()=>{
+    const url=location.origin+location.pathname+'#chord-studio~'+csEncodeShare();
+    history.replaceState(null,'','#chord-studio~'+csEncodeShare());
+    let copied=false;
+    try{ await navigator.clipboard.writeText(url); copied=true; }catch{}
+    if(csStatus) csStatus.textContent=copied
+      ? 'link copied — it opens this exact progression'
+      : 'link is in the address bar — copy it from there';
+  });
+}
+
 /* ---------- key-based chord palette ---------- */
 
 const keySelect=document.getElementById('keySelect');
@@ -1641,9 +1687,24 @@ function tick(now){
 
 window.addEventListener('resize', draw);
 
-// boot: restore the saved progression before first render, then light up
+// boot: a shared link (hash payload) wins over the saved progression; the
+// visitor's own work is backed up first, and the payload is stripped so a
+// refresh keeps the progression from local storage like any other session
 if(csGridTrack){
-  loadCsPrefs();
+  const m=/^#chord-studio~([A-Za-z0-9\-_]+)/.exec(location.hash);
+  const shared=m ? csDecodeShare(m[1]) : null;
+  if(shared){
+    try{
+      const prev=localStorage.getItem(CS_STORE_KEY);
+      if(prev) localStorage.setItem(CS_STORE_KEY+'Backup', prev);
+    }catch{}
+    PROG=shared.prog.map(c=>({sym:c[0], beats:c[1]}));
+    if(shared.bpm){ bpm=shared.bpm; tempo.value=String(bpm); }
+    if(shared.sound) soundPreset=shared.sound;
+    history.replaceState(null,'','#chord-studio');
+  }else{
+    loadCsPrefs();
+  }
   if(soundSelect) soundSelect.value=soundPreset;
 }
 N=PROG.length;

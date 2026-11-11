@@ -2924,6 +2924,7 @@
                   <li>pick a key, then tap chords — triads through 9ths — to place blocks on the chart, up to sixteen. drag blocks to reorder, drag their right edge to resize, or use the ‹ › ⧉ × buttons on each block. double-click the ruler to drop section markers; click a flag while playing to jump the loop there.</li>
                   <li>six sounds: custom pads, church organ, cathedral choir (live), symphony strings, full orchestra, and real strings + orchestra with a harp sweep on every change.</li>
                   <li>chords sweep into each other with a filter bloom — tempo sets the pace, and every block sets its own length in beats.</li>
+                  <li>share copies a link that opens this exact progression — key, lengths, tempo and sound included — for anyone you send it to.</li>
                   <li>everything you build is remembered for your next visit.</li>
                 </ul>
                 <p class="tool-guide-link">deep-link this tool: <a href="#chord-studio">tools#chord-studio</a></p>
@@ -2982,6 +2983,7 @@
                   <div class="seq-head">
                     <p class="drone-label" id="cs-seq-label">Your progression</p>
                     <div class="tool-row">
+                      <button class="ghost-btn" id="cs-share" type="button" title="Copy a link that opens this exact progression">Share</button>
                       <button class="ghost-btn" id="cs-undo" type="button" disabled>Undo</button>
                       <div class="sb-overflow">
                         <button class="ghost-btn" id="cs-menu-btn" type="button"
@@ -8834,6 +8836,7 @@
         window.addEventListener("resize", updateTabEdgeFade);
 
         function activateTool(name) {
+          name = name.split("~")[0]; // "~" carries tool payload, e.g. a shared progression
           if (!TOOL_NAMES.includes(name)) name = "scale-builder";
           if (name !== "tuner") {
             // leaving the tuner: release the mic and any reference tone
