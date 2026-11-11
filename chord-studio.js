@@ -1791,6 +1791,25 @@ if(csMenuBtn && csMenuEl){
       closeMenu();
     }
   });
+  const csCopyTextBtn=document.getElementById('cs-copy-text');
+  if(csCopyTextBtn){
+    csCopyTextBtn.addEventListener('click',async ()=>{
+      closeMenu();
+      if(!PROG.length) return;
+      const keyLabel=(keySelect && keySelect.selectedOptions[0]) ? keySelect.selectedOptions[0].textContent : '';
+      const roman=csRomanReadout();
+      const text=(csName ? csName+' — ' : '')+
+        PROG.map(c=>c.sym).join(' | ')+
+        (roman ? ' ('+roman.replace(/–/g,'-')+')' : '')+
+        ' · '+Math.round(bpm)+' bpm · '+keyLabel+
+        ' · '+location.origin+location.pathname+'#chord-studio~'+csEncodeShare();
+      let copied=false;
+      try{ await navigator.clipboard.writeText(text); copied=true; }catch{}
+      if(csStatus) csStatus.textContent=copied
+        ? 'text copied — paste it anywhere'
+        : 'copy blocked — the address bar still carries the link';
+    });
+  }
   const csPrintBtn=document.getElementById('cs-print-chart');
   if(csPrintBtn){
     csPrintBtn.addEventListener('click',()=>{
