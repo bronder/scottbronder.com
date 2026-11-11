@@ -1795,6 +1795,7 @@ function saveCsPrefs(){
       click:csClickOn,
       arp:csArpOn,
       arpRate:csArpRate,
+      bassMode:csBassMode,
       name:csName,
     }));
   }catch{}
@@ -1836,6 +1837,10 @@ function loadCsPrefs(){
   if(SOUND_PRESETS[p.sound]) soundPreset=p.sound;
   if(typeof p.click==='boolean') csClickOn=p.click;
   if(typeof p.arp==='boolean') csArpOn=p.arp;
+  if(['held','pulse','walk'].includes(p.bassMode)){
+    csBassMode=p.bassMode;
+    if(csBassSel) csBassSel.value=csBassMode;
+  }
   if([1,2,4].includes(p.arpRate)){
     csArpRate=p.arpRate;
     if(csArpRateSel) csArpRateSel.value=String(csArpRate);
@@ -2602,6 +2607,81 @@ function csResetMeter(){
   if(csMeterFill) csMeterFill.style.width='0%';
 }
 
+/* ---------- bass patterns: the drone learns to move ---------- */
+
+let csBassMode='held'; // held | pulse | walk
+let csBassSynth=null;
+let csBassAnchor=null;
+let csBassNextPos=null;
+let csBassBeatIdx=0;
+let csBassMuted=false; // pad's own bass voice silenced while a pattern plays
+
+async function csEnsureBass(){
+  if(csBassSynth || !window.Tone || !Tone.Synth) return csBassSynth;
+  try{
+    await Tone.start();
+    csBassSynth=new Tone.Synth({
+      oscillator:{type:'triangle'},
+      envelope:{attack:0.008, decay:0.4, sustain:0.35, release:0.5},
+    });
+    csBassSynth.toDestination();
+    csBassSynth.volume.value=-10;
+  }catch{
+    csBassSynth=null;
+  }
+  return csBassSynth;
+}
+
+function csBassPatternOn(){
+  return csBassMode==='pulse' || csBassMode==='walk';
+}
+
+function csSyncPadBass(){
+  // hand the low end to the pattern (or take it back)
+  const want=csBassPatternOn();
+  if(want!==csBassMuted && bassVoice){
+    try{ bassVoice.volume.rampTo(want ? -Infinity : -6, 0.25); }catch{}
+    csBassMuted=want;
+  }
+}
+
+function csBassSchedule(){
+  if(!csBassPatternOn() || N===0 || !window.Tone) return;
+  if(!csBassSynth){ csEnsureBass(); return; }
+  if(csBassAnchor && csClickLastCur!==null && Math.abs(cur-csClickLastCur)>0.25){
+    csBassAnchor=null;
+  }
+  if(!csBassAnchor){
+    csBassAnchor={at:Tone.now()+0.05, pos:cur};
+    csBassNextPos=Math.ceil(cur*bpm/60+1e-6)*60/bpm;
+    csBassBeatIdx=Math.round(csBassNextPos*bpm/60);
+  }
+  const horizon=Tone.now()+0.3;
+  while(csBassAnchor.at + (csBassNextPos-csBassAnchor.pos) < horizon){
+    const t=Math.max(csBassAnchor.at + (csBassNextPos-csBassAnchor.pos), Tone.now()+0.01);
+    const seg=posToSeg(csBassNextPos);
+    const chord=NOTES[seg ? seg.idx : 0];
+    if(chord){
+      // walk: root on the downbeat, the fifth on beat three; pulse: roots
+      const useFifth=csBassMode==='walk' && (csBassBeatIdx % BEATS_PER_MEASURE)===2;
+      const m=chord[4]+(useFifth ? 7 : 0);
+      try{ csBassSynth.triggerAttackRelease(midiToFreq(m), '8n', t, 0.85); }catch{}
+    }
+    csBassBeatIdx++;
+    csBassNextPos+=60/bpm;
+  }
+}
+
+const csBassSel=document.getElementById('cs-bass-mode');
+if(csBassSel){
+  csBassSel.addEventListener('change',()=>{
+    csBassMode=['held','pulse','walk'].includes(csBassSel.value) ? csBassSel.value : 'held';
+    csBassAnchor=null;
+    csSyncPadBass();
+    saveCsPrefs();
+  });
+}
+
 function tick(now){
   const dt=Math.min(0.05,(now-last)/1000);
   last=now;
@@ -2617,6 +2697,8 @@ function tick(now){
     updateSynth();
     csClickSchedule();
     csArpSchedule();
+    csBassSchedule();
+    csSyncPadBass();
     csUpdateMeter();
   }else if(csJamView || csHoverView){
     draw(); // the freeze-frame breathes (glow pulse) while held or hovered
