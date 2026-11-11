@@ -2072,6 +2072,17 @@ window.addEventListener('keyup',e=>{
   if(csJamHeld.size===0) csClearJamView();
 });
 
+// space runs the transport from anywhere in the tool — but never steals it
+// from a focused control (buttons, inputs, blocks all own their space)
+window.addEventListener('keydown',e=>{
+  if(e.key!==' ' || e.repeat) return;
+  if(!csGridTrack || document.querySelector('.tool-panel[data-tool="chord-studio"]').hidden) return;
+  const t=e.target;
+  if(t && t.closest && t.closest('button, input, select, textarea, a, [contenteditable], .seq-block, .marker-flag')) return;
+  e.preventDefault();
+  if(!playBtn.disabled) setPlaying(!playing);
+});
+
 function tick(now){
   const dt=Math.min(0.05,(now-last)/1000);
   last=now;
