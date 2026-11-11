@@ -1019,6 +1019,22 @@ function csToggleSectionLoop(m){
   rebuild();
 }
 
+// harmonic function of a chord in the selected key: 0 tonic, 1 subdominant,
+// 2 dominant, 3 outside — the chart's color spine
+function csFunctionOf(sym){
+  const pc=parseChord(sym);
+  if(!pc) return 3;
+  const data=paletteData();
+  const d=data.findIndex(x=>{
+    const q=parseChord(x.sym);
+    return q && q.root===pc.root;
+  });
+  if(d<0) return 3;
+  if(d===0 || d===2 || d===5) return 0; // I iii vi
+  if(d===1 || d===3) return 1;          // ii IV
+  return 2;                             // V vii
+}
+
 function csHexA(hex, a){
   const n=parseInt(hex.slice(1), 16);
   return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
@@ -1267,7 +1283,7 @@ function csFocusAfterRemoval(gone){
 
 function renderBlock(c,i,startBeat,move,fresh){
   const el=document.createElement('div');
-  el.className='seq-block'+
+  el.className='seq-block fx-'+csFunctionOf(c.sym)+
     (playing && !move && i===csNowIdx ? ' now' : '')+
     (fresh ? ' fresh' : '');
   el.style.left=startBeat*CS_PX_BEAT+1+'px';
