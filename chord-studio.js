@@ -737,6 +737,7 @@ function setPlaying(on){
   playBtn.setAttribute('aria-label', on?'Pause':'Play');
   playBtn.setAttribute('title', on?'Pause':'Play');
   updateSynth();
+  csUpdatePlayhead();
 }
 
 const stepBtn=(id,input,d)=>{
@@ -971,9 +972,29 @@ function renderGrid(move, freshIdx){
     csGridTrack.appendChild(slot);
   }
 
+  // the sweeping playhead rides above the blocks, ignored by the pointer
+  const ph=document.createElement('div');
+  ph.className='cs-playhead';
+  csGridTrack.appendChild(ph);
+  csPlayheadEl=ph;
+  csUpdatePlayhead();
+
   if(playing) csApplyNow();
   csSyncPlayEnabled();
   saveCsPrefs();
+}
+
+let csPlayheadEl=null;
+
+function csUpdatePlayhead(){
+  if(!csPlayheadEl) return;
+  if(!playing || N===0){
+    csPlayheadEl.style.display='none';
+    return;
+  }
+  csPlayheadEl.style.display='block';
+  const beat=((cur*bpm/60)%totalBeats()+totalBeats())%totalBeats();
+  csPlayheadEl.style.left=(beat*CS_PX_BEAT)+'px';
 }
 
 // nothing to play means no transport: the sibling tools disable their play
@@ -1250,6 +1271,27 @@ function jumpToMarker(m){
   csNowIdx=-1;
   csUpdateNow(cur);
   syncMeta(); updateSynth(); draw();
+}
+
+// click anywhere on the ruler strip to scrub the loop there — continuous,
+// so unlike the whole-second slider it can land between beats. marker
+// double-clicks coexist: their seek-then-place lands on the measure start
+if(csGridScroll){
+  csGridScroll.addEventListener('click',e=>{
+    if(!PROG.length) return;
+    if(e.target.closest('.seq-block, .marker-flag, .mk-rename')) return;
+    const rect=csGridTrack.getBoundingClientRect();
+    const y=e.clientY-rect.top;
+    const px=e.clientX-rect.left;
+    if(y<0 || y>44 || px<0 || px>rect.width) return;
+    const td=totalDur();
+    cur=Math.min(Math.max(0, px/CS_PX_BEAT*60/bpm), td-0.001);
+    sfLastSegIdx=-1;
+    csNowIdx=-1;
+    csUpdateNow(cur);
+    csUpdatePlayhead();
+    syncMeta(); updateSynth(); draw();
+  });
 }
 
 // double-click the ruler strip to drop a marker on that measure
@@ -1679,6 +1721,7 @@ function tick(now){
     cur=(cur+dt)%totalDur();
     syncMeta();
     csUpdateNow(cur);
+    csUpdatePlayhead();
     draw();
     updateSynth();
   }
