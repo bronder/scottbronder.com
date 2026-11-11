@@ -491,6 +491,11 @@ async function initTone(){
   if(gen!==soundGen) return;
   const chorus=reg(new Tone.Chorus({frequency:P.chorus.frequency, depth:P.chorus.depth, wet:P.chorus.wet}));
   chorus.start();
+  // ensemble thickness: a second chorus at an unrelated, slower rate stacked
+  // after the first — the string-machine trick. two modulations beating
+  // against each other read as many players, not one fat one
+  const chorus2=reg(new Tone.Chorus({frequency:0.11, depth:0.55, wet:0.35}));
+  chorus2.start();
   const widener=reg(new Tone.StereoWidener({width:0.85}));
   const sweepFilter=reg(new Tone.Filter({type:'highshelf', frequency:2200, gain:0}));
   const wah=reg(new Tone.Filter({type:'lowpass', frequency:P.wah.base, Q:P.wah.q}));
@@ -499,9 +504,10 @@ async function initTone(){
   limiter.toDestination();
   const master=reg(new Tone.Gain(0.9));
   master.connect(limiter);
-  // pad bus: chorus -> [formant] -> widener -> sweep EQ -> wah -> reverb
+  // pad bus: chorus -> ensemble chorus -> [formant] -> widener -> sweep EQ -> wah -> reverb
   const padBus=reg(new Tone.Gain(1));
-  chorus.connect(midShape || widener);
+  chorus.connect(chorus2);
+  chorus2.connect(midShape || widener);
   if(midShape){ midShape.connect(widener); }
   widener.connect(sweepFilter);
   sweepFilter.connect(wah);
