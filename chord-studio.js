@@ -752,6 +752,7 @@ function setPlaying(on){
   if(on){
     playClock=0;
     if(introSweep) cur=0;
+    csFollow=true; // picking up the instrument takes over the chart view
     ensureSynth();
     if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
     csNowIdx=-1;
@@ -813,6 +814,7 @@ if(csRewindBtn){
   csRewindBtn.addEventListener('click',()=>{
     cur=0;
     playClock=0;
+    csFollow=true;
     sfLastSegIdx=-1;
     syncMeta();
     updateSynth();
@@ -830,6 +832,7 @@ if(csIntroBtn){
 }
 scrub.addEventListener('input',()=>{
   cur=Number(scrub.value)||0;
+  csFollow=true;
   sfLastSegIdx=-1;
   csNowIdx=-1;
   csUpdateNow(cur);
@@ -1017,6 +1020,12 @@ function renderGrid(move, freshIdx){
 
 let csPlayheadEl=null;
 
+// auto-follow: while playing, page the chart forward so the sweeping playhead
+// stays in view. a user's own scroll pauses the following — it re-arms when
+// they scroll back to the playhead, or on any seek
+let csFollow=true;
+let csFollowUntil=0; // scroll events in this window are our own paging
+
 function csUpdatePlayhead(){
   if(!csPlayheadEl) return;
   if(!playing || N===0){
@@ -1026,6 +1035,28 @@ function csUpdatePlayhead(){
   csPlayheadEl.style.display='block';
   const beat=((cur*bpm/60)%totalBeats()+totalBeats())%totalBeats();
   csPlayheadEl.style.left=(beat*CS_PX_BEAT)+'px';
+  if(csFollow && csGridScroll){
+    const x=beat*CS_PX_BEAT;
+    const sl=csGridScroll.scrollLeft;
+    const vw=csGridScroll.clientWidth;
+    if(x<sl || x>sl+vw-40){
+      csGridScroll.scrollLeft=Math.max(0, x-vw*0.15);
+      csFollowUntil=performance.now()+80;
+    }
+  }
+}
+
+if(csGridScroll){
+  csGridScroll.addEventListener('scroll',()=>{
+    if(!playing) return;
+    if(performance.now()<csFollowUntil) return; // our own paging, not the user
+    const beat=((cur*bpm/60)%totalBeats()+totalBeats())%totalBeats();
+    const x=beat*CS_PX_BEAT;
+    const sl=csGridScroll.scrollLeft;
+    const vw=csGridScroll.clientWidth;
+    // the user scrolled: follow again only if they landed back on the music
+    csFollow = x>=sl && x<=sl+vw;
+  }, {passive:true});
 }
 
 // nothing to play means no transport: the sibling tools disable their play
@@ -1298,6 +1329,7 @@ function jumpToMarker(m){
   if(!playing || !PROG.length) return;
   const td=totalDur();
   cur=Math.min(Math.max(0,beatToPos(m.beat)), Math.max(0,td-0.001));
+  csFollow=true;
   sfLastSegIdx=-1;
   csNowIdx=-1;
   csUpdateNow(cur);
@@ -1317,6 +1349,7 @@ if(csGridScroll){
     if(y<0 || y>44 || px<0 || px>rect.width) return;
     const td=totalDur();
     cur=Math.min(Math.max(0, px/CS_PX_BEAT*60/bpm), td-0.001);
+    csFollow=true;
     sfLastSegIdx=-1;
     csNowIdx=-1;
     csUpdateNow(cur);
@@ -1817,6 +1850,7 @@ window.addEventListener('keydown',async e=>{
     let start=0;
     for(let i=0;i<idx;i++) start+=PROG[i].beats;
     cur=start*60/bpm;
+    csFollow=true;
     sfLastSegIdx=-1;
     csNowIdx=-1;
     csUpdateNow(cur);
