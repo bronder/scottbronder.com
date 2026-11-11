@@ -2096,8 +2096,9 @@ if(window.ResizeObserver){
 }
 
 // boot: a shared link (hash payload) wins over the saved progression; the
-// visitor's own work is backed up first, and the payload is stripped so a
-// refresh keeps the progression from local storage like any other session
+// visitor's own work is backed up first and a restore pill offered, and the
+// payload is stripped so a refresh keeps the progression from local storage
+let csSharedLoaded=false;
 if(csGridTrack){
   const m=/^#chord-studio~([A-Za-z0-9\-_]+)/.exec(location.hash);
   const shared=m ? csDecodeShare(m[1]) : null;
@@ -2110,10 +2111,58 @@ if(csGridTrack){
     if(shared.bpm){ bpm=shared.bpm; tempo.value=String(bpm); }
     if(shared.sound) soundPreset=shared.sound;
     history.replaceState(null,'','#chord-studio');
+    csSharedLoaded=true;
+    const rb=document.getElementById('cs-restore');
+    if(rb && localStorage.getItem(CS_STORE_KEY+'Backup')) rb.hidden=false;
   }else{
     loadCsPrefs();
   }
   if(soundSelect) soundSelect.value=soundPreset;
+}
+
+// the lifeline: swap the visitor's own saved work back over the shared one
+const csRestoreBtn=document.getElementById('cs-restore');
+if(csRestoreBtn){
+  csRestoreBtn.addEventListener('click',()=>{
+    let p=null;
+    try{ p=JSON.parse(localStorage.getItem(CS_STORE_KEY+'Backup')||'null'); }catch{}
+    if(!p || !Array.isArray(p.prog)) return;
+    const prog=p.prog.filter(c=>
+      c && typeof c.sym==='string' && parseChord(c.sym) &&
+      Number.isInteger(c.beats) && c.beats>=1 && c.beats<=64
+    ).slice(0,MAX_CHORDS).map(c=>({sym:c.sym.trim(), beats:c.beats}));
+    if(!prog.length) return;
+    let markers=[];
+    if(Array.isArray(p.markers)){
+      const seen=new Set();
+      markers=p.markers.filter(m=>
+        m && Number.isInteger(m.beat) && m.beat>=0 && !seen.has(m.beat) && seen.add(m.beat) &&
+        typeof m.label==='string' && m.label.trim()
+      ).map(m=>({
+        beat:m.beat,
+        label:m.label.trim().slice(0,24),
+        color:/^#[0-9a-f]{6}$/i.test(m.color||'') ? m.color : null,
+      })).sort((a,b)=>a.beat-b.beat);
+      markers.forEach((m,i)=>{
+        if(!m.color) m.color=MARKER_COLORS[i%MARKER_COLORS.length];
+      });
+    }
+    mutateProg(()=>{
+      PROG.splice(0, PROG.length, ...prog);
+      MARKERS.splice(0, MARKERS.length, ...markers);
+    });
+    if(Number.isFinite(p.bpm)){
+      tempo.value=String(Math.max(40, Math.min(240, Math.round(p.bpm))));
+      tempo.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    if(SOUND_PRESETS[p.sound] && soundSelect.value!==p.sound){
+      soundSelect.value=p.sound;
+      soundSelect.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    try{ localStorage.removeItem(CS_STORE_KEY+'Backup'); }catch{}
+    csRestoreBtn.hidden=true;
+    if(csStatus) csStatus.textContent='your progression is back';
+  });
 }
 N=PROG.length;
 NOTES=N?voiceChords(PROG.map(c=>c.sym)):[];
@@ -2125,6 +2174,9 @@ csSyncUndo();
 syncMeta();
 setPlaying(false);
 draw();
+if(csSharedLoaded && csStatus){
+  csStatus.textContent='shared progression loaded — '+PROG.length+' chord'+(PROG.length>1?'s':'');
+}
 requestAnimationFrame(tick);
 
 // tab switcher hook: leaving the chord studio stops playback

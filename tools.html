@@ -2417,6 +2417,9 @@
       .cs-chart .seq-block{border-color:rgba(245,182,70,0.55);background:linear-gradient(160deg,rgba(245,182,70,0.30),rgba(245,182,70,0.10))}
       .cs-chart .seq-block.now{border-color:var(--amber);box-shadow:0 0 16px rgba(245,182,70,0.65)}
       .cs-chart .seq-block .edge{background:linear-gradient(90deg,transparent,rgba(245,182,70,0.5))}
+      /* one-shot lifeline shown when a shared link has taken over the chart */
+      .cs-restore{border:0;background:none;color:var(--amber);font-family:var(--mono);font-size:.78rem;padding:.15rem 0 0;cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-align:left}
+      .cs-restore:hover{color:var(--text)}
       /* sweeping playhead: the chart tells time like the neon graph does */
       .cs-playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--amber);box-shadow:0 0 8px rgba(245,182,70,0.8);pointer-events:none;z-index:4;display:none}
       .cs-playhead::after{content:'';position:absolute;top:0;left:-4px;border:5px solid transparent;border-top-color:var(--amber)}
@@ -3004,6 +3007,7 @@
                     <div class="grid-track" id="cs-grid-track"></div>
                   </div>
                   <p class="tool-status" id="cs-status" aria-live="polite"></p>
+                  <button type="button" class="cs-restore" id="cs-restore" hidden>bring back your own progression</button>
                 </div>
               </div>
             </div>
