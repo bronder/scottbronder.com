@@ -886,6 +886,7 @@ function setPlaying(on, immediate){
     csCancelCountIn(true);
     releaseAll();
     csClearNow();
+    csResetMeter();
   }
   playBtn.innerHTML = on
     ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>'
@@ -2484,6 +2485,35 @@ if(csClickBtn){
   });
 }
 
+/* ---------- level meter: everything the tool makes, in one bar ---------- */
+
+let csMeter=null;
+const csMeterFill=document.getElementById('cs-meter-fill');
+
+function csUpdateMeter(){
+  if(!csMeterFill) return;
+  if(!csMeter){
+    if(window.Tone && Tone.Meter){
+      try{
+        csMeter=new Tone.Meter();
+        Tone.Destination.connect(csMeter);
+      }catch{
+        return;
+      }
+    }else{
+      return;
+    }
+  }
+  const v=csMeter.getValue();
+  const db=(typeof v==='number' && Number.isFinite(v)) ? v : -60;
+  const pct=Math.max(0, Math.min(1, 1+db/60));
+  csMeterFill.style.width=(pct*100).toFixed(1)+'%';
+}
+
+function csResetMeter(){
+  if(csMeterFill) csMeterFill.style.width='0%';
+}
+
 function tick(now){
   const dt=Math.min(0.05,(now-last)/1000);
   last=now;
@@ -2498,8 +2528,10 @@ function tick(now){
     draw();
     updateSynth();
     csClickSchedule();
+    csUpdateMeter();
   }else if(csJamView || csHoverView){
     draw(); // the freeze-frame breathes (glow pulse) while held or hovered
+    csUpdateMeter();
   }
   requestAnimationFrame(tick);
 }
