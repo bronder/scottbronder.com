@@ -2090,8 +2090,22 @@ if(csSaveBtn){
 }
 if(csShareBtn){
   csShareBtn.addEventListener('click',async ()=>{
-    const url=location.origin+location.pathname+'#chord-studio~'+csEncodeShare();
-    history.replaceState(null,'','#chord-studio~'+csEncodeShare());
+    const payload=csEncodeShare();
+    const url=location.origin+location.pathname+'#chord-studio~'+payload;
+    history.replaceState(null,'','#chord-studio~'+payload);
+    // phones get the real share sheet, carrying the progression's name
+    if(navigator.share){
+      try{
+        await navigator.share({
+          title:(csName ? csName+' — ' : '')+'chord studio',
+          url,
+        });
+        if(csStatus) csStatus.textContent='shared';
+        return;
+      }catch{
+        // sheet dismissed — fall through to the copy
+      }
+    }
     let copied=false;
     try{ await navigator.clipboard.writeText(url); copied=true; }catch{}
     if(csStatus) csStatus.textContent=copied
