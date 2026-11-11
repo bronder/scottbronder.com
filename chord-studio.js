@@ -448,6 +448,11 @@ async function initTone(){
   await Tone.start();
   if(gen!==soundGen) return; // a newer sound was picked before this build started
   const reverb=reg(new Tone.Reverb({decay:P.reverb.decay, preDelay:0.03, wet:P.reverb.wet}));
+  // tide reverb: the hall's wetness swells and recedes on its own slow wave —
+  // the room is far away, then it is everywhere
+  const rvWet=reg(new Tone.LFO({frequency:1/180, min:Math.max(0.45, P.reverb.wet-0.12), max:Math.min(0.9, P.reverb.wet+0.1)}));
+  rvWet.connect(reverb.wet);
+  rvWet.start();
   try{ if(reverb.ready) await reverb.ready; }catch{}
   if(gen!==soundGen) return;
   const chorus=reg(new Tone.Chorus({frequency:P.chorus.frequency, depth:P.chorus.depth, wet:P.chorus.wet}));
