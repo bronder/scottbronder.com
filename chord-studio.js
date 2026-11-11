@@ -1594,6 +1594,7 @@ function saveCsPrefs(){
       markers:MARKERS.map(m=>({beat:m.beat, label:m.label, color:m.color})),
       bpm:Math.max(40, Math.min(240, Math.round(bpm)||90)),
       sound:soundPreset,
+      click:csClickOn,
     }));
   }catch{}
 }
@@ -1632,6 +1633,8 @@ function loadCsPrefs(){
     tempo.value=String(bpm);
   }
   if(SOUND_PRESETS[p.sound]) soundPreset=p.sound;
+  if(typeof p.click==='boolean') csClickOn=p.click;
+  csSyncClickBtn();
 }
 
 /* ---------- share links: the whole progression rides in the hash ---------- */
@@ -2083,6 +2086,65 @@ window.addEventListener('keydown',e=>{
   if(!playBtn.disabled) setPlaying(!playing);
 });
 
+/* ---------- click track: lookahead-scheduled ticks over the transport ---------- */
+
+let csClickOn=false;
+let csClickSynth=null;
+let csClickAnchor=null; // {at, pos} maps transport seconds to audio time
+let csClickNextPos=null; // transport time of the next beat to schedule
+let csClickLastCur=null;
+
+async function csEnsureClick(){
+  if(csClickSynth || !window.Tone || !Tone.MembraneSynth) return csClickSynth;
+  try{
+    await Tone.start();
+    // separate lifecycle from the patch graph: a sound swap must not kill the metronome
+    csClickSynth=new Tone.MembraneSynth({pitchDecay:0.008, octaves:4, envelope:{attack:0.001, decay:0.09, sustain:0}});
+    csClickSynth.volume.value=-8;
+    csClickSynth.toDestination();
+  }catch{
+    csClickSynth=null;
+  }
+  return csClickSynth;
+}
+
+function csClickSchedule(){
+  if(!csClickOn || !csClickSynth || !window.Tone) return;
+  // a seek shows up as a discontinuity: re-anchor the audio-time mapping
+  if(csClickAnchor && csClickLastCur!==null && Math.abs(cur-csClickLastCur)>0.25){
+    csClickAnchor=null;
+  }
+  csClickLastCur=cur;
+  if(!csClickAnchor){
+    csClickAnchor={at:Tone.now()+0.05, pos:cur};
+    csClickNextPos=Math.ceil(cur*bpm/60+1e-6)*60/bpm;
+  }
+  const horizon=Tone.now()+0.3;
+  while(csClickAnchor.at + (csClickNextPos-csClickAnchor.pos) < horizon){
+    const t=Math.max(csClickAnchor.at + (csClickNextPos-csClickAnchor.pos), Tone.now()+0.01);
+    const beatIdx=Math.round(csClickNextPos*bpm/60);
+    const down=beatIdx%BEATS_PER_MEASURE===0;
+    try{ csClickSynth.triggerAttackRelease(down?1900:1250, 0.03, t, down?0.9:0.45); }catch{}
+    csClickNextPos+=60/bpm;
+  }
+}
+
+const csClickBtn=document.getElementById('cs-click');
+function csSyncClickBtn(){
+  if(!csClickBtn) return;
+  csClickBtn.setAttribute('aria-pressed', String(csClickOn));
+  csClickBtn.textContent=csClickOn?'On':'Off';
+}
+if(csClickBtn){
+  csClickBtn.addEventListener('click', async ()=>{
+    csClickOn=!csClickOn;
+    csSyncClickBtn();
+    if(csClickOn) await csEnsureClick();
+    csClickAnchor=null;
+    saveCsPrefs();
+  });
+}
+
 function tick(now){
   const dt=Math.min(0.05,(now-last)/1000);
   last=now;
@@ -2096,6 +2158,7 @@ function tick(now){
     csUpdatePlayhead();
     draw();
     updateSynth();
+    csClickSchedule();
   }else if(csJamView){
     draw(); // the jam freeze-frame breathes (glow pulse) while a key is held
   }
