@@ -1063,6 +1063,7 @@ if(csGridScroll){
 // buttons on an empty progression too
 function csSyncPlayEnabled(){
   if(playBtn) playBtn.disabled = N===0;
+  if(csSaveBtn) csSaveBtn.disabled = N===0;
 }
 
 // removing a block destroys whatever held focus; hand it to the block that
@@ -1620,6 +1621,80 @@ function csDecodeShare(str){
 }
 
 const csShareBtn=document.getElementById('cs-share');
+const csSaveBtn=document.getElementById('cs-save');
+
+// the whole progression as one shareable poster: every voice's glide across
+// the full loop, chord names at the boundaries, the site's mark in the corner
+function csRenderPoster(){
+  const W=1600,H=900;
+  const off=document.createElement('canvas');
+  off.width=W; off.height=H;
+  const c=off.getContext('2d');
+  const g=c.createRadialGradient(W/2,H/2,0,W/2,H/2,W*0.7);
+  g.addColorStop(0,theme.stage);
+  g.addColorStop(1,theme.deep);
+  c.fillStyle=g;
+  c.fillRect(0,0,W,H);
+  const td=totalDur();
+  const yFor=m=>H*0.86-((m-40)/40)*H*0.72;
+  const x0=W*0.08, x1=W*0.92;
+  // chord boundaries + names across the full loop
+  c.font='700 22px Figtree, sans-serif';
+  let acc=0;
+  for(let i=0;i<N;i++){
+    const x=x0+(acc/totalBeats())*(x1-x0);
+    acc+=PROG[i].beats;
+    c.strokeStyle='rgba(245,182,70,0.18)';
+    c.lineWidth=1.5;
+    c.beginPath(); c.moveTo(x,H*0.10); c.lineTo(x,H*0.92); c.stroke();
+    c.fillStyle='rgba(245,182,70,0.75)';
+    c.fillText(PROG[i].sym, x+8, H*0.14);
+  }
+  // the five voice trajectories, sampled across the loop
+  for(let v=0;v<5;v++){
+    const col=theme.voices[v];
+    c.strokeStyle=col;
+    c.lineWidth=3.5;
+    c.shadowColor=col;
+    c.shadowBlur=16;
+    c.beginPath();
+    const steps=240;
+    for(let s=0;s<=steps;s++){
+      const t=(s/steps)*td;
+      const x=x0+(s/steps)*(x1-x0);
+      const y=yFor(noteAt(v,t));
+      if(s===0) c.moveTo(x,y); else c.lineTo(x,y);
+    }
+    c.stroke();
+  }
+  c.shadowBlur=0;
+  c.font='700 20px Figtree, sans-serif';
+  c.fillStyle='rgba(238,240,243,0.5)';
+  c.textAlign='right';
+  c.fillText('scottbronder.com · chord studio', x1, H*0.965);
+  c.textAlign='left';
+  return off;
+}
+
+if(csSaveBtn){
+  csSaveBtn.addEventListener('click',()=>{
+    if(N===0) return;
+    const off=csRenderPoster();
+    const name='chord-studio-'+(PROG.slice(0,6).map(c=>c.sym).join('-').replace(/[^A-Za-z0-9-]+/g,'').slice(0,40) || 'progression')+'.png';
+    const save=url=>{
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      if(url.startsWith('blob:')) setTimeout(()=>URL.revokeObjectURL(url),4000);
+      if(csStatus) csStatus.textContent='image saved — your progression as neon lines';
+    };
+    if(off.toBlob) off.toBlob(b=>save(URL.createObjectURL(b)),'image/png');
+    else save(off.toDataURL('image/png'));
+  });
+}
 if(csShareBtn){
   csShareBtn.addEventListener('click',async ()=>{
     const url=location.origin+location.pathname+'#chord-studio~'+csEncodeShare();
