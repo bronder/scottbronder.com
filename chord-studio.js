@@ -1818,6 +1818,7 @@ function saveCsPrefs(){
       sound:soundPreset,
       theme:csThemeKey,
       speedStep:csSpeedStep,
+      stopAfter:csStopAfter,
       click:csClickOn,
       arp:csArpOn,
       arpRate:csArpRate,
@@ -1870,6 +1871,10 @@ function loadCsPrefs(){
   if([0,2,4,6].includes(p.speedStep)){
     csSpeedStep=p.speedStep;
     if(csSpeedSel) csSpeedSel.value=String(csSpeedStep);
+  }
+  if([0,4,8,16].includes(p.stopAfter)){
+    csStopAfter=p.stopAfter;
+    if(csStopSel) csStopSel.value=String(csStopAfter);
   }
   if(typeof p.arp==='boolean') csArpOn=p.arp;
   if(['held','pulse','walk'].includes(p.bassMode)){
@@ -2750,12 +2755,10 @@ if(csSpeedSel){
 }
 
 function csTrainerTick(){
-  if(!csSpeedStep || !playing) return;
-  // a wrap shows up as the position jumping backwards
-  if(cur < csSpeedPrevCur-0.5){
+  if(playing && cur < csSpeedPrevCur-0.5){
+    // a wrap shows up as the position jumping backwards
     csSpeedPasses++;
-    if(csSpeedPasses>=2){
-      csSpeedPasses=0;
+    if(csSpeedStep && csSpeedPasses%2===0){
       const next=Math.min(Number(tempo.max), bpm+csSpeedStep);
       if(next!==bpm){
         tempo.value=String(next);
@@ -2763,8 +2766,25 @@ function csTrainerTick(){
         if(csStatus) csStatus.textContent='trainer: '+next+' bpm';
       }
     }
+    if(csStopAfter && csSpeedPasses>=csStopAfter){
+      setPlaying(false);
+      if(csStatus) csStatus.textContent='done — '+csStopAfter+' loops';
+      csSpeedPasses=0;
+      csSpeedPrevCur=cur;
+      return;
+    }
   }
   csSpeedPrevCur=cur;
+}
+
+let csStopAfter=0; // auto-stop after N loop passes; 0 = forever
+const csStopSel=document.getElementById('cs-autostop');
+if(csStopSel){
+  csStopSel.addEventListener('change',()=>{
+    csStopAfter=[0,4,8,16].includes(Number(csStopSel.value)) ? Number(csStopSel.value) : 0;
+    csSpeedPasses=0;
+    saveCsPrefs();
+  });
 }
 
 function tick(now){
