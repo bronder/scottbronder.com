@@ -2388,6 +2388,8 @@
       .cs-value{font-size:12px;color:var(--cs-muted)}
       .cs-hint{color:var(--cs-muted);font-size:12px;margin:0}
       .cs-key-head{margin-top:8px}
+      .cs-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+      .cs-root .cs-preset{padding:.3rem .6rem;font-size:.72rem}
       .cs-palette{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
       .cs-root .key-chord{border:1px solid var(--cs-border);background:transparent;color:var(--cs-fg);border-radius:8px;padding:6px 4px;font-size:13px;font-weight:700;cursor:pointer;display:grid;gap:2px;justify-items:center}
       .cs-root .key-chord span{font-size:10px;color:var(--cs-muted);font-weight:600}
@@ -2918,6 +2920,7 @@
               <div class="tool-guide" id="guide-chord-studio" hidden>
                 <p>stack a chord progression from any key and watch it glide as neon lines while it plays on layered synths and real sampled instruments.</p>
                 <ul>
+                  <li>six one-click presets — pop punk, doo-wop, a jazz turnaround and more — transpose into whatever key you've picked and load with their block lengths ready to play.</li>
                   <li>pick a key, then tap chords — triads through 9ths — to place blocks on the chart, up to sixteen. drag blocks to reorder, drag their right edge to resize, or use the ‹ › ⧉ × buttons on each block. double-click the ruler to drop section markers; click a flag while playing to jump the loop there.</li>
                   <li>six sounds: custom pads, church organ, cathedral choir (live), symphony strings, full orchestra, and real strings + orchestra with a harp sweep on every change.</li>
                   <li>chords sweep into each other with a filter bloom — tempo sets the pace, and every block sets its own length in beats.</li>
@@ -2936,6 +2939,8 @@
                     <div class="cs-block">
                       <div class="cs-row"><span class="cs-label">chords</span></div>
                       <p class="cs-hint">Tap a chord to add it to the chart below — each block sets its own length.</p>
+                      <div class="cs-key-head"><span class="cs-label">start from a preset</span></div>
+                      <div class="cs-presets" id="cs-presets" role="group" aria-label="Progression presets"></div>
                       <div class="cs-key-head"><span class="cs-label">add from key</span></div>
                       <div class="cs-steps" style="gap:6px">
                         <select id="keySelect" class="cs-select" aria-label="Key" style="flex:1"></select>

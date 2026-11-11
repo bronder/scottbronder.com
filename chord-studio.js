@@ -1486,8 +1486,59 @@ const keySelect=document.getElementById('keySelect');
 const keyChords=document.getElementById('keyChords');
 const modeSelect=document.getElementById('modeSelect');
 const soundSelect=document.getElementById('soundSelect');
+const csPresetsHost=document.getElementById('cs-presets');
 let chordMode='triads';
 let currentKey=KEYS.find(k=>k[0]==='G') || KEYS[0];
+
+// one-click starting points, spelled as scale degrees so they transpose into
+// whatever key (and mode) is selected; beats shape the feel — waltz in threes,
+// the epic loop in long swells
+const PRESETS=[
+  {name:'pop punk', degrees:[0,4,5,3], beats:[4,4,4,4], title:'I–V–vi–IV'},
+  {name:'doo-wop', degrees:[0,5,3,4], beats:[4,4,4,4], title:'I–vi–IV–V'},
+  {name:'aeolian descent', degrees:[0,6,5,4], beats:[4,4,4,4], title:'i–VII–VI–v — shines in a minor key'},
+  {name:'waltz', degrees:[0,5,3,0], beats:[3,3,3,3], title:'I–vi–IV–I in three-beat blocks'},
+  {name:'slow epic', degrees:[0,2,3,5], beats:[8,8,8,8], title:'I–iii–IV–vi — long swells for the big synths'},
+  {name:'jazz turnaround', degrees:[1,4,0], beats:[4,4,8], mode:'sevenths', title:'ii–V–I with 7ths'}
+];
+
+function renderPresets(){
+  if(!csPresetsHost) return;
+  csPresetsHost.innerHTML='';
+  PRESETS.forEach(p=>{
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='ghost-btn cs-preset';
+    b.textContent=p.name;
+    b.title=p.title+' — loads into the key you picked';
+    b.addEventListener('click',()=>loadPreset(p));
+    csPresetsHost.appendChild(b);
+  });
+}
+
+function loadPreset(p){
+  // presets are predictable: jazz brings its own 7ths, everything else
+  // resets to triads so a leftover mode never surprises the next click
+  const wantMode=p.mode||'triads';
+  if(chordMode!==wantMode){
+    chordMode=wantMode;
+    if(modeSelect) modeSelect.value=wantMode;
+    renderPalette();
+  }
+  const data=paletteData();
+  const prog=p.degrees.map((d,i)=>({sym:data[d].sym, beats:p.beats[i]||4}));
+  mutateProg(()=>{
+    PROG.splice(0, PROG.length, ...prog);
+  });
+  if(csGridScroll) csGridScroll.scrollLeft=0;
+  // same feedback promise as palette adds: the loaded progression is on screen
+  const first=csGridTrack.querySelector('.seq-block');
+  if(first) first.scrollIntoView({block:'nearest', inline:'start', behavior:'smooth'});
+  if(csStatus){
+    const keyLabel=(keySelect && keySelect.selectedOptions[0]) ? keySelect.selectedOptions[0].textContent : '';
+    csStatus.textContent=p.name+' loaded — '+p.title+' in '+keyLabel;
+  }
+}
 
 function renderPalette(){
   if(!keyChords) return;
@@ -1599,6 +1650,7 @@ N=PROG.length;
 NOTES=N?voiceChords(PROG.map(c=>c.sym)):[];
 renderGrid();
 renderPalette();
+renderPresets();
 csIdleStatus();
 csSyncUndo();
 syncMeta();
