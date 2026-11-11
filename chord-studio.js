@@ -786,7 +786,22 @@ function draw(){
   }
 }
 
-function setPlaying(on){
+// with the click on, play waits behind a four-beat count-in (practice mode);
+// pressing again while it counts cancels. without the click, play is instant
+let csCountInTimer=null;
+
+function csCancelCountIn(note){
+  if(!csCountInTimer) return;
+  clearTimeout(csCountInTimer);
+  csCountInTimer=null;
+  if(csStatus && note) csStatus.textContent='';
+}
+
+function setPlaying(on, immediate){
+  if(on && !immediate && csCountInTimer){
+    csCancelCountIn(true); // the press during the count-in cancels it
+    return;
+  }
   playing=on;
   const chip=document.querySelector('.visual-label');
   if(chip){
@@ -796,14 +811,51 @@ function setPlaying(on){
     chip.setAttribute('aria-hidden', on?'true':'false');
   }
   if(on){
-    playClock=0;
-    if(introSweep) cur=0;
-    csFollow=true; // picking up the instrument takes over the chart view
-    ensureSynth();
-    if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
-    csNowIdx=-1;
-    csUpdateNow(cur);
+    const startNow=()=>{
+      playClock=0;
+      if(introSweep) cur=0;
+      csFollow=true; // picking up the instrument takes over the chart view
+      ensureSynth();
+      if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
+      csNowIdx=-1;
+      csUpdateNow(cur);
+      playBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>';
+      playBtn.setAttribute('aria-label','Pause');
+      playBtn.setAttribute('title','Pause');
+      updateSynth();
+      csUpdatePlayhead();
+    };
+    if(!immediate && csClickOn && window.Tone && Tone.MembraneSynth){
+      // the transport defers until the count-in is served: undo the
+      // playing=true set above, restore the idle preview label
+      playing=false;
+      if(chip){
+        chip.style.opacity='';
+        chip.setAttribute('aria-hidden','false');
+      }
+      const go=()=>{
+        const beat=60/bpm;
+        const t0=Tone.now()+0.08;
+        for(let i=0;i<4;i++){
+          try{ csClickSynth.triggerAttackRelease(i===0?1900:1250, 0.03, t0+i*beat, 0.8); }catch{}
+        }
+        if(csStatus) csStatus.textContent='count-in…';
+        const waitMs=Math.max(50,(t0+4*beat-Tone.now())*1000);
+        csCountInTimer=setTimeout(()=>{
+          csCountInTimer=null;
+          if(csStatus) csStatus.textContent='';
+          setPlaying(true, true); // immediate: the count-in has been served
+        }, waitMs);
+      };
+      const voice=csClickSynth || csEnsureClick();
+      if(voice && voice.then) voice.then(v=>{ if(v) go(); else startNow(); });
+      else if(csClickSynth) go();
+      else startNow();
+      return;
+    }
+    startNow();
   }else{
+    csCancelCountIn(true);
     releaseAll();
     csClearNow();
   }
@@ -2109,7 +2161,8 @@ async function csEnsureClick(){
 }
 
 function csClickSchedule(){
-  if(!csClickOn || !csClickSynth || !window.Tone) return;
+  if(!csClickOn || !window.Tone) return;
+  if(!csClickSynth){ csEnsureClick(); return; } // restored pref: build on the play gesture
   // a seek shows up as a discontinuity: re-anchor the audio-time mapping
   if(csClickAnchor && csClickLastCur!==null && Math.abs(cur-csClickLastCur)>0.25){
     csClickAnchor=null;
