@@ -726,6 +726,24 @@ function csEnsureBloom(){
   return csBloomSynth;
 }
 
+// sparkle dust: between the changes, a chance per beat of a single tiny
+// bell ping two octaves above a chord tone — light catching the ice
+let csDustBeat=-1;
+function csDust(pos){
+  if(!toneMaster || !window.Tone) return;
+  const beat=Math.floor(pos*bpm/60);
+  if(beat===csDustBeat) return;
+  csDustBeat=beat;
+  if(Math.random()>0.22) return; // sparse: roughly a ping every four to five beats
+  const seg=posToSeg(pos);
+  const chord=NOTES[seg.idx];
+  if(!chord) return;
+  const s=csBloomSynth || csEnsureBloom();
+  if(!s) return;
+  const tone=chord[Math.floor(Math.random()*4)];
+  try{ s.triggerAttackRelease(midiToFreq(tone+24), 0.3, Tone.now()+0.02+Math.random()*0.1, 0.2); }catch{}
+}
+
 function csBloom(idx){
   if(!toneMaster) return;
   const s=csBloomSynth || csEnsureBloom();
@@ -2953,6 +2971,7 @@ function tick(now){
     draw();
     updateSynth();
     csClickSchedule();
+    csDust(cur);
     csUpdateMeter();
   }else if(csJamView || csHoverView){
     draw(); // the freeze-frame breathes (glow pulse) while held or hovered
