@@ -1698,6 +1698,7 @@ function csEncodeShare(){
     p:PROG.map(c=>[c.sym, c.beats]),
     b:Math.round(bpm),
     s:soundPreset,
+    m:MARKERS.length ? MARKERS.map(x=>[x.beat, x.label]) : undefined,
   });
   return btoa(json).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
@@ -1712,10 +1713,15 @@ function csDecodeShare(str){
       Number.isInteger(c[1]) && c[1]>=1 && c[1]<=64
     ).slice(0,MAX_CHORDS).map(c=>[c[0].trim(), c[1]]);
     if(!prog.length) return null;
+    const markers=Array.isArray(d.m)
+      ? d.m.filter(x=>Array.isArray(x) && Number.isInteger(x[0]) && x[0]>=0 && typeof x[1]==='string' && x[1].trim())
+          .slice(0,16).map(x=>[x[0], x[1].trim().slice(0,24)])
+      : [];
     return {
       prog,
       bpm:Number.isFinite(d.b) ? Math.max(40, Math.min(240, Math.round(d.b))) : null,
       sound:SOUND_PRESETS[d.s] ? d.s : null,
+      markers,
     };
   }catch{
     return null;
@@ -2238,6 +2244,13 @@ if(csGridTrack){
       if(prev) localStorage.setItem(CS_STORE_KEY+'Backup', prev);
     }catch{}
     PROG=shared.prog.map(c=>({sym:c[0], beats:c[1]}));
+    if(shared.markers.length){
+      const seen=new Set();
+      MARKERS=shared.markers
+        .filter(x=>!seen.has(x[0]) && seen.add(x[0]))
+        .sort((a,b)=>a[0]-b[0])
+        .map((x,i)=>({beat:x[0], label:x[1], color:MARKER_COLORS[i%MARKER_COLORS.length]}));
+    }
     if(shared.bpm){ bpm=shared.bpm; tempo.value=String(bpm); }
     if(shared.sound) soundPreset=shared.sound;
     history.replaceState(null,'','#chord-studio');
