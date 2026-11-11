@@ -301,12 +301,6 @@
       }
 
       .tool-panel {
-        max-width: 47rem;
-      }
-
-      .tool-panel[data-tool="song-builder"],
-      .tool-panel[data-tool="scale-builder"],
-      .tool-panel[data-tool="licks"] {
         max-width: 64rem;
       }
 
@@ -2331,6 +2325,61 @@
           font-size: 4rem;
         }
       }
+      /* ---------- chord studio (skinned with the site palette) ---------- */
+      .cs-root{
+        --cs-fg: var(--text); --cs-muted: var(--muted);
+        --cs-mono: var(--mono);
+        --cs-card: var(--panel); --cs-secondary: rgba(255,255,255,0.04);
+        --cs-border: var(--line); --cs-primary: var(--amber); --cs-primary-fg: #0b0d11;
+        --cs-green-soft: rgba(245,182,70,0.12);
+        color:var(--cs-fg);
+        margin-top:14px;
+      }
+      .cs-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .cs-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cs-muted)}
+      .cs-select{background:#151a23;border:1px solid var(--cs-border);color:var(--cs-fg);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600}
+      .cs-select option{background:#151a23;color:var(--cs-fg)}
+      .cs-wrap{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start;margin-top:14px}
+      .cs-aside{background:var(--cs-card);border:1px solid var(--cs-border);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+      .cs-block{display:flex;flex-direction:column;gap:6px}
+      .cs-row{display:flex;align-items:center;justify-content:space-between}
+      .cs-steps{display:flex;align-items:center;gap:6px}
+      /* compact the site's big tempo control for the studio sidebar */
+      .cs-root .tempo-entry{gap:.35rem;align-items:center;flex-wrap:nowrap}
+      .cs-root .tempo-input{font-size:.95rem;width:3.6ch;border-bottom:1px solid var(--line);padding:.15rem 0}
+      .cs-root .step-btn{width:1.9rem;height:1.9rem;font-size:.95rem;line-height:1;padding:.2rem}
+      .cs-root .tempo-unit{font-size:.62rem}
+      .cs-root .ghost-btn{padding:.28rem .55rem;font-size:.7rem}
+      .cs-value{font-size:12px;color:var(--cs-muted)}
+      .cs-chords-box{background:var(--cs-secondary);border-radius:8px;padding:8px 10px;font-family:var(--cs-mono)}
+      .cs-chips{display:flex;flex-wrap:wrap;gap:6px}
+      .cs-root .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--cs-primary);background:var(--cs-green-soft);color:var(--cs-fg);border-radius:6px;padding:4px 8px;font-family:var(--cs-mono);font-size:14px;font-weight:700;cursor:pointer}
+      .cs-root .chip .x{color:var(--cs-muted);font-size:12px;line-height:1}
+      .cs-root .empty-chords{color:var(--cs-muted);font-size:13px;font-family:var(--cs-mono)}
+      .cs-hint{color:var(--cs-muted);font-size:12px;margin:0}
+      .cs-key-head{margin-top:8px}
+      .cs-palette{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+      .cs-root .key-chord{border:1px solid var(--cs-border);background:transparent;color:var(--cs-fg);border-radius:8px;padding:6px 4px;font-size:13px;font-weight:700;cursor:pointer;display:grid;gap:2px;justify-items:center}
+      .cs-root .key-chord span{font-size:10px;color:var(--cs-muted);font-weight:600}
+      .cs-root .key-chord:hover{border-color:var(--cs-primary)}
+      .cs-root .key-chord:disabled{opacity:.4;cursor:default}
+      .cs-mode{display:flex;gap:6px;margin-top:6px}
+      .cs-mode button{flex:1;border:1px solid var(--cs-border);background:transparent;color:var(--cs-muted);border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
+      .cs-mode button.active{background:var(--cs-green-soft);border-color:var(--cs-primary);color:var(--cs-fg)}
+      .cs-clear{border:1px solid var(--cs-border);background:transparent;color:var(--cs-muted);border-radius:9999px;padding:2px 10px;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
+      .cs-clear:hover{border-color:var(--cs-primary);color:var(--cs-fg)}
+      .cs-slider{width:100%;accent-color:var(--cs-primary)}
+      .cs-stage{min-width:0}
+      .cs-visual-card{border:1px solid var(--cs-border);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#10141b,#0b0d11)}
+      .cs-visual{position:relative;aspect-ratio:16/9;width:100%;background:radial-gradient(800px 400px at 50% 30%, rgba(122,162,247,0.07), transparent)}
+      .cs-root .visual-label{position:absolute;left:14px;top:14px;z-index:1;color:var(--cs-muted);font-size:14px;display:flex;align-items:center;gap:8px}
+      .cs-root .visual-label strong{color:var(--cs-primary);font-size:18px}
+      #viz{width:100%;height:100%;display:block}
+      .cs-transport{display:flex;align-items:center;gap:14px;padding:10px 14px;border-top:1px solid var(--cs-border);background:rgba(16,20,27,0.7)}
+      .cs-play{width:44px;height:44px;border-radius:50%;background:var(--cs-primary);color:var(--cs-primary-fg);border:none;display:grid;place-items:center;cursor:pointer;flex:0 0 44px}
+      .cs-flex{flex:1}
+      .cs-time{min-width:64px;text-align:right;font-size:15px;color:var(--cs-fg)}
+      @media(max-width:900px){.cs-wrap{grid-template-columns:1fr}}
     </style>
   </head>
   <body>
@@ -2359,6 +2408,7 @@
                   <button class="tool-tab active" type="button" role="tab" aria-selected="true" data-tool="scale-builder">scale builder</button>
                   <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="sweeps">sweep builder</button>
                   <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="song-builder">song builder</button>
+                  <button class="tool-tab" type="button" role="tab" aria-selected="false" data-tool="chord-studio">chord studio</button>
                 </div>
               </div>
               <div class="tool-tab-group">
@@ -2813,6 +2863,85 @@
             </div>
             </div>
 
+            <div class="tool-panel" data-tool="chord-studio" hidden>
+            <!-- ============= chord studio ============= -->
+            <div class="tool-card wide">
+              <div class="tool-head">
+                <h3 class="tool-title">Chord studio</h3>
+                <span class="tool-head-side">
+                  <span class="tool-meta">chords into neon light, on a huge synth</span>
+                  <button class="ghost-btn tool-guide-btn" type="button" aria-expanded="false" aria-controls="guide-chord-studio">?</button>
+                </span>
+              </div>
+
+              <div class="tool-guide" id="guide-chord-studio" hidden>
+                <p>stack a chord progression from any key and watch it glide as neon lines while it plays on layered synths and real sampled instruments.</p>
+                <ul>
+                  <li>pick a key, then tap chords — triads or 7ths — to build a progression of up to eight. tap a chip or clear all to remove chords.</li>
+                  <li>six sounds: custom pads, church organ, cathedral choir (live), symphony strings, full orchestra, and real strings + orchestra with a harp sweep on every change.</li>
+                  <li>chords sweep into each other with a filter bloom — tempo and beats per chord set the pace.</li>
+                </ul>
+                <p class="tool-guide-link">deep-link this tool: <a href="#chord-studio">tools#chord-studio</a></p>
+              </div>
+
+              <div class="cs-root" id="csRoot">
+                <div class="cs-bar">
+                  <span class="cs-label">sound</span>
+                  <select id="soundSelect" class="cs-select" aria-label="Sound"></select>
+                </div>
+                <div class="cs-wrap">
+                  <aside class="cs-aside">
+                    <div class="cs-block">
+                      <div class="cs-row"><span class="cs-label">chords</span><button type="button" class="cs-clear" id="clearChords">clear all</button></div>
+                      <div class="cs-chords-box"><span class="cs-chips" id="chordChips"></span></div>
+                      <p class="cs-hint">Tap a chord below to add it — tap a chip to remove it.</p>
+                      <div class="cs-key-head"><span class="cs-label">add from key</span></div>
+                      <div class="cs-steps" style="gap:6px">
+                        <select id="keySelect" class="cs-select" aria-label="Key" style="flex:1"></select>
+                        <select id="modeSelect" class="cs-select" aria-label="Chord type"></select>
+                      </div>
+                      <div class="cs-palette" id="keyChords" role="group" aria-label="Chords in key"></div>
+                      <p class="cs-hint">Up to 8 chords.</p>
+                    </div>
+                    <div class="cs-block">
+                      <div class="cs-row">
+                        <span class="cs-label">tempo</span>
+                        <div class="tempo-entry" role="group" aria-label="Tempo">
+                          <button class="step-btn" id="tempoDown" type="button" aria-label="Slower by one BPM">−</button>
+                          <input class="tempo-input" id="tempo" type="number" inputmode="numeric" min="40" max="240" step="1" value="90" aria-label="Tempo in BPM">
+                          <span class="tempo-unit" aria-hidden="true">BPM</span>
+                          <button class="step-btn" id="tempoUp" type="button" aria-label="Faster by one BPM">+</button>
+                          <button class="ghost-btn" id="csTap" type="button">Tap</button>
+                        </div>
+                      </div>
+                      <div class="cs-row">
+                        <span class="cs-label">beats per chord</span>
+                        <div class="cs-steps" role="group" aria-label="Beats per chord">
+                          <button type="button" class="song-jump" id="beatsDown" aria-label="One fewer beat per chord">−</button>
+                          <input class="bpm-input" id="beats" type="number" inputmode="numeric" min="1" max="8" step="1" value="4" aria-label="Beats per chord">
+                          <button type="button" class="song-jump" id="beatsUp" aria-label="One more beat per chord">+</button>
+                        </div>
+                      </div>
+                    </div>
+                  </aside>
+                  <section class="cs-stage">
+                    <div class="cs-visual-card">
+                      <div class="cs-visual">
+                        <div class="visual-label">silent preview <strong>G</strong></div>
+                        <canvas id="viz" width="1200" height="675"></canvas>
+                      </div>
+                      <div class="cs-transport">
+                        <button id="playBtn" class="cs-play" aria-label="Play"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+                        <input id="scrub" type="range" min="0" max="24" value="0" class="cs-slider cs-flex" aria-label="Timeline">
+                        <span class="cs-time" id="time">0:00 / 0:24</span>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </div>
+            </div>
+
             <div class="tool-panel" data-tool="scale-builder">
             <!-- ===================== scale builder ===================== -->
             <div class="tool-card wide">
@@ -3129,6 +3258,8 @@
     </div>
 
     <script src="licks-library.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tone@15.5.66/build/Tone.js" integrity="sha384-J/pPHslLxeYMpnYVdPOInamADBBvcEsSn+t8ImLHICgvll6FpE0bTDNhh+L6HGm2" crossorigin="anonymous"></script>
+    <script src="chord-studio.js"></script>
     <script>
       (() => {
         "use strict";
@@ -8623,7 +8754,7 @@
 
         /* ---------- tool tabs (hash deep-links) ---------- */
 
-        const TOOL_NAMES = ["scale-builder", "sweeps", "song-builder", "licks", "drone", "tuner", "metronome"];
+        const TOOL_NAMES = ["scale-builder", "sweeps", "song-builder", "chord-studio", "licks", "drone", "tuner", "metronome"];
         const tabBtns = document.querySelectorAll(".tool-tab");
         const tabsWrapEl = document.querySelector(".tool-tabs-wrap");
         const tabsStripEl = document.querySelector(".tool-tabs");
@@ -8665,6 +8796,9 @@
           }
           if (name !== "licks" && typeof licksStopPlayback === "function") {
             licksStopPlayback();
+          }
+          if (name !== "chord-studio" && typeof csStopPlayback === "function") {
+            csStopPlayback();
           }
           if (name !== "licks" && typeof licksClearSelection === "function") {
             licksClearSelection();
