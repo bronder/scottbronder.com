@@ -83,7 +83,25 @@ const SOUND_PRESETS={
     ],
     midShape:{type:'lowpass',frequency:4500,Q:0.7},
     vibrato:{depth:7,rate:5.1},
-    chorus:{frequency:0.25,depth:0.5,wet:0.4},reverb:{decay:10,wet:0.7},shimmer:-22,wah:{base:2600,peak:6000,q:1.5}}
+    chorus:{frequency:0.25,depth:0.5,wet:0.4},reverb:{decay:10,wet:0.7},shimmer:-22,wah:{base:2600,peak:6000,q:1.5}},
+  glacier:{name:'Glacier',
+    layers:[
+      // the shelf: a mile-wide supersaw that blooms upward over seconds
+      {type:'fatsawtooth',count:7,spread:85,attack:1.4,sustain:0.9,release:4.5,glide:0.10,
+        filterBase:220,filterSus:0.5,filterOct:3.2,fEnvA:1.2,vol:-15,haas:true},
+      // the depth beneath it: darker, slower, wider still
+      {type:'fatsawtooth',count:5,spread:40,attack:2.2,sustain:0.85,release:5.5,glide:0.12,
+        filterBase:160,filterSus:0.45,filterOct:2.6,fEnvA:1.8,vol:-19,haas:true},
+      // glassy tops: soft triangles an octave up on the melody voices
+      {partials:[{up:0,gain:1,wave:{type:'fattriangle',count:3,spread:18}},{up:12,gain:0.22}],
+        attack:1.8,sustain:0.9,release:4,glide:0.10,vol:-22,tones:[0,1]}
+    ],
+    breath:[70,240],
+    vibrato:{depth:6,rate:4.4},
+    chorus:{frequency:0.18,depth:0.9,wet:0.6},
+    reverb:{decay:12,wet:0.7},
+    shimmer:-17,
+    wah:{base:1500,peak:4800,q:2.5}}
 };
 let soundPreset='custom';
 
