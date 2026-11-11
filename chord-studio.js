@@ -7,7 +7,15 @@ const canvas=document.getElementById('viz');
 const ctx=canvas.getContext('2d');
 
 // neon-graph palette — the studio is skinned with the site colors
-const theme={name:'Site',stage:'#10141b',deep:'#0b0d11',voices:['#f5b646','#7aa2f7','#34d399','#ff8e3c','#eef0f3']};
+// stage looks for the neon graph — the poster wears them too
+const CS_THEMES={
+  site:{name:'Site',stage:'#10141b',deep:'#0b0d11',voices:['#f5b646','#7aa2f7','#34d399','#ff8e3c','#eef0f3']},
+  blueprint:{name:'Blueprint',stage:'#0d1420',deep:'#090d14',voices:['#7aa2f7','#9d7cd8','#5eead4','#89ddff','#eef0f3']},
+  sunset:{name:'Sunset',stage:'#1a1013',deep:'#120a0d',voices:['#ff8e3c','#f5b646','#ff6b9d','#c4b5fd','#fff1e6']},
+  forest:{name:'Forest',stage:'#0e1512',deep:'#0a0f0d',voices:['#34d399','#a3e635','#5eead4','#f5b646','#eef0f3']}
+};
+let csThemeKey='site';
+let theme=CS_THEMES.site;
 
 // Progression = chart blocks: a chord symbol plus its own length in beats.
 // Everything downstream (voicing, sweeps, transport, the neon graph) reads
@@ -1808,6 +1816,7 @@ function saveCsPrefs(){
       markers:MARKERS.map(m=>({beat:m.beat, label:m.label, color:m.color})),
       bpm:Math.max(40, Math.min(240, Math.round(bpm)||90)),
       sound:soundPreset,
+      theme:csThemeKey,
       click:csClickOn,
       arp:csArpOn,
       arpRate:csArpRate,
@@ -1851,6 +1860,11 @@ function loadCsPrefs(){
     tempo.value=String(bpm);
   }
   if(SOUND_PRESETS[p.sound]) soundPreset=p.sound;
+  if(CS_THEMES[p.theme]){
+    csThemeKey=p.theme;
+    theme=CS_THEMES[csThemeKey];
+    if(csThemeSel) csThemeSel.value=csThemeKey;
+  }
   if(typeof p.click==='boolean') csClickOn=p.click;
   if(typeof p.arp==='boolean') csArpOn=p.arp;
   if(['held','pulse','walk'].includes(p.bassMode)){
@@ -2575,6 +2589,23 @@ if(csArpRateSel){
     csArpRate=Number(csArpRateSel.value)||2;
     csArpAnchor=null; // re-grid at the new subdivision
     saveCsPrefs();
+  });
+}
+
+const csThemeSel=document.getElementById('cs-theme');
+if(csThemeSel){
+  Object.keys(CS_THEMES).forEach(k=>{
+    const o=document.createElement('option');
+    o.value=k;
+    o.textContent=CS_THEMES[k].name;
+    csThemeSel.appendChild(o);
+  });
+  csThemeSel.value=csThemeKey;
+  csThemeSel.addEventListener('change',()=>{
+    csThemeKey=CS_THEMES[csThemeSel.value] ? csThemeSel.value : 'site';
+    theme=CS_THEMES[csThemeKey];
+    saveCsPrefs();
+    draw();
   });
 }
 
