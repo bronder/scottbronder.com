@@ -1277,6 +1277,14 @@ function renderBlock(c,i,startBeat,move,fresh){
       e.preventDefault();
       mutateProg(()=>{ PROG.splice(i,1); });
       csFocusAfterRemoval(i);
+    }else if(e.key==='ArrowLeft' || e.key==='ArrowRight'){
+      // keyboard drag: arrows move the block, focus rides along
+      e.preventDefault();
+      const ni=i+(e.key==='ArrowLeft' ? -1 : 1);
+      if(ni<0 || ni>=PROG.length) return;
+      mutateProg(()=>{ PROG.splice(ni,0,PROG.splice(i,1)[0]); });
+      const nb=csGridTrack.querySelector('.seq-block[data-idx="'+ni+'"]');
+      if(nb) nb.focus();
     }
   });
 
