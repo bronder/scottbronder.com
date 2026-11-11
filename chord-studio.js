@@ -462,6 +462,11 @@ async function initTone(){
   breathe.start();
   // pad bus: chorus -> ensemble chorus -> [formant] -> widener -> sweep EQ -> wah -> reverb
   const padBus=reg(new Tone.Gain(1));
+  // the tide: a two-minute amplitude swell across the whole pad bed, too
+  // slow to track, big enough that the scape is never twice the same size
+  const tide=reg(new Tone.LFO({frequency:1/125, min:0.86, max:1.0}));
+  tide.connect(padBus.gain);
+  tide.start();
   chorus.connect(chorus2);
   chorus2.connect(midShape || widener);
   if(midShape){ midShape.connect(widener); }
