@@ -1702,6 +1702,24 @@ if(csMenuBtn && csMenuEl){
       closeMenu();
     }
   });
+  const csRotateBtn=document.getElementById('cs-rotate');
+  const csReverseBtn=document.getElementById('cs-reverse');
+  if(csRotateBtn){
+    csRotateBtn.addEventListener('click',()=>{
+      closeMenu();
+      if(PROG.length<2) return;
+      mutateProg(()=>{ PROG.push(PROG.shift()); });
+      if(csStatus) csStatus.textContent='rotated — '+PROG[0].sym+' now leads';
+    });
+  }
+  if(csReverseBtn){
+    csReverseBtn.addEventListener('click',()=>{
+      closeMenu();
+      if(PROG.length<2) return;
+      mutateProg(()=>{ PROG.reverse(); });
+      if(csStatus) csStatus.textContent='reversed — '+PROG[0].sym+' now leads';
+    });
+  }
   if(csClearBtn){
     csClearBtn.addEventListener('click',()=>{
       closeMenu();
