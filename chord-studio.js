@@ -87,21 +87,23 @@ const SOUND_PRESETS={
   glacier:{name:'Glacier',
     layers:[
       // the shelf: a mile-wide supersaw that blooms upward over seconds
-      {type:'fatsawtooth',count:7,spread:85,attack:1.4,sustain:0.9,release:4.5,glide:0.10,
-        filterBase:220,filterSus:0.5,filterOct:3.2,fEnvA:1.2,vol:-15,haas:true},
+      // (six voices and 60 cents of spread — wider walls beat against
+      // each other and read as distortion; this width still sounds huge)
+      {type:'fatsawtooth',count:6,spread:60,attack:1.4,sustain:0.9,release:4.5,glide:0.10,
+        filterBase:220,filterSus:0.5,filterOct:3.2,fEnvA:1.2,vol:-18,haas:true},
       // the depth beneath it: darker, slower, wider still
       {type:'fatsawtooth',count:5,spread:40,attack:2.2,sustain:0.85,release:5.5,glide:0.12,
-        filterBase:160,filterSus:0.45,filterOct:2.6,fEnvA:1.8,vol:-19,haas:true},
+        filterBase:160,filterSus:0.45,filterOct:2.6,fEnvA:1.8,vol:-22,haas:true},
       // glassy tops: soft triangles an octave up on the melody voices
       {partials:[{up:0,gain:1,wave:{type:'fattriangle',count:3,spread:18}},{up:12,gain:0.22}],
-        attack:1.8,sustain:0.9,release:4,glide:0.10,vol:-22,tones:[0,1]}
+        attack:1.8,sustain:0.9,release:4,glide:0.10,vol:-24,tones:[0,1]}
     ],
     breath:[70,240],
     vibrato:{depth:6,rate:4.4},
     chorus:{frequency:0.18,depth:0.9,wet:0.6},
     reverb:{decay:12,wet:0.7},
     shimmer:-17,
-    wah:{base:1500,peak:4800,q:2.5}},
+    wah:{base:1500,peak:4200,q:1.6}},
   cathedral:{name:'Cathedral',
     layers:[
       // the pipes: organ partial stack with the quinte stop (a fifth) drawn
@@ -583,12 +585,14 @@ async function initTone(){
     envelope:{attack:0.04, decay:0.3, sustain:0.75, release:0.9},
     filterEnvelope:{attack:0.05, decay:0.3, sustain:0.4, release:0.8, baseFrequency:110, octaves:1.8}
   }));
-  // gentle saturation on the bass: second-order drive at low wet adds
-  // harmonics the sine sub can't carry, so the low end reads on small
-  // speakers instead of just being felt on big ones
-  const bassDrive=reg(new Tone.Chebyshev({order:2, wet:0.35}));
+  // gentle saturation on the bass: a whisper of second-order drive, low-passed
+  // after the shaper so only the weight harmonics survive — thickness on
+  // small speakers, never audible grit
+  const bassDrive=reg(new Tone.Chebyshev({order:2, wet:0.2}));
+  const bassTame=reg(new Tone.Filter({type:'lowpass', frequency:900, Q:0.5}));
   bass.connect(bassDrive);
-  bassDrive.connect(master);
+  bassDrive.connect(bassTame);
+  bassTame.connect(master);
   bass.volume.value=-6;
   // pure sine sub an octave under the bass — the weight you feel
   const sub=reg(new Tone.Synth({
