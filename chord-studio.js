@@ -65,7 +65,11 @@ const SOUND_PRESETS={
       // the choir: soft triangles singing an "ah" through the preset's
       // formant, an octave above the melody — voices in the nave
       {partials:[{up:12,gain:1,wave:{type:'fattriangle',count:3,spread:12}},{up:19,gain:0.25,wave:{type:'sine'}}],
-        attack:1.6,sustain:0.9,release:4.5,glide:0.09,vol:-23,tones:[0,1]}
+        attack:1.6,sustain:0.9,release:4.5,glide:0.09,vol:-23,tones:[0,1]},
+      // the lantern: the rose window — pure high sines on the melody voice,
+      // faint, and slower to arrive than everything else in the building
+      {partials:[{up:24,gain:1,wave:{type:'sine'}},{up:28,gain:0.35,wave:{type:'sine'}}],
+        attack:3.2,sustain:0.8,release:5.5,glide:0.15,vol:-29,tones:[0]}
     ],
     midShape:{type:'peaking',frequency:820,gain:5,Q:1.4},
     chorus:{frequency:0.15,depth:0.4,wet:0.35},
