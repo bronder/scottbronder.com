@@ -502,8 +502,16 @@ async function initTone(){
   const midShape=P.midShape ? reg(new Tone.Filter({type:P.midShape.type, frequency:P.midShape.frequency, gain:P.midShape.gain||0, Q:P.midShape.Q||1})) : null;
   const limiter=reg(new Tone.Limiter(-1.2));
   limiter.toDestination();
+  // glue: slow, gentle compression knits the layers into one body
+  const comp=reg(new Tone.Compressor({threshold:-24, ratio:3, attack:0.4, release:1}));
+  comp.connect(limiter);
   const master=reg(new Tone.Gain(0.9));
-  master.connect(limiter);
+  master.connect(comp);
+  // the whole scape inhales and exhales: a fifty-second swell, too slow to
+  // hear as an effect, big enough to feel as the music living
+  const breathe=reg(new Tone.LFO({frequency:0.02, min:0.82, max:1.0}));
+  breathe.connect(master.gain);
+  breathe.start();
   // pad bus: chorus -> ensemble chorus -> [formant] -> widener -> sweep EQ -> wah -> reverb
   const padBus=reg(new Tone.Gain(1));
   chorus.connect(chorus2);
