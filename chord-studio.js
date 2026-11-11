@@ -340,6 +340,10 @@ function noteAt(voice,t,noIntro,sessT){
 
 function midiToFreq(m){ return 440 * Math.pow(2,(m-69)/12); }
 
+// the shimmer's octave choice: even voices ride +12, odd voices +19 — an
+// octave AND a fifth above the pads, the classic shimmer-verb sparkle
+function csShimOct(i){ return (i%2===0) ? 12 : 19; }
+
 // Sampled real-instrument layers: FluidR3_GM soundfonts (GPL) loaded lazily from
 // the gleitz MIDI.js mirror only when a sampled preset is used. Real players
 // re-articulate on each chord change, so samples trigger at segment boundaries on
@@ -545,7 +549,6 @@ async function initTone(){
   shimHP.connect(shimDelay);
   shimDelay.connect(shimReverb);
   shimReverb.connect(master);
-  const shimPans=[-0.5,0.5,-0.25,0.25];
   const shims=[];
   for(let i=0;i<4;i++){
     const v=reg(new Tone.Synth({
@@ -557,7 +560,12 @@ async function initTone(){
     const lfo=reg(new Tone.LFO({frequency:0.06+i*0.05, min:0.1, max:0.9}));
     lfo.connect(vg.gain);
     lfo.start();
-    const pan=reg(new Tone.Panner(shimPans[i]));
+    // the sparkle circles the room: each voice's pan drifts on its own slow
+    // orbit, phase-offset so the shimmer never settles in one place
+    const pan=reg(new Tone.Panner(0));
+    const panLfo=reg(new Tone.LFO({frequency:0.04+i*0.013, min:-0.8, max:0.8}));
+    panLfo.connect(pan.pan);
+    panLfo.start();
     v.connect(vg);
     vg.connect(pan);
     if(i%2===1){
@@ -607,7 +615,7 @@ function attackAll(){
   padVoices.forEach(v=>v.attack(midiToFreq(noteAt(v.tone,pos))));
   bassVoice.triggerAttack(midiToFreq(noteAt(4,pos)));
   if(subVoice) subVoice.triggerAttack(midiToFreq(noteAt(4,pos)-12));
-  if(shimVoices) shimVoices.forEach((v,i)=>v.triggerAttack(midiToFreq(noteAt(i,pos,true)+12)));
+  if(shimVoices) shimVoices.forEach((v,i)=>v.triggerAttack(midiToFreq(noteAt(i,pos,true)+csShimOct(i))));
   voicesActive=true;
 }
 
@@ -682,7 +690,7 @@ function updateSynth(){
       }
       if(shimVoices){
         for(let v=0;v<shimVoices.length;v++){
-          const sf=midiToFreq(noteAt(v,pos,true)+12);
+          const sf=midiToFreq(noteAt(v,pos,true)+csShimOct(v));
           if(Number.isFinite(sf)) shimVoices[v].setNote(sf);
         }
       }
