@@ -2141,6 +2141,59 @@ function renderPresets(){
   roll.title='roll a random progression in the key you picked';
   roll.addEventListener('click',()=>csRollProgression());
   csPresetsHost.appendChild(roll);
+
+  // the vocabulary you build yourself, saved beside the factory patches
+  const save=document.createElement('button');
+  save.type='button';
+  save.className='ghost-btn cs-preset';
+  save.textContent='save preset';
+  save.title='keep this progression as one of your own presets';
+  save.addEventListener('click',()=>{
+    const list=csLoadUserPresets();
+    if(!PROG.length || list.length>=8) return;
+    const name=(csName || ('my progression '+(list.length+1))).slice(0,24);
+    list.push({name, prog:PROG.map(c=>({sym:c.sym, beats:c.beats}))});
+    csSaveUserPresets(list);
+    renderPresets();
+    if(csStatus) csStatus.textContent='saved "'+name+'" as a preset — right-click it to remove';
+  });
+  csPresetsHost.appendChild(save);
+
+  csLoadUserPresets().forEach((up)=>{
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='ghost-btn cs-preset';
+    b.textContent='★ '+up.name;
+    b.title='your preset — click to load, right-click to remove';
+    b.addEventListener('click',()=>{
+      const valid=(up.prog||[]).filter(c=>c && parseChord(c.sym) && Number.isInteger(c.beats) && c.beats>=1 && c.beats<=64).slice(0,MAX_CHORDS);
+      if(!valid.length) return;
+      mutateProg(()=>{ PROG.splice(0, PROG.length, ...valid.map(c=>({sym:c.sym, beats:c.beats}))); });
+      if(csGridScroll) csGridScroll.scrollLeft=0;
+      const first=csGridTrack.querySelector('.seq-block');
+      if(first) first.scrollIntoView({block:'nearest', inline:'start', behavior:'smooth'});
+      if(csStatus) csStatus.textContent='"'+up.name+'" loaded — yours';
+    });
+    b.addEventListener('contextmenu',e=>{
+      e.preventDefault();
+      csSaveUserPresets(csLoadUserPresets().filter(x=>x.name!==up.name));
+      renderPresets();
+      if(csStatus) csStatus.textContent='preset "'+up.name+'" removed';
+    });
+    csPresetsHost.appendChild(b);
+  });
+}
+
+function csLoadUserPresets(){
+  try{
+    const v=JSON.parse(localStorage.getItem('chordStudioPresets')||'[]');
+    return Array.isArray(v) ? v.filter(p=>p && typeof p.name==='string' && Array.isArray(p.prog)) : [];
+  }catch{
+    return [];
+  }
+}
+function csSaveUserPresets(list){
+  try{ localStorage.setItem('chordStudioPresets', JSON.stringify(list.slice(0,8))); }catch{}
 }
 
 // weighted dice: grounded start, mostly-friendly middle, resolve to I/V/vi
