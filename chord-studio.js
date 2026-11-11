@@ -1816,6 +1816,7 @@ function saveCsPrefs(){
       markers:MARKERS.map(m=>({beat:m.beat, label:m.label, color:m.color})),
       bpm:Math.max(40, Math.min(240, Math.round(bpm)||90)),
       sound:soundPreset,
+      vol:csVolume,
       theme:csThemeKey,
       speedStep:csSpeedStep,
       stopAfter:csStopAfter,
@@ -1863,6 +1864,11 @@ function loadCsPrefs(){
     tempo.value=String(bpm);
   }
   if(SOUND_PRESETS[p.sound]) soundPreset=p.sound;
+  if(Number.isFinite(p.vol)){
+    csVolume=Math.max(0, Math.min(1, p.vol));
+    if(csVolSlider) csVolSlider.value=String(Math.round(csVolume*100));
+    csApplyVolume();
+  }
   if(CS_THEMES[p.theme]){
     csThemeKey=p.theme;
     theme=CS_THEMES[csThemeKey];
@@ -2681,6 +2687,26 @@ if(csArpRateSel){
   csArpRateSel.addEventListener('change',()=>{
     csArpRate=Number(csArpRateSel.value)||2;
     csArpAnchor=null; // re-grid at the new subdivision
+    saveCsPrefs();
+  });
+}
+
+const csVolSlider=document.getElementById('cs-vol');
+let csVolume=0.8; // 0..1, mapped onto the destination
+
+function csApplyVolume(){
+  if(window.Tone){
+    try{ Tone.Destination.volume.rampTo(-40+csVolume*40, 0.05); }catch{}
+  }
+  if(masterGain){
+    try{ masterGain.gain.setTargetAtTime(0.22*csVolume, audioCtx.currentTime, 0.03); }catch{}
+  }
+}
+
+if(csVolSlider){
+  csVolSlider.addEventListener('input',()=>{
+    csVolume=Number(csVolSlider.value)/100;
+    csApplyVolume();
     saveCsPrefs();
   });
 }
