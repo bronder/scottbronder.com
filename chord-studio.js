@@ -652,6 +652,36 @@ function draw(){
 
   const td=totalDur();
   const yFor=m=>h*0.88 - ((m-40)/40)*h*0.78;
+
+  // jam freeze-frame: the held chord as static neon lines, name blazing —
+  // the tagline ("chords into neon light") made literal under your fingers
+  if(csJamView && !playing){
+    const t=performance.now()/1000;
+    for(let v=0;v<4;v++){
+      const m=csJamView.notes[v];
+      const y=yFor(m);
+      const col=theme.voices[v];
+      ctx.strokeStyle=col;
+      ctx.lineWidth=3*dpr;
+      ctx.shadowColor=col;
+      ctx.shadowBlur=(10+5*Math.sin(t*2+v))*dpr;
+      ctx.beginPath();
+      ctx.moveTo(w*0.06,y);
+      ctx.lineTo(w*0.94,y);
+      ctx.stroke();
+    }
+    ctx.shadowBlur=0;
+    ctx.fillStyle=theme.voices[0];
+    ctx.font=`800 ${44*dpr}px Figtree, sans-serif`;
+    const sym=csJamView.sym;
+    ctx.fillText(sym, w/2-ctx.measureText(sym).width/2, h*0.47);
+    ctx.font=`700 ${13*dpr}px Figtree, sans-serif`;
+    ctx.fillStyle=theme.voices[0]+'99';
+    const hint='jamming — release to return';
+    ctx.fillText(hint, w/2-ctx.measureText(hint).width/2, h*0.56);
+    return;
+  }
+
   const pxPerBeat=w/32; // eight 4-beat measures across the canvas, zooming with tempo
   const pxPerSec=pxPerBeat*bpm/60;
   // playhead rides from the left edge to center, then the graph scrolls
@@ -1719,6 +1749,24 @@ if(keySelect && keyChords && modeSelect){
 // the first press (a keydown is the audio gesture), rebuilt after sound swaps
 let csJam=null;
 const csJamHeld=new Map();
+let csJamView=null; // {sym, notes} — the chord currently lighting up the graph
+
+function csSetJamView(idx){
+  csJamView={sym:PROG[idx].sym, notes:NOTES[idx].slice(0,4)};
+  if(label) label.textContent=PROG[idx].sym;
+  // light the matching block on the chart
+  csGridTrack.querySelectorAll('.seq-block').forEach(el=>{
+    el.classList.toggle('now', Number(el.dataset.idx)===idx);
+  });
+  draw();
+}
+
+function csClearJamView(){
+  csJamView=null;
+  csGridTrack.querySelectorAll('.seq-block.now').forEach(el=>el.classList.remove('now'));
+  syncMeta(); // restores the preview label from the transport position
+  draw();
+}
 
 function csJamOptions(){
   const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.custom;
@@ -1781,6 +1829,7 @@ window.addEventListener('keydown',async e=>{
   const notes=NOTES[idx].slice(0,4).map(midiToFreq);
   try{ j.synth.triggerAttack(notes, Tone.now(), 0.9); }catch{}
   csJamHeld.set(k,notes);
+  csSetJamView(idx);
 });
 
 window.addEventListener('keyup',e=>{
@@ -1788,6 +1837,7 @@ window.addEventListener('keyup',e=>{
   if(!notes) return;
   csJamHeld.delete(e.key);
   if(csJam){ try{ csJam.synth.triggerRelease(notes); }catch{} }
+  if(csJamHeld.size===0) csClearJamView();
 });
 
 function tick(now){
@@ -1803,6 +1853,8 @@ function tick(now){
     csUpdatePlayhead();
     draw();
     updateSynth();
+  }else if(csJamView){
+    draw(); // the jam freeze-frame breathes (glow pulse) while a key is held
   }
   requestAnimationFrame(tick);
 }
