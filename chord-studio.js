@@ -1791,6 +1791,38 @@ if(csMenuBtn && csMenuEl){
       closeMenu();
     }
   });
+  const csPrintBtn=document.getElementById('cs-print-chart');
+  if(csPrintBtn){
+    csPrintBtn.addEventListener('click',()=>{
+      closeMenu();
+      if(!PROG.length) return;
+      let host=document.getElementById('cs-print');
+      if(!host){
+        host=document.createElement('div');
+        host.id='cs-print';
+        document.body.appendChild(host);
+      }
+      const keyLabel=(keySelect && keySelect.selectedOptions[0]) ? keySelect.selectedOptions[0].textContent : '';
+      const cells=PROG.map(c=>{
+        const label=csBlockLabel(c.sym);
+        const pc=parseChord(c.sym);
+        const data=paletteData();
+        const d=pc ? data.findIndex(x=>{
+          const q=parseChord(x.sym);
+          return q && q.root===pc.root;
+        }) : -1;
+        const sub=d>=0 && csLabelMode==='chords' ? data[d].roman : c.beats+' beats';
+        return '<td>'+label+'<small>'+sub+'</small></td>';
+      }).join('');
+      host.innerHTML='<h1>'+(csName || 'Chord chart')+'</h1>'+
+        '<p class="cs-print-sub">'+keyLabel+' · '+Math.round(bpm)+' bpm · '+BEATS_PER_MEASURE+' beats to the bar</p>'+
+        '<table><tr>'+cells+'</tr></table>'+
+        (MARKERS.length ? '<p class="cs-print-sub">sections: '+MARKERS.map(m=>m.label).join(' · ')+'</p>' : '')+
+        '<p class="cs-print-foot">scottbronder.com · chord studio — '+
+        location.origin+location.pathname+'#chord-studio~'+csEncodeShare()+'</p>';
+      window.print();
+    });
+  }
   const csRevoiceBtn=document.getElementById('cs-revoice');
   if(csRevoiceBtn){
     csRevoiceBtn.addEventListener('click',()=>{

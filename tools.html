@@ -2454,6 +2454,18 @@
         .cs-wrap{grid-template-columns:1fr}
         .cs-aside{order:2}
       }
+      /* the music-stand view: printing shows only the chart */
+      #cs-print{display:none}
+      @media print{
+        body>*{display:none !important}
+        #cs-print{display:block !important;color:#111;font-family:Figtree,system-ui,sans-serif;padding:24px}
+        #cs-print h1{font-size:22pt;margin:0 0 2pt}
+        #cs-print .cs-print-sub{font-size:11pt;color:#444;margin:0 0 14pt}
+        #cs-print table{border-collapse:collapse;width:100%}
+        #cs-print td{border:1px solid #999;padding:8pt 10pt;font-size:16pt;text-align:center}
+        #cs-print td small{display:block;font-size:9pt;color:#666;margin-top:2pt}
+        #cs-print .cs-print-foot{margin-top:16pt;font-size:9pt;color:#777}
+      }
     </style>
   </head>
   <body>
@@ -3093,6 +3105,7 @@
                         <button class="ghost-btn" id="cs-menu-btn" type="button"
                           aria-haspopup="true" aria-expanded="false" aria-label="More progression actions">···</button>
                         <div class="sb-menu" id="cs-menu" hidden>
+                          <button type="button" class="sb-menu-item" id="cs-print-chart">Print chart</button>
                           <button type="button" class="sb-menu-item" id="cs-revoice">Revoice</button>
                           <button type="button" class="sb-menu-item" id="cs-rotate">Rotate left</button>
                           <button type="button" class="sb-menu-item" id="cs-reverse">Reverse</button>
