@@ -1379,6 +1379,16 @@ function renderBlock(c,i,startBeat,move,fresh){
     });
   });
   // Delete on a focused block removes it — same affordance the marker flags have
+  // double-click strums the block in the jam voice — audition without adding
+  el.addEventListener('dblclick',async e=>{
+    if(playing || e.target.closest('.blk-btn, .blk-dur')) return;
+    const j=await csEnsureJam();
+    if(!j) return;
+    const notes=NOTES[i].slice(0,4).map(midiToFreq);
+    try{ j.synth.triggerAttackRelease(notes, 0.9, Tone.now()+0.02, 0.85); }catch{}
+    if(csStatus) csStatus.textContent=c.sym+' — just checking';
+  });
+
   el.addEventListener('keydown',e=>{
     if(e.target!==el) return; // child controls own their keys
     if(e.key==='Delete' || e.key==='Backspace'){
