@@ -141,7 +141,7 @@ function parseChord(sym){
   return {root:((pc%12)+12)%12, shapes:spec.shapes};
 }
 
-function voiceChords(symbols){
+function voiceChords(symbols, jitter){
   const out=[]; let prev=null;
   for(const sym of symbols){
     const c=parseChord(sym);
@@ -157,6 +157,7 @@ function voiceChords(symbols){
         }else{
           cost=Math.abs(top-70)+Math.abs(bot-58);
         }
+        if(jitter) cost+=Math.random()*18; // revoice: nudge the chooser well off its usual path
         if(cost<bestCost){bestCost=cost;best={r,shape};}
       }
     }
@@ -1719,6 +1720,17 @@ if(csMenuBtn && csMenuEl){
       closeMenu();
     }
   });
+  const csRevoiceBtn=document.getElementById('cs-revoice');
+  if(csRevoiceBtn){
+    csRevoiceBtn.addEventListener('click',()=>{
+      closeMenu();
+      if(!PROG.length) return;
+      NOTES=voiceChords(PROG.map(c=>c.sym), true);
+      if(playing && padVoices) attackAll();
+      draw();
+      if(csStatus) csStatus.textContent='revoiced — the lines take new paths';
+    });
+  }
   const csRotateBtn=document.getElementById('cs-rotate');
   const csReverseBtn=document.getElementById('cs-reverse');
   if(csRotateBtn){
