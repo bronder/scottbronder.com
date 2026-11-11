@@ -178,6 +178,8 @@ function voiceChords(symbols){
 let bpm=Number(tempo.value||90);
 let beatsPerChord=Number(beats.value||4);
 let playing=false;
+let introSweep=false;
+let playClock=0;
 let cur=0;
 let last=performance.now();
 let audioCtx=null;
@@ -212,7 +214,7 @@ function syncMeta(){
 // how much of each bar is spent sweeping to the next chord
 function sweepDur(b){ return Math.min(1.8, b*0.45); }
 
-function noteAt(voice,t,b){
+function noteAt(voice,t,b,noIntro,sessT){
   if(N===0) return 60;
   const cycle=b*N;
   let tt=((t%cycle)+cycle)%cycle;
@@ -222,10 +224,21 @@ function noteAt(voice,t,b){
   const to=NOTES[(idx+1)%N][voice];
   const trans=sweepDur(b);
   const hold=b-trans;
-  if(local<=hold) return from;
-  const p=(local-hold)/trans;
-  const e=p*p*(3-2*p);
-  return from + (to-from)*e;
+  let m;
+  if(local<=hold) m=from;
+  else{
+    const p=(local-hold)/trans;
+    const e=p*p*(3-2*p);
+    m=from + (to-from)*e;
+  }
+  // intro sweep: the first measure starts an octave up and rides down into place
+  const introOn=!noIntro && introSweep && (sessT!==undefined ? (sessT>=0 && sessT<b) : playClock<b);
+  if(introOn){
+    const p=Math.min(1, tt/b);
+    const e=1-p*p*(3-2*p);
+    m+=(voice<2?12:-12)*e;
+  }
+  return m;
 }
 
 function midiToFreq(m){ return 440 * Math.pow(2,(m-69)/12); }
@@ -481,7 +494,7 @@ function attackAll(){
   padVoices.forEach(v=>v.attack(midiToFreq(noteAt(v.tone,pos,b))));
   bassVoice.triggerAttack(midiToFreq(noteAt(4,pos,b)));
   if(subVoice) subVoice.triggerAttack(midiToFreq(noteAt(4,pos,b)-12));
-  if(shimVoices) shimVoices.forEach((v,i)=>v.triggerAttack(midiToFreq(noteAt(i,pos,b)+12)));
+  if(shimVoices) shimVoices.forEach((v,i)=>v.triggerAttack(midiToFreq(noteAt(i,pos,b,true)+12)));
   voicesActive=true;
 }
 
@@ -559,7 +572,7 @@ function updateSynth(){
       }
       if(shimVoices){
         for(let v=0;v<shimVoices.length;v++){
-          const sf=midiToFreq(noteAt(v,pos,b)+12);
+          const sf=midiToFreq(noteAt(v,pos,b,true)+12);
           if(Number.isFinite(sf)) shimVoices[v].setNote(sf);
         }
       }
@@ -606,8 +619,10 @@ function draw(){
   const yFor=m=>h*0.88 - ((m-40)/40)*h*0.78;
   const pxPerBar=w/8;
   const pxPerSec=pxPerBar/b;
-  const playX=w*0.5;
+  // playhead rides from the left edge to center, then the graph scrolls
+  const playX=Math.min(w*0.5, playClock*pxPerSec);
   const pos=N>0 ? ((cur%td)+td)%td : 0;
+  const sessAnchor=playClock-pos;
 
   ctx.font=`700 ${13*dpr}px Figtree, sans-serif`;
   const first=Math.floor((pos - playX/pxPerSec)/b);
@@ -629,7 +644,7 @@ function draw(){
     ctx.beginPath();
     for(let x=0;x<=playX;x+=3*dpr){
       const tt=pos - (playX-x)/pxPerSec;
-      const y=yFor(noteAt(v,tt,b));
+      const y=yFor(noteAt(v,tt,b,false,tt+sessAnchor));
       if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
     ctx.strokeStyle=col;
@@ -637,14 +652,14 @@ function draw(){
     ctx.shadowColor=col;
     ctx.shadowBlur=14*dpr;
     ctx.stroke();
-    const py=yFor(noteAt(v,pos,b));
+    const py=yFor(noteAt(v,pos,b,false,playClock));
     ctx.beginPath();
     ctx.arc(playX,py,7*dpr,0,Math.PI*2);
     ctx.fillStyle=col;
     ctx.fill();
   }
   ctx.shadowBlur=0;
-  if(N>0){
+  if(N>0 && playX>=w*0.18){
     const nowIdx=Math.floor(pos/b)%N;
     ctx.fillStyle=theme.voices[0];
     ctx.font=`800 ${28*dpr}px Figtree, sans-serif`;
@@ -654,7 +669,11 @@ function draw(){
 
 function setPlaying(on){
   playing=on;
+  const chip=document.querySelector('.visual-label');
+  if(chip) chip.style.opacity=on?'0':'';
   if(on){
+    playClock=0;
+    if(introSweep) cur=0;
     ensureSynth();
     if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
   }else{
@@ -701,6 +720,27 @@ if(csTapBtn){
 tempo.addEventListener('input',()=>{ bpm=Number(tempo.value); syncMeta(); updateSynth(); draw(); });
 beats.addEventListener('input',()=>{ beatsPerChord=Number(beats.value); syncMeta(); updateSynth(); draw(); });
 playBtn.addEventListener('click',()=> setPlaying(!playing));
+// rewind to start: jump the loop, restart the session clock (replays the intro
+// and sends the playhead back to the left edge when armed)
+const csRewindBtn=document.getElementById('csRewind');
+if(csRewindBtn){
+  csRewindBtn.addEventListener('click',()=>{
+    cur=0;
+    playClock=0;
+    syncMeta();
+    updateSynth();
+    draw();
+  });
+}
+const csIntroBtn=document.getElementById('csIntro');
+if(csIntroBtn){
+  csIntroBtn.addEventListener('click',()=>{
+    introSweep=!introSweep;
+    csIntroBtn.setAttribute('aria-pressed',String(introSweep));
+    updateSynth();
+    draw();
+  });
+}
 scrub.addEventListener('input',()=>{ cur=Number(scrub.value)||0; syncMeta(); updateSynth(); draw(); });
 
 // Editable progression + key-based chord palette
@@ -841,6 +881,7 @@ function tick(now){
   const dt=Math.min(0.05,(now-last)/1000);
   last=now;
   if(playing){
+    playClock+=dt;
     cur=(cur+dt)%totalDur();
   }
   syncMeta();

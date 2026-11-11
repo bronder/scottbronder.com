@@ -2377,6 +2377,8 @@
       #viz{width:100%;height:100%;display:block}
       .cs-transport{display:flex;align-items:center;gap:14px;padding:10px 14px;border-top:1px solid var(--cs-border);background:rgba(16,20,27,0.7)}
       .cs-play{width:44px;height:44px;border-radius:50%;background:var(--cs-primary);color:var(--cs-primary-fg);border:none;display:grid;place-items:center;cursor:pointer;flex:0 0 44px}
+      .cs-rewind{width:44px;height:44px;border-radius:50%;background:transparent;color:var(--cs-muted);border:1px solid var(--cs-border);display:grid;place-items:center;cursor:pointer;flex:0 0 44px;transition:color .15s ease,border-color .15s ease}
+      .cs-rewind:hover{color:var(--cs-fg);border-color:var(--cs-primary)}
       .cs-flex{flex:1}
       .cs-time{min-width:64px;text-align:right;font-size:15px;color:var(--cs-fg)}
       @media(max-width:900px){.cs-wrap{grid-template-columns:1fr}}
@@ -2931,6 +2933,7 @@
                         <canvas id="viz" width="1200" height="675"></canvas>
                       </div>
                       <div class="cs-transport">
+                        <button id="csRewind" class="cs-rewind" aria-label="Rewind to start" title="Rewind to start"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
                         <button id="playBtn" class="cs-play" aria-label="Play"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
                         <input id="scrub" type="range" min="0" max="24" value="0" class="cs-slider cs-flex" aria-label="Timeline">
                         <span class="cs-time" id="time">0:00 / 0:24</span>
