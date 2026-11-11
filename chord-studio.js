@@ -608,6 +608,20 @@ async function initTone(){
   shimHP.connect(shimDelay);
   shimDelay.connect(shimReverb);
   shimReverb.connect(master);
+  // air: a near-silent pink-noise wash, band-pass swept over minutes, fed to
+  // the hall — the space between the notes. what makes a scape feel like a
+  // place instead of a stack of synths
+  const air=reg(new Tone.Noise('pink'));
+  const airBP=reg(new Tone.Filter({type:'bandpass', frequency:800, Q:0.6}));
+  const airG=reg(new Tone.Gain(0.05));
+  const airSweep=reg(new Tone.LFO({frequency:0.015, min:450, max:1600}));
+  airSweep.connect(airBP.frequency);
+  airSweep.start();
+  air.connect(airBP);
+  airBP.connect(airG);
+  airG.connect(reverb);
+  air.volume.value=-32;
+  air.start();
   const shims=[];
   for(let i=0;i<4;i++){
     const v=reg(new Tone.Synth({
