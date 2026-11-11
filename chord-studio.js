@@ -101,7 +101,20 @@ const SOUND_PRESETS={
     chorus:{frequency:0.18,depth:0.9,wet:0.6},
     reverb:{decay:12,wet:0.7},
     shimmer:-17,
-    wah:{base:1500,peak:4800,q:2.5}}
+    wah:{base:1500,peak:4800,q:2.5}},
+  cathedral:{name:'Cathedral',
+    layers:[
+      // the pipes: organ partial stack with the quinte stop (a fifth) drawn
+      {partials:[{up:0,gain:1},{up:12,gain:0.5},{up:19,gain:0.28},{up:24,gain:0.3},{up:-12,gain:0.55}],
+        attack:0.9,sustain:1,release:3.5,glide:0.05,vol:-20},
+      // the crypt: sub-octave drone beneath, slower to swell than the nave above
+      {partials:[{up:-24,gain:1,wave:{type:'sine'}},{up:-12,gain:0.3,wave:{type:'sine'}}],
+        attack:2.5,sustain:0.95,release:5,glide:0.06,vol:-18,tones:[2,3]}
+    ],
+    chorus:{frequency:0.15,depth:0.4,wet:0.35},
+    reverb:{decay:15,wet:0.75},
+    shimmer:-19,
+    wah:{base:2200,peak:5200,q:1.2}}
 };
 let soundPreset='custom';
 
