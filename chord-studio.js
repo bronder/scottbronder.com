@@ -2801,6 +2801,26 @@ if(csArpRateSel){
   });
 }
 
+// "?" summons the shortcut palette; escape, x or a click outside retires it
+const csKeysPanel=document.getElementById('cs-keys');
+if(csKeysPanel){
+  const csKeysClose=()=>{ csKeysPanel.hidden=true; };
+  document.getElementById('cs-keys-x').addEventListener('click',csKeysClose);
+  csKeysPanel.addEventListener('click',e=>e.stopPropagation());
+  document.addEventListener('click',e=>{
+    if(!csKeysPanel.hidden) csKeysClose();
+  });
+  window.addEventListener('keydown',e=>{
+    if(e.key==='Escape' && !csKeysPanel.hidden){ csKeysClose(); return; }
+    if(e.key!=='?' || e.repeat) return;
+    const t=e.target;
+    if(t && t.closest && t.closest('input, select, textarea, [contenteditable]')) return;
+    if(!csGridTrack || document.querySelector('.tool-panel[data-tool="chord-studio"]').hidden) return;
+    e.preventDefault();
+    csKeysPanel.hidden=!csKeysPanel.hidden;
+  });
+}
+
 const csVolSlider=document.getElementById('cs-vol');
 let csVolume=0.8; // 0..1, mapped onto the destination
 

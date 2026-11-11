@@ -2454,6 +2454,13 @@
         .cs-wrap{grid-template-columns:1fr}
         .cs-aside{order:2}
       }
+      /* shortcut palette, summoned with ? */
+      .cs-keys{position:absolute;top:52px;right:16px;z-index:40;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+      .cs-keys h4{margin:0 0 8px;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
+      .cs-keys ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+      .cs-keys li{font-size:.78rem;color:var(--text)}
+      .cs-keys b{font-family:var(--mono);color:var(--amber)}
+      .cs-keys-x{position:absolute;top:6px;right:8px;border:0;background:none;color:var(--muted);font-size:1rem;cursor:pointer}
       /* the music-stand view: printing shows only the chart */
       #cs-print{display:none}
       @media print{
@@ -2975,6 +2982,19 @@
               </div>
 
               <div class="cs-root" id="csRoot">
+                <div class="cs-keys" id="cs-keys" role="dialog" aria-label="Keyboard shortcuts" hidden>
+                  <button type="button" class="cs-keys-x" id="cs-keys-x" aria-label="Close shortcuts">×</button>
+                  <h4>under your fingers</h4>
+                  <ul>
+                    <li><b>space</b> play / pause</li>
+                    <li><b>1–9 · 0</b> jam the chart's chords — <b>shift</b> an octave up</li>
+                    <li><b>delete</b> remove the focused block</li>
+                    <li><b>← →</b> move it · <b>shift+↑ ↓</b> transpose a semitone</li>
+                    <li><b>double-click</b> a block to strum it</li>
+                    <li><b>click</b> the ruler to scrub — <b>double-click</b> drops a section flag · <b>shift-click</b> a flag to loop its section</li>
+                    <li><b>click</b> the neon overview to move the silent preview</li>
+                  </ul>
+                </div>
                 <div class="cs-bar">
                   <span class="cs-label">sound</span>
                   <select id="soundSelect" class="cs-select" aria-label="Sound"></select>
