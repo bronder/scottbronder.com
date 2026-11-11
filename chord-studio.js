@@ -523,6 +523,23 @@ async function initTone(){
     pads.forEach(v=>v.detunables.forEach(s=>vib.connect(s.detune)));
     vib.start();
   }
+  // slow per-voice wander: detune breathes a few cents, and one haas side's
+  // filter drifts against the other so the stereo field never locks — the
+  // scapes evolve for minutes without repeating
+  pads.forEach((v,vi)=>{
+    if(v.detunables && v.detunables.length){
+      const wl=reg(new Tone.LFO({frequency:0.05+0.017*vi, min:-4, max:4}));
+      v.detunables.forEach(s=>wl.connect(s.detune));
+      wl.start();
+    }
+    if(v.filters && v.filters.length>1){
+      const f=v.filters[1];
+      const base=f.frequency.value||300;
+      const fl=reg(new Tone.LFO({frequency:0.03+0.011*vi, min:Math.max(40, base*0.7), max:base*1.4}));
+      fl.connect(f.frequency);
+      fl.start();
+    }
+  });
   const bass=reg(new Tone.MonoSynth({
     portamento:0.05,
     oscillator:{type:'fatsawtooth', count:2, spread:8},
