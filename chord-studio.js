@@ -2302,9 +2302,13 @@ if(window.ResizeObserver){
 // visitor's own work is backed up first and a restore pill offered, and the
 // payload is stripped so a refresh keeps the progression from local storage
 let csSharedLoaded=false;
+let csFirstVisit=false;
 if(csGridTrack){
   const m=/^#chord-studio~([A-Za-z0-9\-_]+)/.exec(location.hash);
   const shared=m ? csDecodeShare(m[1]) : null;
+  // captured before anything saves: the boot render persists prefs, which
+  // would otherwise erase the very signal we're testing for
+  try{ csFirstVisit=!shared && !localStorage.getItem(CS_STORE_KEY); }catch{}
   if(shared){
     try{
       const prev=localStorage.getItem(CS_STORE_KEY);
@@ -2388,6 +2392,16 @@ setPlaying(false);
 draw();
 if(csSharedLoaded && csStatus){
   csStatus.textContent='shared progression loaded — '+PROG.length+' chord'+(PROG.length>1?'s':'');
+}
+// first visit: the presets, jam keys and sharing hide behind a tiny "?" —
+// open the guide for anyone who has never saved a progression here.
+// deferred a tick: the generic guide toggles are wired by tools.html's
+// inline script, which runs after this file
+if(csFirstVisit){
+  setTimeout(()=>{
+    const btn=document.querySelector('.tool-guide-btn[aria-controls="guide-chord-studio"]');
+    if(btn && btn.getAttribute('aria-expanded')==='false') btn.click();
+  },0);
 }
 requestAnimationFrame(tick);
 
