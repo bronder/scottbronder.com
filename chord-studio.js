@@ -1979,8 +1979,8 @@ let csJam=null;
 const csJamHeld=new Map();
 let csJamView=null; // {sym, notes} — the chord currently lighting up the graph
 
-function csSetJamView(idx){
-  csJamView={sym:PROG[idx].sym, notes:NOTES[idx].slice(0,4)};
+function csSetJamView(idx, midis){
+  csJamView={sym:PROG[idx].sym, notes:midis || NOTES[idx].slice(0,4)};
   if(label) label.textContent=PROG[idx].sym;
   // light the matching block on the chart
   csGridTrack.querySelectorAll('.seq-block').forEach(el=>{
@@ -2055,10 +2055,13 @@ window.addEventListener('keydown',async e=>{
   }
   const j=await csEnsureJam();
   if(!j) return;
-  const notes=NOTES[idx].slice(0,4).map(midiToFreq);
+  // shift jabs the chord up an octave — audition pads in register
+  const oct=e.shiftKey ? 12 : 0;
+  const midis=NOTES[idx].slice(0,4).map(m=>m+oct);
+  const notes=midis.map(midiToFreq);
   try{ j.synth.triggerAttack(notes, Tone.now(), 0.9); }catch{}
   csJamHeld.set(k,notes);
-  csSetJamView(idx);
+  csSetJamView(idx, midis);
 });
 
 window.addEventListener('keyup',e=>{
