@@ -675,31 +675,36 @@ function draw(){
   const td=totalDur();
   const yFor=m=>h*0.88 - ((m-40)/40)*h*0.78;
 
-  // jam freeze-frame: the held chord as static neon lines, name blazing —
-  // the tagline ("chords into neon light") made literal under your fingers
-  if(csJamView && !playing){
+  // freeze-frame: the held (jam) or hovered (palette preview) chord as
+  // static neon lines, name blazing — the tagline ("chords into neon
+  // light") made literal under your fingers or your cursor
+  const freeze=csJamView || csHoverView;
+  if(freeze && !playing){
     const t=performance.now()/1000;
+    const isJam=csJamView===freeze;
     for(let v=0;v<4;v++){
-      const m=csJamView.notes[v];
+      const m=freeze.notes[v];
       const y=yFor(m);
       const col=theme.voices[v];
       ctx.strokeStyle=col;
       ctx.lineWidth=3*dpr;
       ctx.shadowColor=col;
       ctx.shadowBlur=(10+5*Math.sin(t*2+v))*dpr;
+      ctx.globalAlpha=isJam?1:0.8;
       ctx.beginPath();
       ctx.moveTo(w*0.06,y);
       ctx.lineTo(w*0.94,y);
       ctx.stroke();
+      ctx.globalAlpha=1;
     }
     ctx.shadowBlur=0;
     ctx.fillStyle=theme.voices[0];
     ctx.font=`800 ${44*dpr}px Figtree, sans-serif`;
-    const sym=csJamView.sym;
+    const sym=freeze.sym;
     ctx.fillText(sym, w/2-ctx.measureText(sym).width/2, h*0.47);
     ctx.font=`700 ${13*dpr}px Figtree, sans-serif`;
     ctx.fillStyle=theme.voices[0]+'99';
-    const hint='jamming — release to return';
+    const hint=isJam ? 'jamming — release to return' : 'hovering — click to add';
     ctx.fillText(hint, w/2-ctx.measureText(hint).width/2, h*0.56);
     return;
   }
@@ -2160,6 +2165,13 @@ function renderPalette(){
     b.title=suggest.has(i) ? 'Add '+c.sym+' — a natural next chord' : 'Add '+c.sym;
     b.innerHTML= c.sym + '<span>'+c.roman+'</span>';
     b.disabled=PROG.length>=MAX_CHORDS;
+    // hover ghosts the chord into the neon before you commit to it
+    b.addEventListener('mouseenter',()=>{
+      if(playing || b.disabled) return;
+      const voiced=voiceChords([c.sym]);
+      if(voiced[0]){ csHoverView={sym:c.sym, notes:voiced[0].slice(0,4)}; draw(); }
+    });
+    b.addEventListener('mouseleave',()=>{ csHoverView=null; draw(); });
     b.addEventListener('click',()=>{
       if(PROG.length>=MAX_CHORDS) return;
       mutateProg(()=>{ PROG.push({sym:c.sym, beats:4}); });
@@ -2287,6 +2299,7 @@ if(keySelect && keyChords && modeSelect){
 let csJam=null;
 const csJamHeld=new Map();
 let csJamView=null; // {sym, notes} — the chord currently lighting up the graph
+let csHoverView=null; // same shape, from hovering the palette
 
 function csSetJamView(idx, midis){
   csJamView={sym:PROG[idx].sym, notes:midis || NOTES[idx].slice(0,4)};
@@ -2473,8 +2486,8 @@ function tick(now){
     draw();
     updateSynth();
     csClickSchedule();
-  }else if(csJamView){
-    draw(); // the jam freeze-frame breathes (glow pulse) while a key is held
+  }else if(csJamView || csHoverView){
+    draw(); // the freeze-frame breathes (glow pulse) while held or hovered
   }
   requestAnimationFrame(tick);
 }
