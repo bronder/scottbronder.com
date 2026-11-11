@@ -2047,15 +2047,34 @@ function loadPreset(p){
   }
 }
 
+// common-practice gravity, by scale degree: what wants to follow what
+const NEXT_DEGREES={
+  0:[4,5,3,1,2], // I -> V vi IV ii iii
+  1:[4],         // ii -> V
+  2:[5],         // iii -> vi
+  3:[4,0],       // IV -> V I
+  4:[0,5],       // V -> I vi
+  5:[3,1,2],     // vi -> IV ii iii
+  6:[0]          // vii -> I
+};
+
 function renderPalette(){
   if(!keyChords) return;
   keyChords.innerHTML='';
   csSyncCustomAdd();
-  paletteData().forEach(c=>{
+  const data=paletteData();
+  // the chart's last chord suggests where the music wants to go next
+  let suggest=new Set();
+  if(PROG.length){
+    const lastSym=PROG[PROG.length-1].sym;
+    const deg=data.findIndex(c=>c.sym===lastSym);
+    if(deg>=0 && NEXT_DEGREES[deg]) suggest=new Set(NEXT_DEGREES[deg]);
+  }
+  data.forEach((c,i)=>{
     const b=document.createElement('button');
     b.type='button';
-    b.className='key-chord';
-    b.title='Add '+c.sym;
+    b.className='key-chord'+(suggest.has(i) ? ' suggest' : '');
+    b.title=suggest.has(i) ? 'Add '+c.sym+' — a natural next chord' : 'Add '+c.sym;
     b.innerHTML= c.sym + '<span>'+c.roman+'</span>';
     b.disabled=PROG.length>=MAX_CHORDS;
     b.addEventListener('click',()=>{
