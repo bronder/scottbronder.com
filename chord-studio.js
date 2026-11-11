@@ -506,6 +506,16 @@ async function initTone(){
   widener.connect(sweepFilter);
   sweepFilter.connect(wah);
   wah.connect(reverb);
+  // hall depth: two quiet early-reflection taps (61ms and 113ms, slightly
+  // fed back) skip ahead of the main path into the reverb, so the tail has
+  // real distance to bloom across before it arrives
+  [[0.061, 0.25], [0.113, 0.15]].forEach(([ms, amt])=>{
+    const tap=reg(new Tone.FeedbackDelay({delayTime:ms, feedback:0.18, wet:1}));
+    const g=reg(new Tone.Gain(amt));
+    wah.connect(g);
+    g.connect(tap);
+    tap.connect(reverb);
+  });
   reverb.connect(master);
   const pads=[];
   (P.layers||[]).forEach(spec=>{
