@@ -682,6 +682,52 @@ function draw(){
     return;
   }
 
+  // idle overview: stopped means the whole loop as a faint neon landscape —
+  // the live graph only draws history left of the playhead, which at rest is
+  // nothing; the tool's signature should not disappear when the music does
+  if(!playing && N>0){
+    const x0=w*0.06, x1=w*0.94;
+    // chord boundaries + names across the loop
+    ctx.font=`700 ${12*dpr}px Figtree, sans-serif`;
+    let acc=0;
+    for(let i=0;i<N;i++){
+      const x=x0+(acc/totalBeats())*(x1-x0);
+      acc+=PROG[i].beats;
+      ctx.strokeStyle=theme.voices[0]+'22';
+      ctx.lineWidth=1*dpr;
+      ctx.beginPath(); ctx.moveTo(x,h*0.08); ctx.lineTo(x,h); ctx.stroke();
+      ctx.fillStyle=theme.voices[0]+'88';
+      ctx.fillText(PROG[i].sym, x+5*dpr, h*0.08);
+    }
+    // the five voice trajectories, fainter than the live graph
+    for(let v=0;v<5;v++){
+      const col=theme.voices[v];
+      ctx.strokeStyle=col;
+      ctx.lineWidth=2*dpr;
+      ctx.shadowColor=col;
+      ctx.shadowBlur=7*dpr;
+      ctx.globalAlpha=0.7;
+      ctx.beginPath();
+      const steps=Math.min(240, Math.max(60, Math.round((x1-x0)/4)));
+      for(let s=0;s<=steps;s++){
+        const t=(s/steps)*td;
+        const x=x0+(s/steps)*(x1-x0);
+        const y=yFor(noteAt(v,t));
+        if(s===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.globalAlpha=1;
+    }
+    ctx.shadowBlur=0;
+    // silent preview's home: a soft hairline at the current position
+    const beat=((cur*bpm/60)%totalBeats()+totalBeats())%totalBeats();
+    const px=x0+(beat/Math.max(1,totalBeats()))*(x1-x0);
+    ctx.strokeStyle=theme.voices[0]+'66';
+    ctx.lineWidth=1.5*dpr;
+    ctx.beginPath(); ctx.moveTo(px,h*0.08); ctx.lineTo(px,h); ctx.stroke();
+    return;
+  }
+
   const pxPerBeat=w/32; // eight 4-beat measures across the canvas, zooming with tempo
   const pxPerSec=pxPerBeat*bpm/60;
   // playhead rides from the left edge to center, then the graph scrolls
@@ -1969,6 +2015,11 @@ function tick(now){
 }
 
 window.addEventListener('resize', draw);
+// idle has no frame loop: re-render whenever the canvas box itself changes
+// size (late layout, or the tool's panel being shown again)
+if(window.ResizeObserver){
+  new ResizeObserver(()=>draw()).observe(canvas);
+}
 
 // boot: a shared link (hash payload) wins over the saved progression; the
 // visitor's own work is backed up first, and the payload is stripped so a
