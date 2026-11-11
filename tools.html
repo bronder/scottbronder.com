@@ -2415,7 +2415,12 @@
       .cs-chart .seq-block{border-color:rgba(245,182,70,0.55);background:linear-gradient(160deg,rgba(245,182,70,0.30),rgba(245,182,70,0.10))}
       .cs-chart .seq-block.now{border-color:var(--amber);box-shadow:0 0 16px rgba(245,182,70,0.65)}
       .cs-chart .seq-block .edge{background:linear-gradient(90deg,transparent,rgba(245,182,70,0.5))}
-      @media(max-width:900px){.cs-wrap{grid-template-columns:1fr}}
+      /* stacked on small screens, the instrument leads: visual + transport
+         before the palette, so play is reachable in the first screenful */
+      @media(max-width:900px){
+        .cs-wrap{grid-template-columns:1fr}
+        .cs-aside{order:2}
+      }
     </style>
   </head>
   <body>
