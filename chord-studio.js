@@ -521,6 +521,7 @@ async function switchSound(){
   toneNodes.forEach(n=>{try{n.dispose();}catch{}});
   toneNodes.length=0;
   sfCache={}; sfLastSegIdx=-1; sfBus=null; sfFailed=false;
+  csJam=null; csJamHeld.clear();
   padVoices=null; bassVoice=null; subVoice=null; shimVoices=null;
   sweepEQ=null; sweepLP=null; toneMaster=null; toneReady=null; sweepUp=false; voicesActive=false;
   if(wasPlaying) ensureSynth();
@@ -1710,6 +1711,84 @@ if(keySelect && keyChords && modeSelect){
     renderPalette();
   });
 }
+
+/* ---------- jam keys: 1-9 sound the chart's chords under your fingers ---------- */
+
+// a momentary polyphonic stab wearing the selected sound's timbre — separate
+// from the transport's gliding voices so the two never fight. built lazily on
+// the first press (a keydown is the audio gesture), rebuilt after sound swaps
+let csJam=null;
+const csJamHeld=new Map();
+
+function csJamOptions(){
+  const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.custom;
+  const L=(P.layers||[]).find(l=>!l.partials) || (P.layers||[])[0] || {};
+  const osc=L.partials
+    ? {type:'fatsawtooth', count:3, spread:20}
+    : {type:L.type||'fatsawtooth', count:L.count||3, spread:L.spread||20};
+  return {
+    maxPolyphony:8,
+    oscillator:osc,
+    // clamp the pad envelopes to something playable under fingers
+    envelope:{attack:Math.min(0.12, L.attack||0.05), decay:0.2, sustain:L.sustain!==undefined?L.sustain:0.8, release:Math.min(1.5, L.release||1)},
+  };
+}
+
+async function csEnsureJam(){
+  if(!window.Tone || !Tone.PolySynth) return null;
+  if(csJam) return csJam;
+  try{
+    await Tone.start();
+    const synth=reg(new Tone.PolySynth(Tone.Synth, csJamOptions()));
+    const rv=reg(new Tone.Reverb({decay:6, preDelay:0.02, wet:0.35}));
+    try{ if(rv.ready) await rv.ready; }catch{}
+    synth.connect(rv);
+    rv.toDestination();
+    synth.volume.value=-16;
+    csJam={synth};
+    return csJam;
+  }catch{
+    return null;
+  }
+}
+
+window.addEventListener('keydown',async e=>{
+  if(e.repeat) return;
+  const k=e.key;
+  if(!/^[0-9]$/.test(k)) return;
+  // only while the chord studio is the tool on screen, and never while the
+  // keyboard is doing something else (inputs, focused blocks, marker renames)
+  if(!csGridTrack || document.querySelector('.tool-panel[data-tool="chord-studio"]').hidden) return;
+  const t=e.target;
+  if(t && t.closest && t.closest('input, select, textarea, .seq-block, .marker-flag, [contenteditable]')) return;
+  if(N===0) return;
+  const idx=(k==='0') ? 9 : Number(k)-1;
+  if(idx>=N) return;
+  if(playing){
+    // live arranging: jump the loop so that chord starts now
+    let start=0;
+    for(let i=0;i<idx;i++) start+=PROG[i].beats;
+    cur=start*60/bpm;
+    sfLastSegIdx=-1;
+    csNowIdx=-1;
+    csUpdateNow(cur);
+    csUpdatePlayhead();
+    syncMeta(); updateSynth(); draw();
+    return;
+  }
+  const j=await csEnsureJam();
+  if(!j) return;
+  const notes=NOTES[idx].slice(0,4).map(midiToFreq);
+  try{ j.synth.triggerAttack(notes, Tone.now(), 0.9); }catch{}
+  csJamHeld.set(k,notes);
+});
+
+window.addEventListener('keyup',e=>{
+  const notes=csJamHeld.get(e.key);
+  if(!notes) return;
+  csJamHeld.delete(e.key);
+  if(csJam){ try{ csJam.synth.triggerRelease(notes); }catch{} }
+});
 
 function tick(now){
   const dt=Math.min(0.05,(now-last)/1000);
