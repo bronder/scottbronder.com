@@ -454,6 +454,11 @@ async function initTone(){
   const chorus2=reg(new Tone.Chorus({frequency:0.11, depth:0.55, wet:0.35}));
   chorus2.start();
   const widener=reg(new Tone.StereoWidener({width:0.85}));
+  // breathing panorama: the stage itself swells wider and narrower over
+  // ~40 seconds — the room leans in and away
+  const widthLfo=reg(new Tone.LFO({frequency:1/40, min:0.7, max:1.0}));
+  widthLfo.connect(widener.width);
+  widthLfo.start();
   const sweepFilter=reg(new Tone.Filter({type:'highshelf', frequency:2200, gain:0}));
   const wah=reg(new Tone.Filter({type:'lowpass', frequency:P.wah.base, Q:P.wah.q}));
   const midShape=P.midShape ? reg(new Tone.Filter({type:P.midShape.type, frequency:P.midShape.frequency, gain:P.midShape.gain||0, Q:P.midShape.Q||1})) : null;
