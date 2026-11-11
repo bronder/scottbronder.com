@@ -585,6 +585,12 @@ async function initTone(){
   try{ if(shimReverb.ready) await shimReverb.ready; }catch{}
   if(gen!==soundGen) return; // stale mid-build: leave teardown to the newer switch
   const shimDelay=reg(new Tone.FeedbackDelay({delayTime:0.42, feedback:0.35, wet:0.3}));
+  // slow orbit: the sparkle's echo time drifts ±18ms over half a minute —
+  // the reflections slide like light on moving water. below the ~20ms
+  // point it would chorus; we stay just above
+  const shimDrift=reg(new Tone.LFO({frequency:1/33, min:0.402, max:0.438}));
+  shimDrift.connect(shimDelay.delayTime);
+  shimDrift.start();
   const shimHP=reg(new Tone.Filter({type:'highpass', frequency:1200}));
   shimHP.connect(shimDelay);
   shimDelay.connect(shimReverb);
