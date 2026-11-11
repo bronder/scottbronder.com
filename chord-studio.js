@@ -1110,6 +1110,7 @@ if(csGridScroll){
 function csSyncPlayEnabled(){
   if(playBtn) playBtn.disabled = N===0;
   if(csSaveBtn) csSaveBtn.disabled = N===0;
+  if(csMidiBtn) csMidiBtn.disabled = N===0;
 }
 
 // removing a block destroys whatever held focus; hand it to the block that
@@ -1720,6 +1721,67 @@ function csRenderPoster(){
   c.fillText('scottbronder.com · chord studio', x1, H*0.965);
   c.textAlign='left';
   return off;
+}
+
+const csMidiBtn=document.getElementById('cs-midi');
+
+// Standard MIDI File, format 0: one track, 480 ticks per quarter, tempo meta,
+// then the same five voices per segment the engine plays — note-on at the
+// block's start tick, note-off two ticks shy of the next (keeps re-attacks
+// clean in DAWs). hand-rolled, no libraries
+function csMidiVLQ(n){
+  const bytes=[n&0x7f];
+  n>>=7;
+  while(n>0){ bytes.unshift((n&0x7f)|0x80); n>>=7; }
+  return bytes;
+}
+
+function csEncodeMidi(){
+  const PPQ=480;
+  const mpqn=Math.round(60000000/bpm);
+  const events=[{tick:0, bytes:[0xFF,0x51,0x03,(mpqn>>16)&0xff,(mpqn>>8)&0xff,mpqn&0xff]}];
+  let start=0;
+  PROG.forEach((c,i)=>{
+    const on=Math.round(start*PPQ);
+    const off=Math.max(on, Math.round((start+c.beats)*PPQ)-2);
+    NOTES[i].forEach((m,v)=>{
+      events.push({tick:on, bytes:[0x90, m&0x7f, v===4?100:88]});
+      events.push({tick:off, bytes:[0x80, m&0x7f, 0]});
+    });
+    start+=c.beats;
+  });
+  events.sort((a,b)=>a.tick-b.tick);
+  let prev=0;
+  const track=[];
+  events.forEach(ev=>{
+    track.push(...csMidiVLQ(ev.tick-prev), ...ev.bytes);
+    prev=ev.tick;
+  });
+  track.push(0x00, 0xFF, 0x2F, 0x00); // end of track
+  const len=track.length;
+  const bytes=[
+    0x4D,0x54,0x68,0x64, 0,0,0,6, 0,0, 0,1, (PPQ>>8)&0xff, PPQ&0xff,
+    0x4D,0x54,0x72,0x6B, (len>>>24)&0xff,(len>>>16)&0xff,(len>>>8)&0xff,len&0xff,
+    ...track,
+  ];
+  return new Uint8Array(bytes);
+}
+
+if(csMidiBtn){
+  csMidiBtn.addEventListener('click',()=>{
+    if(N===0) return;
+    const name='chord-studio-'+(PROG.slice(0,6).map(c=>c.sym).join('-').replace(/[^A-Za-z0-9-]+/g,'').slice(0,40) || 'progression')+'.mid';
+    const blob=new Blob([csEncodeMidi()], {type:'audio/midi'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    if(csStatus) csStatus.textContent='MIDI saved — drop it into any DAW';
+  });
 }
 
 if(csSaveBtn){
