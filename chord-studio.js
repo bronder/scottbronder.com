@@ -1793,6 +1793,8 @@ function saveCsPrefs(){
       bpm:Math.max(40, Math.min(240, Math.round(bpm)||90)),
       sound:soundPreset,
       click:csClickOn,
+      arp:csArpOn,
+      arpRate:csArpRate,
       name:csName,
     }));
   }catch{}
@@ -1833,8 +1835,14 @@ function loadCsPrefs(){
   }
   if(SOUND_PRESETS[p.sound]) soundPreset=p.sound;
   if(typeof p.click==='boolean') csClickOn=p.click;
+  if(typeof p.arp==='boolean') csArpOn=p.arp;
+  if([1,2,4].includes(p.arpRate)){
+    csArpRate=p.arpRate;
+    if(csArpRateSel) csArpRateSel.value=String(csArpRate);
+  }
   if(typeof p.name==='string') csName=p.name.trim().slice(0,40);
   if(csNameInput) csNameInput.value=csName;
+  csSyncArpUI();
   csSyncClickBtn();
 }
 
@@ -2426,6 +2434,61 @@ let csClickAnchor=null; // {at, pos} maps transport seconds to audio time
 let csClickNextPos=null; // transport time of the next beat to schedule
 let csClickLastCur=null;
 
+/* ---------- arpeggio motion: the chords learn to move ---------- */
+
+let csArpOn=false;
+let csArpRate=2; // notes per beat: 1 quarters, 2 eighths, 4 sixteenths
+let csArpSynth=null;
+let csArpAnchor=null;
+let csArpNextPos=null;
+let csArpSlot=0;
+const CS_ARP_PATTERN=[0,1,2,3,2,1]; // up and down the voices
+
+async function csEnsureArp(){
+  if(csArpSynth || !window.Tone || !Tone.Synth) return csArpSynth;
+  try{
+    await Tone.start();
+    csArpSynth=new Tone.Synth({
+      oscillator:{type:'triangle'},
+      envelope:{attack:0.005, decay:0.28, sustain:0.12, release:0.4},
+    });
+    const echo=new Tone.FeedbackDelay({delayTime:'8n.', feedback:0.28, wet:0.22});
+    csArpSynth.connect(echo);
+    echo.toDestination();
+    csArpSynth.volume.value=-14;
+  }catch{
+    csArpSynth=null;
+  }
+  return csArpSynth;
+}
+
+function csArpSchedule(){
+  if(!csArpOn || N===0 || !window.Tone) return;
+  if(!csArpSynth){ csEnsureArp(); return; }
+  if(csArpAnchor && csClickLastCur!==null && Math.abs(cur-csClickLastCur)>0.25){
+    csArpAnchor=null; // re-anchor on seeks, like the click
+  }
+  if(!csArpAnchor){
+    csArpAnchor={at:Tone.now()+0.05, pos:cur};
+    const step=60/bpm/csArpRate;
+    csArpNextPos=Math.ceil((cur-step)*bpm/60*csArpRate+1e-6)*step;
+    csArpSlot=0;
+  }
+  const horizon=Tone.now()+0.3;
+  const step=60/bpm/csArpRate;
+  while(csArpAnchor.at + (csArpNextPos-csArpAnchor.pos) < horizon){
+    const t=Math.max(csArpAnchor.at + (csArpNextPos-csArpAnchor.pos), Tone.now()+0.01);
+    const seg=posToSeg(csArpNextPos);
+    const chord=NOTES[seg ? seg.idx : 0];
+    if(chord){
+      const voice=CS_ARP_PATTERN[csArpSlot % CS_ARP_PATTERN.length];
+      try{ csArpSynth.triggerAttackRelease(midiToFreq(chord[voice]+12), '16n', t, 0.7); }catch{}
+    }
+    csArpSlot++;
+    csArpNextPos+=step;
+  }
+}
+
 async function csEnsureClick(){
   if(csClickSynth || !window.Tone || !Tone.MembraneSynth) return csClickSynth;
   try{
@@ -2465,6 +2528,31 @@ function csClickSchedule(){
 if(csNameInput){
   csNameInput.addEventListener('input',()=>{
     csName=csNameInput.value.trim();
+    saveCsPrefs();
+  });
+}
+
+const csArpBtn=document.getElementById('cs-arp');
+const csArpRateSel=document.getElementById('cs-arp-rate');
+function csSyncArpUI(){
+  if(csArpBtn){
+    csArpBtn.setAttribute('aria-pressed', String(csArpOn));
+    csArpBtn.textContent=csArpOn?'On':'Off';
+  }
+}
+if(csArpBtn){
+  csArpBtn.addEventListener('click', async ()=>{
+    csArpOn=!csArpOn;
+    csSyncArpUI();
+    if(csArpOn) await csEnsureArp();
+    csArpAnchor=null;
+    saveCsPrefs();
+  });
+}
+if(csArpRateSel){
+  csArpRateSel.addEventListener('change',()=>{
+    csArpRate=Number(csArpRateSel.value)||2;
+    csArpAnchor=null; // re-grid at the new subdivision
     saveCsPrefs();
   });
 }
@@ -2528,6 +2616,7 @@ function tick(now){
     draw();
     updateSynth();
     csClickSchedule();
+    csArpSchedule();
     csUpdateMeter();
   }else if(csJamView || csHoverView){
     draw(); // the freeze-frame breathes (glow pulse) while held or hovered
