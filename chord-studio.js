@@ -1502,9 +1502,11 @@ function renderPalette(){
     b.addEventListener('click',()=>{
       if(PROG.length>=MAX_CHORDS) return;
       mutateProg(()=>{ PROG.push({sym:c.sym, beats:4}); });
-      // land the fresh-card pulse on the newly added block and scroll to it
+      // land the fresh-card pulse on the newly added block and bring it into
+      // view — nearest, so nothing moves when the chart is already visible
       renderGrid(null, PROG.length-1);
-      if(csGridScroll) csGridScroll.scrollLeft=csGridScroll.scrollWidth;
+      const nb=csGridTrack.querySelector('.seq-block[data-idx="'+(PROG.length-1)+'"]');
+      if(nb) nb.scrollIntoView({block:'nearest', inline:'nearest', behavior:'smooth'});
     });
     keyChords.appendChild(b);
   });
