@@ -2671,6 +2671,21 @@ if(csArpRateSel){
   });
 }
 
+const csFullBtn=document.getElementById('cs-full');
+if(csFullBtn){
+  csFullBtn.addEventListener('click',async ()=>{
+    try{
+      if(document.fullscreenElement){
+        await document.exitFullscreen();
+      }else{
+        await document.getElementById('csRoot').requestFullscreen();
+      }
+    }catch{
+      if(csStatus) csStatus.textContent='fullscreen is not available here';
+    }
+  });
+}
+
 const csThemeSel=document.getElementById('cs-theme');
 if(csThemeSel){
   Object.keys(CS_THEMES).forEach(k=>{
