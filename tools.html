@@ -1730,6 +1730,41 @@
         opacity: 1;
       }
 
+      /* narrow blocks (1–2 beats): compact the furniture so the action buttons
+         stay inside the block instead of bleeding onto its neighbor; blocks too
+         narrow for any select hide it (resize wider to edit the length) */
+      .seq-block {
+        container-type: size;
+      }
+
+      @container (max-width: 70px) {
+        .seq-block .blk-name {
+          margin-top: 24px;
+          font-size: 0.8rem;
+        }
+
+        .blk-dur {
+          font-size: 0.6rem;
+          padding: 0.08rem 0.1rem;
+          max-width: 100%;
+        }
+
+        .blk-actions {
+          left: 2px;
+          justify-content: space-between;
+        }
+
+        .blk-btn {
+          padding: 0.12rem 0.16rem;
+        }
+      }
+
+      @container (max-width: 34px) {
+        .blk-dur {
+          display: none;
+        }
+      }
+
       .drop-slot {
         position: absolute;
         top: 50px;
@@ -2351,11 +2386,6 @@
       .cs-root .tempo-unit{font-size:.62rem}
       .cs-root .ghost-btn{padding:.28rem .55rem;font-size:.7rem}
       .cs-value{font-size:12px;color:var(--cs-muted)}
-      .cs-chords-box{background:var(--cs-secondary);border-radius:8px;padding:8px 10px;font-family:var(--cs-mono)}
-      .cs-chips{display:flex;flex-wrap:wrap;gap:6px}
-      .cs-root .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--cs-primary);background:var(--cs-green-soft);color:var(--cs-fg);border-radius:6px;padding:4px 8px;font-family:var(--cs-mono);font-size:14px;font-weight:700;cursor:pointer}
-      .cs-root .chip .x{color:var(--cs-muted);font-size:12px;line-height:1}
-      .cs-root .empty-chords{color:var(--cs-muted);font-size:13px;font-family:var(--cs-mono)}
       .cs-hint{color:var(--cs-muted);font-size:12px;margin:0}
       .cs-key-head{margin-top:8px}
       .cs-palette{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
@@ -2366,8 +2396,6 @@
       .cs-mode{display:flex;gap:6px;margin-top:6px}
       .cs-mode button{flex:1;border:1px solid var(--cs-border);background:transparent;color:var(--cs-muted);border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
       .cs-mode button.active{background:var(--cs-green-soft);border-color:var(--cs-primary);color:var(--cs-fg)}
-      .cs-clear{border:1px solid var(--cs-border);background:transparent;color:var(--cs-muted);border-radius:9999px;padding:2px 10px;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.05em}
-      .cs-clear:hover{border-color:var(--cs-primary);color:var(--cs-fg)}
       .cs-slider{width:100%;accent-color:var(--cs-primary)}
       .cs-stage{min-width:0}
       .cs-visual-card{border:1px solid var(--cs-border);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#10141b,#0b0d11)}
@@ -2381,6 +2409,12 @@
       .cs-rewind:hover{color:var(--cs-fg);border-color:var(--cs-primary)}
       .cs-flex{flex:1}
       .cs-time{min-width:64px;text-align:right;font-size:15px;color:var(--cs-fg)}
+      /* song-builder chart, carded in the studio's palette — blocks wear amber, not green */
+      .cs-chart{margin-top:14px;background:var(--cs-card);border:1px solid var(--cs-border);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+      .cs-chart .grid-scroll{background:#0b0d11}
+      .cs-chart .seq-block{border-color:rgba(245,182,70,0.55);background:linear-gradient(160deg,rgba(245,182,70,0.30),rgba(245,182,70,0.10))}
+      .cs-chart .seq-block.now{border-color:var(--amber);box-shadow:0 0 16px rgba(245,182,70,0.65)}
+      .cs-chart .seq-block .edge{background:linear-gradient(90deg,transparent,rgba(245,182,70,0.5))}
       @media(max-width:900px){.cs-wrap{grid-template-columns:1fr}}
     </style>
   </head>
@@ -2879,9 +2913,10 @@
               <div class="tool-guide" id="guide-chord-studio" hidden>
                 <p>stack a chord progression from any key and watch it glide as neon lines while it plays on layered synths and real sampled instruments.</p>
                 <ul>
-                  <li>pick a key, then tap chords — triads or 7ths — to build a progression of up to eight. tap a chip or clear all to remove chords.</li>
+                  <li>pick a key, then tap chords — triads through 9ths — to place blocks on the chart, up to sixteen. drag blocks to reorder, drag their right edge to resize, or use the ‹ › ⧉ × buttons on each block. double-click the ruler to drop section markers; click a flag while playing to jump the loop there.</li>
                   <li>six sounds: custom pads, church organ, cathedral choir (live), symphony strings, full orchestra, and real strings + orchestra with a harp sweep on every change.</li>
-                  <li>chords sweep into each other with a filter bloom — tempo and beats per chord set the pace.</li>
+                  <li>chords sweep into each other with a filter bloom — tempo sets the pace, and every block sets its own length in beats.</li>
+                  <li>everything you build is remembered for your next visit.</li>
                 </ul>
                 <p class="tool-guide-link">deep-link this tool: <a href="#chord-studio">tools#chord-studio</a></p>
               </div>
@@ -2894,16 +2929,15 @@
                 <div class="cs-wrap">
                   <aside class="cs-aside">
                     <div class="cs-block">
-                      <div class="cs-row"><span class="cs-label">chords</span><button type="button" class="cs-clear" id="clearChords">clear all</button></div>
-                      <div class="cs-chords-box"><span class="cs-chips" id="chordChips"></span></div>
-                      <p class="cs-hint">Tap a chord below to add it — tap a chip to remove it.</p>
+                      <div class="cs-row"><span class="cs-label">chords</span></div>
+                      <p class="cs-hint">Tap a chord to add it to the chart below — each block sets its own length.</p>
                       <div class="cs-key-head"><span class="cs-label">add from key</span></div>
                       <div class="cs-steps" style="gap:6px">
                         <select id="keySelect" class="cs-select" aria-label="Key" style="flex:1"></select>
                         <select id="modeSelect" class="cs-select" aria-label="Chord type"></select>
                       </div>
                       <div class="cs-palette" id="keyChords" role="group" aria-label="Chords in key"></div>
-                      <p class="cs-hint">Up to 8 chords.</p>
+                      <p class="cs-hint">Up to 16 chords.</p>
                     </div>
                     <div class="cs-block">
                       <div class="cs-row">
@@ -2914,14 +2948,6 @@
                           <span class="tempo-unit" aria-hidden="true">BPM</span>
                           <button class="step-btn" id="tempoUp" type="button" aria-label="Faster by one BPM">+</button>
                           <button class="ghost-btn" id="csTap" type="button">Tap</button>
-                        </div>
-                      </div>
-                      <div class="cs-row">
-                        <span class="cs-label">beats per chord</span>
-                        <div class="cs-steps" role="group" aria-label="Beats per chord">
-                          <button type="button" class="song-jump" id="beatsDown" aria-label="One fewer beat per chord">−</button>
-                          <input class="bpm-input" id="beats" type="number" inputmode="numeric" min="1" max="8" step="1" value="4" aria-label="Beats per chord">
-                          <button type="button" class="song-jump" id="beatsUp" aria-label="One more beat per chord">+</button>
                         </div>
                       </div>
                     </div>
@@ -2940,6 +2966,26 @@
                       </div>
                     </div>
                   </section>
+                </div>
+
+                <div class="cs-chart">
+                  <div class="seq-head">
+                    <p class="drone-label" id="cs-seq-label">Your progression</p>
+                    <div class="tool-row">
+                      <button class="ghost-btn" id="cs-undo" type="button" disabled>Undo</button>
+                      <div class="sb-overflow">
+                        <button class="ghost-btn" id="cs-menu-btn" type="button"
+                          aria-haspopup="true" aria-expanded="false" aria-label="More progression actions">···</button>
+                        <div class="sb-menu" id="cs-menu" hidden>
+                          <button type="button" class="sb-menu-item" id="cs-clear">Clear progression</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="grid-scroll" id="cs-grid-scroll">
+                    <div class="grid-track" id="cs-grid-track"></div>
+                  </div>
+                  <p class="tool-status" id="cs-status" aria-live="polite"></p>
                 </div>
               </div>
             </div>
@@ -3068,7 +3114,7 @@
                 </div>
                 <div class="fb-tfield">
                   <span class="sb-label" id="fb-sub-label">Subdivision</span>
-                  <div class="sub-row" id="fb-sub" role="group" aria-labelledby="fb-sub-label">
+                  <div class="sub-row" id="fb-subdiv" role="group" aria-labelledby="fb-sub-label">
                     <button class="sub-opt" type="button" data-sub="1" aria-pressed="true">Quarter</button>
                     <button class="sub-opt" type="button" data-sub="2" aria-pressed="false">Eighths</button>
                     <button class="sub-opt" type="button" data-sub="3" aria-pressed="false">Triplets</button>
@@ -6880,10 +6926,10 @@
         fbBpmInput.addEventListener("change", () =>
           fbSetBpm(Number(fbBpmInput.value) || 120)
         );
-        document.querySelectorAll("#fb-sub .sub-opt").forEach((btn) => {
+        document.querySelectorAll("#fb-subdiv .sub-opt").forEach((btn) => {
           btn.addEventListener("click", () => {
             fbSub = Number(btn.dataset.sub) || 1;
-            document.querySelectorAll("#fb-sub .sub-opt").forEach((b) => {
+            document.querySelectorAll("#fb-subdiv .sub-opt").forEach((b) => {
               b.setAttribute("aria-pressed", String(Number(b.dataset.sub) === fbSub));
             });
             saveScalePrefs();
@@ -7011,7 +7057,7 @@
         document.querySelectorAll("#fb-display .sub-opt").forEach((b) => {
           b.setAttribute("aria-pressed", String(b.dataset.display === fbDisplay));
         });
-        document.querySelectorAll("#fb-sub .sub-opt").forEach((b) => {
+        document.querySelectorAll("#fb-subdiv .sub-opt").forEach((b) => {
           b.setAttribute("aria-pressed", String(Number(b.dataset.sub) === fbSub));
         });
         fbPatternSel.value = fbPattern;
@@ -8802,6 +8848,15 @@
           }
           if (name !== "chord-studio" && typeof csStopPlayback === "function") {
             csStopPlayback();
+          }
+          if (name !== "song-builder" && songPlaying) {
+            stopSong();
+          }
+          if (name !== "drone" && dronePlaying) {
+            stopDrone();
+          }
+          if (name !== "metronome" && playing) {
+            stopMetro();
           }
           if (name !== "licks" && typeof licksClearSelection === "function") {
             licksClearSelection();

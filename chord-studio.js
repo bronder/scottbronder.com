@@ -1,5 +1,4 @@
 const tempo=document.getElementById('tempo');
-const beats=document.getElementById('beats');
 const playBtn=document.getElementById('playBtn');
 const scrub=document.getElementById('scrub');
 const time=document.getElementById('time');
@@ -7,21 +6,16 @@ const label=document.querySelector('.visual-label strong');
 const canvas=document.getElementById('viz');
 const ctx=canvas.getContext('2d');
 
-const THEMES={
-  site:{name:'Site',stage:'#10141b',deep:'#0b0d11',voices:['#f5b646','#7aa2f7','#34d399','#ff8e3c','#eef0f3']}
-};
-let themeKey='site';
-let theme=THEMES.site;
-function applyTheme(){
-  themeKey='site';
-  theme=THEMES.site;
-  draw();
-}
+// neon-graph palette — the studio is skinned with the site colors
+const theme={name:'Site',stage:'#10141b',deep:'#0b0d11',voices:['#f5b646','#7aa2f7','#34d399','#ff8e3c','#eef0f3']};
 
-let CHORDS=['G','B','C','Cm'];
-let NOTES=[[71,67,62,59,43],[71,66,63,59,47],[72,67,64,60,48],[72,67,63,60,48]];
-let N=CHORDS.length;
-const MAX_CHORDS=8;
+// Progression = chart blocks: a chord symbol plus its own length in beats.
+// Everything downstream (voicing, sweeps, transport, the neon graph) reads
+// this as a variable-length segment timeline, song-builder style.
+const MAX_CHORDS=16;
+let PROG=[{sym:'G',beats:4},{sym:'B',beats:4},{sym:'C',beats:4},{sym:'Cm',beats:4}];
+let NOTES=[];
+let N=0;
 
 // Sound presets. Each is a list of section layers; a layer is either a mono-synth
 // spec (detuned unisons, optionally Haas-doubled) or an additive partials stack,
@@ -176,7 +170,6 @@ function voiceChords(symbols){
 }
 
 let bpm=Number(tempo.value||90);
-let beatsPerChord=Number(beats.value||4);
 let playing=false;
 let introSweep=false;
 let playClock=0;
@@ -198,28 +191,58 @@ let toneMaster=null;
 const toneNodes=[];
 function reg(node){ toneNodes.push(node); return node; }
 
-function barDur(){ return beatsPerChord*60/bpm; }
-function totalDur(){ return N>0 ? barDur()*N : barDur(); }
+/* ---------- segment timeline: per-chord lengths replace one global bar length ---------- */
+
+const BEATS_PER_MEASURE=4;
+
+function totalBeats(){
+  return PROG.reduce((s,c)=>s+c.beats,0);
+}
+function totalDur(){
+  // with no chords, one empty measure keeps the transport math finite
+  return (totalBeats()||BEATS_PER_MEASURE)*60/bpm;
+}
+function segDur(i){
+  return PROG[i].beats*60/bpm;
+}
+// seconds in -> which chord segment covers it (wraps the loop)
+function posToSeg(pos){
+  if(N===0) return {idx:0,local:0,dur:totalDur(),start:0};
+  const td=totalDur();
+  const t=((pos%td)+td)%td;
+  let acc=0;
+  for(let i=0;i<N;i++){
+    const d=segDur(i);
+    if(t<acc+d || i===N-1) return {idx:i, local:t-acc, dur:d, start:acc};
+    acc+=d;
+  }
+}
+function beatToPos(beat){
+  return beat*60/bpm;
+}
 function fmtSec(s){ return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'); }
 function syncMeta(){
   const td=totalDur();
   const pos=((cur%td)+td)%td;
   time.textContent=fmtSec(pos)+' / '+fmtSec(td);
+  // announce position as time, matching the visible readout — a bare range
+  // input would otherwise say percentages
+  scrub.setAttribute('aria-valuetext', fmtSec(pos)+' of '+fmtSec(td));
   scrub.max=String(Math.max(1,Math.round(td)));
   scrub.value=String(Math.min(Number(scrub.max), Math.round(pos)));
-  const chord=CHORDS[Math.floor(pos/barDur())%N] || '—';
+  const chord=(N>0 && PROG[posToSeg(pos).idx]) ? PROG[posToSeg(pos).idx].sym : '—';
   if(label) label.textContent=chord;
 }
 
-// how much of each bar is spent sweeping to the next chord
+// how much of each segment is spent sweeping to the next chord
 function sweepDur(b){ return Math.min(1.8, b*0.45); }
 
-function noteAt(voice,t,b,noIntro,sessT){
+function noteAt(voice,t,noIntro,sessT){
   if(N===0) return 60;
-  const cycle=b*N;
-  let tt=((t%cycle)+cycle)%cycle;
-  const idx=Math.min(N-1, Math.floor(tt/b));
-  const local=tt-idx*b;
+  const td=totalDur();
+  const tt=((t%td)+td)%td;
+  const seg=posToSeg(tt);
+  const idx=seg.idx, local=seg.local, b=seg.dur;
   const from=NOTES[idx][voice];
   const to=NOTES[(idx+1)%N][voice];
   const trans=sweepDur(b);
@@ -232,9 +255,10 @@ function noteAt(voice,t,b,noIntro,sessT){
     m=from + (to-from)*e;
   }
   // intro sweep: the first measure starts an octave up and rides down into place
-  const introOn=!noIntro && introSweep && (sessT!==undefined ? (sessT>=0 && sessT<b) : playClock<b);
+  const firstDur=segDur(0);
+  const introOn=!noIntro && introSweep && (sessT!==undefined ? (sessT>=0 && sessT<firstDur) : playClock<firstDur);
   if(introOn){
-    const p=Math.min(1, tt/b);
+    const p=Math.min(1, tt/firstDur);
     const e=1-p*p*(3-2*p);
     m+=(voice<2?12:-12)*e;
   }
@@ -245,19 +269,26 @@ function midiToFreq(m){ return 440 * Math.pow(2,(m-69)/12); }
 
 // Sampled real-instrument layers: FluidR3_GM soundfonts (GPL) loaded lazily from
 // the gleitz MIDI.js mirror only when a sampled preset is used. Real players
-// re-articulate on each chord change, so samples trigger at bar boundaries on
+// re-articulate on each chord change, so samples trigger at segment boundaries on
 // top of the gliding synth pad underneath; the optional harp sweeps upward.
 let sfScripts={};
 let sfCache={};
 let sfBus=null;
-let sfLastBarIdx=-1;
+let sfLastSegIdx=-1;
+let sfFailed=false;
 
 function ensureSoundfont(inst){
   if(!sfScripts[inst]){
     const tag=document.createElement('script');
     tag.src='https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/'+inst+'-mp3.js';
+    // a failed load (offline, blocked, 404) used to strip the sampled layers
+    // silently — say so once so the quieter sound is not a mystery
+    tag.onerror=()=>{
+      if(sfFailed) return;
+      sfFailed=true;
+      if(csStatus && !playing) csStatus.textContent='sampled instruments could not load — playing synth layers only';
+    };
     document.head.appendChild(tag);
-    sfScripts[inst]=tag;
   }
 }
 
@@ -282,9 +313,7 @@ function sfPlayer(inst, midi, vol){
 }
 
 function sfTriggerChord(cfg, pos){
-  const b=barDur();
-  const idx=Math.floor(pos/b)%N;
-  const notes=(NOTES[idx]||[]).slice(0,4);
+  const notes=(NOTES[posToSeg(pos).idx]||[]).slice(0,4);
   if(cfg.inst){
     notes.forEach(n=>{
       const p=sfPlayer(cfg.inst, n, cfg.instVol);
@@ -363,10 +392,13 @@ function makeVoice(spec, tone, dest){
 }
 
 async function initTone(){
+  const gen=soundGen;
   const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.custom;
   await Tone.start();
+  if(gen!==soundGen) return; // a newer sound was picked before this build started
   const reverb=reg(new Tone.Reverb({decay:P.reverb.decay, preDelay:0.03, wet:P.reverb.wet}));
   try{ if(reverb.ready) await reverb.ready; }catch{}
+  if(gen!==soundGen) return;
   const chorus=reg(new Tone.Chorus({frequency:P.chorus.frequency, depth:P.chorus.depth, wet:P.chorus.wet}));
   chorus.start();
   const widener=reg(new Tone.StereoWidener({width:0.85}));
@@ -434,6 +466,7 @@ async function initTone(){
   // high-passed into a long reverb with a touch of echo — the glisten over the pad
   const shimReverb=reg(new Tone.Reverb({decay:9, preDelay:0.04, wet:0.9}));
   try{ if(shimReverb.ready) await shimReverb.ready; }catch{}
+  if(gen!==soundGen) return; // stale mid-build: leave teardown to the newer switch
   const shimDelay=reg(new Tone.FeedbackDelay({delayTime:0.42, feedback:0.35, wet:0.3}));
   const shimHP=reg(new Tone.Filter({type:'highpass', frequency:1200}));
   shimHP.connect(shimDelay);
@@ -473,14 +506,21 @@ async function initTone(){
   sweepLP=wah;
 }
 
+// sound swaps are generation-guarded: each switch bumps the generation, so a
+// stale switch (or its half-built patch) can never tear down or clobber the
+// graph a newer selection is building
+let soundGen=0;
+
 // swap patches live: release, dispose every node, rebuild with the new preset
 async function switchSound(){
+  const gen=++soundGen;
   const wasPlaying=playing;
   releaseAll();
   await new Promise(r=>setTimeout(r,120));
+  if(gen!==soundGen) return; // a newer selection owns the teardown + rebuild
   toneNodes.forEach(n=>{try{n.dispose();}catch{}});
   toneNodes.length=0;
-  sfCache={}; sfLastBarIdx=-1; sfBus=null;
+  sfCache={}; sfLastSegIdx=-1; sfBus=null; sfFailed=false;
   padVoices=null; bassVoice=null; subVoice=null; shimVoices=null;
   sweepEQ=null; sweepLP=null; toneMaster=null; toneReady=null; sweepUp=false; voicesActive=false;
   if(wasPlaying) ensureSynth();
@@ -488,13 +528,12 @@ async function switchSound(){
 
 function attackAll(){
   if(!padVoices || N===0) return;
-  const b=barDur();
   const td=totalDur();
   const pos=((cur%td)+td)%td;
-  padVoices.forEach(v=>v.attack(midiToFreq(noteAt(v.tone,pos,b))));
-  bassVoice.triggerAttack(midiToFreq(noteAt(4,pos,b)));
-  if(subVoice) subVoice.triggerAttack(midiToFreq(noteAt(4,pos,b)-12));
-  if(shimVoices) shimVoices.forEach((v,i)=>v.triggerAttack(midiToFreq(noteAt(i,pos,b,true)+12)));
+  padVoices.forEach(v=>v.attack(midiToFreq(noteAt(v.tone,pos))));
+  bassVoice.triggerAttack(midiToFreq(noteAt(4,pos)));
+  if(subVoice) subVoice.triggerAttack(midiToFreq(noteAt(4,pos)-12));
+  if(shimVoices) shimVoices.forEach((v,i)=>v.triggerAttack(midiToFreq(noteAt(i,pos,true)+12)));
   voicesActive=true;
 }
 
@@ -541,10 +580,11 @@ function updateSynth(){
   if(padVoices && window.Tone){
     if(playing && N>0){
       const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.custom;
+      const td=totalDur();
+      const pos=((cur%td)+td)%td;
+      const seg=posToSeg(pos);
       // while the chords are sweeping, open the top end and lift the shimmer
-      const b0=barDur();
-      const local=((cur% b0)+b0)%b0;
-      const gliding=local > b0-sweepDur(b0);
+      const gliding=seg.local > seg.dur-sweepDur(seg.dur);
       if(gliding!==sweepUp && sweepEQ && sweepLP){
         sweepUp=gliding;
         sweepEQ.gain.rampTo(gliding?5:0, 0.25);
@@ -552,27 +592,23 @@ function updateSynth(){
         // the whaa: resonant lowpass snaps open through the shift, eases shut after
         sweepLP.frequency.rampTo(gliding?P.wah.peak:P.wah.base, gliding?0.18:0.6);
       }
-      const b=barDur();
-      const td=totalDur();
-      const pos=((cur%td)+td)%td;
-      // real instruments re-articulate at each chord onset (bar boundary)
+      // real instruments re-articulate at each chord onset (segment boundary)
       if(P.sampled && sfBus){
-        const barIdx=Math.floor(pos/b);
-        if(barIdx!==sfLastBarIdx){ sfLastBarIdx=barIdx; sfTriggerChord(P.sampled, pos); }
+        if(seg.idx!==sfLastSegIdx){ sfLastSegIdx=seg.idx; sfTriggerChord(P.sampled, pos); }
       }
       padVoices.forEach(vv=>{
-        const f=midiToFreq(noteAt(vv.tone,pos,b));
+        const f=midiToFreq(noteAt(vv.tone,pos));
         if(Number.isFinite(f)) vv.setNote(f);
       });
-      const bf=midiToFreq(noteAt(4,pos,b));
+      const bf=midiToFreq(noteAt(4,pos));
       if(Number.isFinite(bf)) bassVoice.setNote(bf);
       if(subVoice){
-        const sf=midiToFreq(noteAt(4,pos,b)-12);
+        const sf=midiToFreq(noteAt(4,pos)-12);
         if(Number.isFinite(sf)) subVoice.setNote(sf);
       }
       if(shimVoices){
         for(let v=0;v<shimVoices.length;v++){
-          const sf=midiToFreq(noteAt(v,pos,b,true)+12);
+          const sf=midiToFreq(noteAt(v,pos,true)+12);
           if(Number.isFinite(sf)) shimVoices[v].setNote(sf);
         }
       }
@@ -584,13 +620,12 @@ function updateSynth(){
 
 function updateLegacySynth(){
   if(!audioCtx || !synthVoices) return;
-  const b=barDur();
   const td=totalDur();
   const pos=((cur%td)+td)%td;
   const now=audioCtx.currentTime;
   masterGain.gain.setTargetAtTime((playing && N>0) ? 0.22 : 0.0001, now, 0.03);
   for(let v=0;v<synthVoices.length;v++){
-    const m=noteAt(v,pos,b);
+    const m=noteAt(v,pos);
     const f=midiToFreq(m);
     if(Number.isFinite(f)) synthVoices[v].osc.frequency.setTargetAtTime(f, now, 0.04);
   }
@@ -614,28 +649,35 @@ function draw(){
   ctx.fillStyle=g;
   ctx.fillRect(0,0,w,h);
 
-  const b=barDur();
-  const td=b*N;
+  const td=totalDur();
   const yFor=m=>h*0.88 - ((m-40)/40)*h*0.78;
-  const pxPerBar=w/8;
-  const pxPerSec=pxPerBar/b;
+  const pxPerBeat=w/32; // eight 4-beat measures across the canvas, zooming with tempo
+  const pxPerSec=pxPerBeat*bpm/60;
   // playhead rides from the left edge to center, then the graph scrolls
   const playX=Math.min(w*0.5, playClock*pxPerSec);
   const pos=N>0 ? ((cur%td)+td)%td : 0;
   const sessAnchor=playClock-pos;
 
   ctx.font=`700 ${13*dpr}px Figtree, sans-serif`;
-  const first=Math.floor((pos - playX/pxPerSec)/b);
-  const lastI=Math.ceil((pos + (w-playX)/pxPerSec)/b);
-  for(let i=first;i<=lastI;i++){
-    const x=playX + (i*b - pos)*pxPerSec;
-    if(x<-20 || x>w+20) continue;
-    ctx.strokeStyle=theme.voices[0]+'33';
-    ctx.lineWidth=1*dpr;
-    ctx.beginPath(); ctx.moveTo(x,h*0.06); ctx.lineTo(x,h); ctx.stroke();
-    if(N>0){
-      ctx.fillStyle=theme.voices[0]+'99';
-      ctx.fillText(CHORDS[((i%N)+N)%N], x+6*dpr, h*0.06);
+  // vertical lines + labels at each chord change, across every visible loop cycle
+  if(N>0){
+    const starts=[];
+    let acc=0;
+    for(let i=0;i<N;i++){ starts.push({t:acc, sym:PROG[i].sym}); acc+=PROG[i].beats; }
+    const t0=pos - playX/pxPerSec;
+    const t1=pos + (w-playX)/pxPerSec;
+    for(let k=Math.floor(t0/td); k<=Math.floor(t1/td); k++){
+      for(let i=0;i<N;i++){
+        const t=k*td + starts[i].t*60/bpm;
+        if(t<t0 || t>t1) continue;
+        const x=playX + (t-pos)*pxPerSec;
+        if(x<-20 || x>w+20) continue;
+        ctx.strokeStyle=theme.voices[0]+'33';
+        ctx.lineWidth=1*dpr;
+        ctx.beginPath(); ctx.moveTo(x,h*0.06); ctx.lineTo(x,h); ctx.stroke();
+        ctx.fillStyle=theme.voices[0]+'99';
+        ctx.fillText(starts[i].sym, x+6*dpr, h*0.06);
+      }
     }
   }
 
@@ -644,7 +686,7 @@ function draw(){
     ctx.beginPath();
     for(let x=0;x<=playX;x+=3*dpr){
       const tt=pos - (playX-x)/pxPerSec;
-      const y=yFor(noteAt(v,tt,b,false,tt+sessAnchor));
+      const y=yFor(noteAt(v,tt,false,tt+sessAnchor));
       if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
     }
     ctx.strokeStyle=col;
@@ -652,7 +694,7 @@ function draw(){
     ctx.shadowColor=col;
     ctx.shadowBlur=14*dpr;
     ctx.stroke();
-    const py=yFor(noteAt(v,pos,b,false,playClock));
+    const py=yFor(noteAt(v,pos,false,playClock));
     ctx.beginPath();
     ctx.arc(playX,py,7*dpr,0,Math.PI*2);
     ctx.fillStyle=col;
@@ -660,28 +702,40 @@ function draw(){
   }
   ctx.shadowBlur=0;
   if(N>0 && playX>=w*0.18){
-    const nowIdx=Math.floor(pos/b)%N;
+    const nowIdx=posToSeg(pos).idx;
     ctx.fillStyle=theme.voices[0];
     ctx.font=`800 ${28*dpr}px Figtree, sans-serif`;
-    ctx.fillText(CHORDS[nowIdx], playX+18*dpr, yFor(noteAt(0,pos,b))-14*dpr);
+    ctx.fillText(PROG[nowIdx].sym, playX+18*dpr, yFor(noteAt(0,pos))-14*dpr);
   }
 }
 
 function setPlaying(on){
   playing=on;
   const chip=document.querySelector('.visual-label');
-  if(chip) chip.style.opacity=on?'0':'';
+  if(chip){
+    chip.style.opacity=on?'0':'';
+    // faded from sight while playing — take it out of the tree too, its
+    // "silent preview" wording is stale mid-playback
+    chip.setAttribute('aria-hidden', on?'true':'false');
+  }
   if(on){
     playClock=0;
     if(introSweep) cur=0;
     ensureSynth();
     if(audioCtx && audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
+    csNowIdx=-1;
+    csUpdateNow(cur);
   }else{
     releaseAll();
+    csClearNow();
   }
   playBtn.innerHTML = on
     ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>'
     : '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  // the icon swaps identity, so the name must follow it — otherwise screen
+  // readers keep announcing "Play" on the button that now pauses
+  playBtn.setAttribute('aria-label', on?'Pause':'Play');
+  playBtn.setAttribute('title', on?'Pause':'Play');
   updateSynth();
 }
 
@@ -696,8 +750,6 @@ const stepBtn=(id,input,d)=>{
 };
 stepBtn('tempoDown','tempo',-1);
 stepBtn('tempoUp','tempo',1);
-stepBtn('beatsDown','beats',-1);
-stepBtn('beatsUp','beats',1);
 // tap tempo, same averaging as the other tools: last 5 taps within 3s
 const csTapBtn=document.getElementById('csTap');
 let csTaps=[];
@@ -717,8 +769,10 @@ if(csTapBtn){
     }
   });
 }
-tempo.addEventListener('input',()=>{ bpm=Number(tempo.value); syncMeta(); updateSynth(); draw(); });
-beats.addEventListener('input',()=>{ beatsPerChord=Number(beats.value); syncMeta(); updateSynth(); draw(); });
+tempo.addEventListener('input',()=>{
+  bpm=Number(tempo.value);
+  syncMeta(); updateSynth(); draw(); saveCsPrefs();
+});
 playBtn.addEventListener('click',()=> setPlaying(!playing));
 // rewind to start: jump the loop, restart the session clock (replays the intro
 // and sends the playhead back to the left edge when armed)
@@ -727,6 +781,7 @@ if(csRewindBtn){
   csRewindBtn.addEventListener('click',()=>{
     cur=0;
     playClock=0;
+    sfLastSegIdx=-1;
     syncMeta();
     updateSynth();
     draw();
@@ -741,55 +796,717 @@ if(csIntroBtn){
     draw();
   });
 }
-scrub.addEventListener('input',()=>{ cur=Number(scrub.value)||0; syncMeta(); updateSynth(); draw(); });
+scrub.addEventListener('input',()=>{
+  cur=Number(scrub.value)||0;
+  sfLastSegIdx=-1;
+  csNowIdx=-1;
+  csUpdateNow(cur);
+  syncMeta(); updateSynth(); draw();
+});
 
-// Editable progression + key-based chord palette
-const chordChips=document.getElementById('chordChips');
-const keySelect=document.getElementById('keySelect');
-const keyChords=document.getElementById('keyChords');
-const modeSelect=document.getElementById('modeSelect');
-const clearChords=document.getElementById('clearChords');
-const themeSelect=document.getElementById('themeSelect');
-const soundSelect=document.getElementById('soundSelect');
-let chordMode='triads';
-let currentKey=KEYS.find(k=>k[0]==='G') || KEYS[0];
+/* ---------- progression chart: song-builder-style blocks on a beat ruler ---------- */
 
-function rebuild(){
-  N=CHORDS.length;
+const CS_PX_BEAT=30;
+const BEAT_CHOICES=[1,2,4,8,12,16];
+const MARKER_COLORS=['#f5b646','#7dd3fc','#c4b5fd','#fda4af','#5eead4'];
+const MARKER_NAMES=['Intro','Verse','Chorus','Bridge','Outro'];
+let MARKERS=[];
+
+const csGridScroll=document.getElementById('cs-grid-scroll');
+const csGridTrack=document.getElementById('cs-grid-track');
+const csStatus=document.getElementById('cs-status');
+const csUndoBtn=document.getElementById('cs-undo');
+const csMenuBtn=document.getElementById('cs-menu-btn');
+const csMenuEl=document.getElementById('cs-menu');
+const csClearBtn=document.getElementById('cs-clear');
+let csHistory=[];
+let csNowIdx=-1;
+let csDrag=null;
+let csMdrag=null;
+
+function csHexA(hex, a){
+  const n=parseInt(hex.slice(1), 16);
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
+
+function maxMarkerBeat(){
+  const tb=Math.max(totalBeats(), BEATS_PER_MEASURE);
+  return Math.max(0, Math.floor((tb-1)/BEATS_PER_MEASURE))*BEATS_PER_MEASURE;
+}
+
+function normalizeMarkers(){
+  if(!MARKERS.length) return;
+  const maxB=maxMarkerBeat();
+  const seen=new Set();
+  MARKERS=MARKERS
+    .filter(m=>m.beat>=0 && m.beat<=maxB && !seen.has(m.beat) && seen.add(m.beat))
+    .sort((a,b)=>a.beat-b.beat);
+}
+
+function csPushHistory(){
+  csHistory.push({prog:PROG.map(c=>({...c})), markers:MARKERS.map(m=>({...m}))});
+  if(csHistory.length>50) csHistory.shift();
+  csSyncUndo();
+}
+function csSyncUndo(){
+  if(csUndoBtn) csUndoBtn.disabled=csHistory.length===0;
+}
+
+function csIdleStatus(){
+  if(!csStatus) return;
+  csStatus.textContent=PROG.length
+    ? PROG.length+' chord'+(PROG.length>1?'s':'')+' · '+totalBeats()+' beats'
+    : '';
+}
+
+// single data-changed pipeline: re-voice, clamp transport, redraw everything, persist
+function rebuild(freshIdx){
+  N=PROG.length;
   if(N===0){
     NOTES=[];
     cur=0;
-    if(playing) releaseAll();
+    if(playing) setPlaying(false); // stop cleanly: icon, label, and synth all reset
   }else{
-    NOTES=voiceChords(CHORDS);
+    NOTES=voiceChords(PROG.map(c=>c.sym));
     const td=totalDur();
     cur=((cur%td)+td)%td;
     if(playing && padVoices && !voicesActive) attackAll();
   }
-  renderChips();
+  renderGrid(null, freshIdx);
   renderPalette();
   syncMeta();
   updateSynth();
   draw();
+  saveCsPrefs();
+  csIdleStatus();
 }
 
-function renderChips(){
-  chordChips.innerHTML='';
-  if(CHORDS.length===0){
-    const s=document.createElement('span');
-    s.className='empty-chords';
-    s.textContent='No chords — pick a key below';
-    chordChips.appendChild(s);
+function mutateProg(fn){
+  csPushHistory();
+  fn();
+  rebuild();
+}
+function mutateMarkers(fn){
+  csPushHistory();
+  fn();
+  rebuild();
+}
+
+function renderGrid(move, freshIdx){
+  // move: { idx, dropIdx } while a block is being dragged to dropIdx
+  csGridTrack.innerHTML='';
+  normalizeMarkers();
+  const tb=Math.max(totalBeats(), BEATS_PER_MEASURE);
+  csGridTrack.style.width=tb*CS_PX_BEAT+'px';
+
+  const sortedMk=[...MARKERS].sort((a,b)=>a.beat-b.beat);
+
+  // section tints: one colored span per marker, out to the next marker
+  sortedMk.forEach((m,i)=>{
+    const end=i+1<sortedMk.length ? sortedMk[i+1].beat : tb;
+    const tint=document.createElement('div');
+    tint.className='marker-tint';
+    tint.style.left=m.beat*CS_PX_BEAT+'px';
+    tint.style.width=Math.max(0,end-m.beat)*CS_PX_BEAT+'px';
+    tint.style.background=csHexA(m.color,0.05);
+    csGridTrack.appendChild(tint);
+  });
+
+  // ruler: beat ticks, measure lines, measure numbers
+  for(let b=0;b<=tb;b++){
+    const x=b*CS_PX_BEAT;
+    const isMeasure=b%BEATS_PER_MEASURE===0;
+    const line=document.createElement('div');
+    line.className='grid-line'+(isMeasure?' measure':'');
+    line.style.left=x+'px';
+    csGridTrack.appendChild(line);
+    if(isMeasure && b<tb){
+      const num=document.createElement('span');
+      num.className='grid-num';
+      num.style.left=x+6+'px';
+      num.textContent=b/BEATS_PER_MEASURE+1;
+      csGridTrack.appendChild(num);
+    }
+  }
+
+  // markers: a beat line down the grid + a flag in the ruler strip
+  sortedMk.forEach(m=>{
+    const vline=document.createElement('div');
+    vline.className='marker-beat-line';
+    vline.style.left=m.beat*CS_PX_BEAT+'px';
+    vline.style.background=csHexA(m.color,0.32);
+    csGridTrack.appendChild(vline);
+  });
+  if(PROG.length && !MARKERS.length){
+    const hint=document.createElement('span');
+    hint.className='mk-lane-hint';
+    hint.textContent='double-click the ruler to drop a section marker';
+    csGridTrack.appendChild(hint);
+  }
+  sortedMk.forEach(renderMarker);
+
+  if(!PROG.length){
+    const empty=document.createElement('div');
+    empty.className='grid-empty';
+    empty.textContent='Your progression starts here. Tap a chord to add it.';
+    csGridTrack.appendChild(empty);
+  }
+
+  // blocks
+  let cursor=0;
+  PROG.forEach((c,i)=>{
+    if(move && i===move.idx){
+      cursor+=c.beats;
+      return;
+    }
+    renderBlock(c,i,cursor,move, !move && i===freshIdx);
+    cursor+=c.beats;
+  });
+
+  if(move){
+    const slot=document.createElement('div');
+    slot.className='drop-slot';
+    slot.style.left=move.dropX+'px';
+    slot.style.width=PROG[move.idx].beats*CS_PX_BEAT-2+'px';
+    csGridTrack.appendChild(slot);
+  }
+
+  if(playing) csApplyNow();
+  csSyncPlayEnabled();
+  saveCsPrefs();
+}
+
+// nothing to play means no transport: the sibling tools disable their play
+// buttons on an empty progression too
+function csSyncPlayEnabled(){
+  if(playBtn) playBtn.disabled = N===0;
+}
+
+// removing a block destroys whatever held focus; hand it to the block that
+// took the removed one's place (or to Undo once the chart is empty)
+function csFocusAfterRemoval(gone){
+  const next=Math.min(gone, PROG.length-1);
+  const nb=csGridTrack.querySelector('.seq-block[data-idx="'+next+'"]');
+  if(nb) nb.focus();
+  else if(csUndoBtn) csUndoBtn.focus();
+}
+
+function renderBlock(c,i,startBeat,move,fresh){
+  const el=document.createElement('div');
+  el.className='seq-block'+
+    (playing && !move && i===csNowIdx ? ' now' : '')+
+    (fresh ? ' fresh' : '');
+  el.style.left=startBeat*CS_PX_BEAT+1+'px';
+  el.style.width=c.beats*CS_PX_BEAT-2+'px';
+  el.setAttribute('tabindex','0');
+  el.setAttribute('data-idx',String(i));
+  el.setAttribute('aria-label',
+    c.sym+', '+c.beats+' beats, chord '+(i+1)+' of '+PROG.length+
+    '. Press Delete to remove.');
+
+  const name=document.createElement('span');
+  name.className='blk-name';
+  name.textContent=c.sym;
+
+  // duration as a clickable select — drag-to-resize still works
+  const dur=document.createElement('select');
+  dur.className='blk-dur';
+  dur.setAttribute('aria-label','Length of '+c.sym+' in beats');
+  const choices=BEAT_CHOICES.includes(c.beats)
+    ? BEAT_CHOICES
+    : [...BEAT_CHOICES, c.beats].sort((a,b)=>a-b);
+  choices.forEach(n=>{
+    const o=document.createElement('option');
+    o.value=String(n);
+    o.textContent=n+(n===1?' beat':' beats');
+    if(n===c.beats) o.selected=true;
+    dur.appendChild(o);
+  });
+  dur.addEventListener('pointerdown',e=>e.stopPropagation());
+  dur.addEventListener('change',()=>{
+    mutateProg(()=>{ PROG[i].beats=parseInt(dur.value,10); });
+  });
+
+  const actions=document.createElement('div');
+  actions.className='blk-actions';
+  const mkBtn=(btnLabel,title,fn)=>{
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='blk-btn';
+    btn.textContent=btnLabel;
+    btn.title=title;
+    btn.setAttribute('aria-label',title+' '+c.sym);
+    btn.addEventListener('pointerdown',e=>e.stopPropagation());
+    btn.addEventListener('click',fn);
+    actions.appendChild(btn);
+  };
+  mkBtn('‹','Move left',()=>mutateProg(()=>{
+    if(i>0) PROG.splice(i-1,0,PROG.splice(i,1)[0]);
+  }));
+  mkBtn('›','Move right',()=>mutateProg(()=>{
+    if(i<PROG.length-1) PROG.splice(i+1,0,PROG.splice(i,1)[0]);
+  }));
+  mkBtn('⧉','Duplicate',()=>mutateProg(()=>{
+    PROG.splice(i+1,0,{sym:c.sym, beats:c.beats});
+  }));
+  mkBtn('×','Remove',()=>{
+    mutateProg(()=>{ PROG.splice(i,1); });
+    csFocusAfterRemoval(i);
+  });
+
+  const edge=document.createElement('span');
+  edge.className='edge';
+  edge.title='drag to resize';
+  edge.addEventListener('pointerdown',e=>{
+    e.stopPropagation();
+    beginCsDrag({
+      type:'resize',
+      i,
+      el,
+      startBeatPx:startBeat*CS_PX_BEAT+1,
+      prevProg:PROG.map(x=>({...x})),
+    });
+  });
+
+  el.addEventListener('pointerdown',e=>{
+    if(e.button!==0) return;
+    beginCsDrag({
+      type:'move',
+      i,
+      el,
+      startX:e.clientX,
+      dropIdx:i,
+      moved:false,
+      prevProg:PROG.map(x=>({...x})),
+    });
+  });
+  // Delete on a focused block removes it — same affordance the marker flags have
+  el.addEventListener('keydown',e=>{
+    if(e.target!==el) return; // child controls own their keys
+    if(e.key==='Delete' || e.key==='Backspace'){
+      e.preventDefault();
+      mutateProg(()=>{ PROG.splice(i,1); });
+      csFocusAfterRemoval(i);
+    }
+  });
+
+  el.appendChild(name);
+  el.appendChild(dur);
+  el.appendChild(actions);
+  el.appendChild(edge);
+  csGridTrack.appendChild(el);
+}
+
+/* ---------- section markers: DAW-style flags on the ruler ---------- */
+
+function renderMarker(m){
+  const el=document.createElement('div');
+  el.className='marker-flag'+(csMdrag && csMdrag.blocked && csMdrag.m===m ? ' blocked' : '');
+  el.style.left=m.beat*CS_PX_BEAT+1+'px';
+  el.style.setProperty('--mk', m.color);
+  el.style.background=csHexA(m.color,0.16);
+  el.style.borderColor=csHexA(m.color,0.5);
+  el.setAttribute('data-beat',String(m.beat));
+  el.setAttribute('role','button');
+  el.setAttribute('tabindex','0');
+  el.setAttribute('aria-label',
+    'Marker '+m.label+', measure '+(m.beat/BEATS_PER_MEASURE+1)+
+    '. Drag to move. Click to rename, or to jump the loop there while playing.');
+
+  const glyph=document.createElement('span');
+  glyph.className='mk-glyph';
+  glyph.textContent='▸';
+
+  const mlabel=document.createElement('span');
+  mlabel.className='mk-label';
+  mlabel.textContent=m.label;
+
+  const del=document.createElement('button');
+  del.type='button';
+  del.className='mk-del';
+  del.textContent='×';
+  del.setAttribute('aria-label','Remove '+m.label+' marker');
+  del.addEventListener('pointerdown',e=>e.stopPropagation());
+  del.addEventListener('click',()=>{
+    mutateMarkers(()=>MARKERS.splice(MARKERS.indexOf(m),1));
+  });
+
+  el.append(glyph,mlabel,del);
+
+  el.addEventListener('pointerdown',e=>{
+    if(e.button!==0 || e.target.closest('.mk-del') || el.querySelector('.mk-rename')) return;
+    e.stopPropagation();
+    beginCsMarkerDrag(m,el,e.clientX);
+  });
+
+  el.addEventListener('keydown',e=>{
+    if(el.querySelector('.mk-rename')) return;
+    if(e.key==='Enter' || e.key===' '){
+      e.preventDefault();
+      if(playing) jumpToMarker(m);
+      else beginCsMarkerRename(el,m);
+    }else if(e.key==='Delete' || e.key==='Backspace'){
+      e.preventDefault();
+      mutateMarkers(()=>MARKERS.splice(MARKERS.indexOf(m),1));
+    }
+  });
+
+  csGridTrack.appendChild(el);
+}
+
+function beginCsMarkerDrag(m,el,startX){
+  csMdrag={m,startX,origBeat:m.beat,lastBeat:m.beat,moved:false,blocked:false,snap:null};
+  window.addEventListener('pointermove',onCsMarkerDragMove);
+  window.addEventListener('pointerup',onCsMarkerDragEnd);
+}
+
+function onCsMarkerDragMove(e){
+  if(!csMdrag) return;
+  if(!csMdrag.moved){
+    if(Math.abs(e.clientX-csMdrag.startX)<=6) return;
+    csMdrag.moved=true;
+    csMdrag.snap={prog:PROG.map(c=>({...c})), markers:MARKERS.map(k=>({...k}))};
+  }
+  const rect=csGridTrack.getBoundingClientRect();
+  const measure=Math.round((e.clientX-rect.left)/(CS_PX_BEAT*BEATS_PER_MEASURE));
+  const beat=Math.max(0,Math.min(maxMarkerBeat(), measure*BEATS_PER_MEASURE));
+  const blocked=MARKERS.some(k=>k!==csMdrag.m && k.beat===beat);
+  if(!blocked) csMdrag.m.beat=beat;
+  if(beat!==csMdrag.lastBeat || blocked!==csMdrag.blocked){
+    csMdrag.lastBeat=beat;
+    csMdrag.blocked=blocked;
+    renderGrid();
+    if(blocked){
+      const fl=csGridTrack.querySelector('.marker-flag[data-beat="'+csMdrag.m.beat+'"]');
+      if(fl) fl.classList.add('blocked');
+    }
+  }
+}
+
+function onCsMarkerDragEnd(){
+  window.removeEventListener('pointermove',onCsMarkerDragMove);
+  window.removeEventListener('pointerup',onCsMarkerDragEnd);
+  const d=csMdrag;
+  csMdrag=null;
+  if(!d) return;
+  if(!d.moved){
+    // plain click: rename while stopped, jump the loop while playing
+    if(playing){
+      jumpToMarker(d.m);
+    }else{
+      const fl=csGridTrack.querySelector('.marker-flag[data-beat="'+d.m.beat+'"]');
+      if(fl) beginCsMarkerRename(fl,d.m);
+    }
     return;
   }
-  CHORDS.forEach((sym,i)=>{
+  if(d.blocked){
+    d.m.beat=d.origBeat;
+    if(csStatus) csStatus.textContent='that measure already has a marker';
+    renderGrid();
+    return;
+  }
+  if(d.snap && d.m.beat!==d.origBeat){
+    csHistory.push(d.snap);
+    if(csHistory.length>50) csHistory.shift();
+    csSyncUndo();
+  }
+  rebuild();
+}
+
+function beginCsMarkerRename(el,m){
+  if(el.querySelector('.mk-rename')) return;
+  const labelEl=el.querySelector('.mk-label');
+  if(!labelEl) return;
+  const input=document.createElement('input');
+  input.className='mk-rename';
+  input.value=m.label;
+  input.maxLength=24;
+  input.setAttribute('aria-label','Marker name');
+  labelEl.replaceWith(input);
+  input.addEventListener('pointerdown',e=>e.stopPropagation());
+  input.addEventListener('keydown',e=>{
+    e.stopPropagation();
+    if(e.key==='Enter') input.blur();
+    else if(e.key==='Escape'){
+      input.value=m.label;
+      input.blur();
+    }
+  });
+  input.addEventListener('blur',()=>{
+    const v=input.value.trim();
+    if(v && v!==m.label) mutateMarkers(()=>{ m.label=v; });
+    else renderGrid();
+  });
+  input.focus();
+  input.select();
+}
+
+// jump the loop so the marker's section starts now
+function jumpToMarker(m){
+  if(!playing || !PROG.length) return;
+  const td=totalDur();
+  cur=Math.min(Math.max(0,beatToPos(m.beat)), Math.max(0,td-0.001));
+  sfLastSegIdx=-1;
+  csNowIdx=-1;
+  csUpdateNow(cur);
+  syncMeta(); updateSynth(); draw();
+}
+
+// double-click the ruler strip to drop a marker on that measure
+if(csGridScroll){
+  csGridScroll.addEventListener('dblclick',e=>{
+    if(e.target.closest('.seq-block, .marker-flag, .mk-rename')) return;
+    if(!PROG.length) return;
+    const rect=csGridTrack.getBoundingClientRect();
+    const y=e.clientY-rect.top;
+    const px=e.clientX-rect.left;
+    if(y<0 || y>44 || px<0 || px>rect.width) return;
+    const beat=Math.max(
+      0,
+      Math.min(maxMarkerBeat(), Math.round(px/(CS_PX_BEAT*BEATS_PER_MEASURE))*BEATS_PER_MEASURE)
+    );
+    if(MARKERS.some(m=>m.beat===beat)){
+      if(csStatus) csStatus.textContent='that measure already has a marker';
+      return;
+    }
+    const used=MARKERS.map(m=>m.label);
+    const mlabel=MARKER_NAMES.find(n=>!used.includes(n)) || 'Marker '+(MARKERS.length+1);
+    mutateMarkers(()=>{
+      MARKERS.push({
+        beat,
+        label:mlabel,
+        color:MARKER_COLORS[MARKERS.length%MARKER_COLORS.length],
+      });
+    });
+  });
+}
+
+/* ---------- grid drag: resize (edge) + move (body) ---------- */
+
+function beginCsDrag(d){
+  csDrag=d;
+  if(d.type==='resize') d.el.classList.add('resizing');
+  window.addEventListener('pointermove',onCsDragMove);
+  window.addEventListener('pointerup',onCsDragEnd);
+}
+
+function endCsDrag(){
+  window.removeEventListener('pointermove',onCsDragMove);
+  window.removeEventListener('pointerup',onCsDragEnd);
+  const d=csDrag;
+  csDrag=null;
+  return d;
+}
+
+function computeDropIdx(px,skipIdx){
+  let acc=0;
+  let idx=0;
+  for(let i=0;i<PROG.length;i++){
+    if(i===skipIdx) continue;
+    if(px>=acc+(PROG[i].beats*CS_PX_BEAT)/2) idx++;
+    acc+=PROG[i].beats;
+  }
+  return idx;
+}
+
+function insertionX(dropIdx,skipIdx){
+  let x=0;
+  let k=0;
+  for(let i=0;i<PROG.length;i++){
+    if(i===skipIdx) continue;
+    if(k===dropIdx) break;
+    x+=PROG[i].beats;
+    k++;
+  }
+  return x*CS_PX_BEAT;
+}
+
+function onCsDragMove(e){
+  if(!csDrag) return;
+  if(csDrag.type==='resize'){
+    const rect=csGridTrack.getBoundingClientRect();
+    const px=e.clientX-rect.left;
+    let nb=Math.max(1,Math.min(64,Math.round((px-csDrag.startBeatPx)/CS_PX_BEAT)));
+    if(nb!==PROG[csDrag.i].beats){
+      PROG[csDrag.i].beats=nb;
+      csDrag.el.style.width=nb*CS_PX_BEAT-2+'px';
+      const sel=csDrag.el.querySelector('.blk-dur');
+      if(sel) sel.value=String(nb);
+      csGridTrack.style.width=
+        Math.max(totalBeats(),BEATS_PER_MEASURE)*CS_PX_BEAT+'px';
+    }
+    return;
+  }
+  // move
+  if(!csDrag.moved && Math.abs(e.clientX-csDrag.startX)<=6) return;
+  csDrag.moved=true;
+  const rect=csGridTrack.getBoundingClientRect();
+  const px=e.clientX-rect.left;
+  const dropIdx=computeDropIdx(px,csDrag.i);
+  if(dropIdx!==csDrag.dropIdx || !csDrag.rendered){
+    csDrag.dropIdx=dropIdx;
+    csDrag.rendered=true;
+    csDrag.dropX=insertionX(dropIdx,csDrag.i);
+    renderGrid({idx:csDrag.i, dropIdx});
+  }else{
+    csDrag.dropX=insertionX(dropIdx,csDrag.i);
+    const slot=csGridTrack.querySelector('.drop-slot');
+    if(slot) slot.style.left=csDrag.dropX+'px';
+  }
+}
+
+function onCsDragEnd(){
+  const d=endCsDrag();
+  if(!d) return;
+  if(d.type==='move' && d.moved){
+    const item=PROG.splice(d.i,1)[0];
+    PROG.splice(d.dropIdx,0,item);
+  }
+  if(d.prevProg && JSON.stringify(d.prevProg)!==JSON.stringify(PROG)){
+    csHistory.push({prog:d.prevProg, markers:MARKERS.map(m=>({...m}))});
+    if(csHistory.length>50) csHistory.shift();
+  }
+  csSyncUndo();
+  rebuild();
+}
+
+/* ---------- progression history (undo / clear / menu) ---------- */
+
+if(csUndoBtn){
+  csUndoBtn.addEventListener('click',()=>{
+    if(!csHistory.length) return;
+    const past=csHistory.pop();
+    PROG=past.prog.map(c=>({...c}));
+    MARKERS=past.markers.map(m=>({...m}));
+    csSyncUndo();
+    rebuild();
+  });
+}
+
+if(csMenuBtn && csMenuEl){
+  const closeMenu=()=>{
+    csMenuEl.hidden=true;
+    csMenuBtn.setAttribute('aria-expanded','false');
+  };
+  csMenuBtn.addEventListener('click',()=>{
+    const open=csMenuEl.hidden;
+    csMenuEl.hidden=!open;
+    csMenuBtn.setAttribute('aria-expanded',String(open));
+  });
+  document.addEventListener('click',e=>{
+    if(!csMenuEl.hidden && !csMenuEl.contains(e.target) && e.target!==csMenuBtn){
+      closeMenu();
+    }
+  });
+  if(csClearBtn){
+    csClearBtn.addEventListener('click',()=>{
+      closeMenu();
+      mutateProg(()=>{ PROG=[]; });
+    });
+  }
+}
+
+/* ---------- now-highlight on the chart while playing ---------- */
+
+function csApplyNow(){
+  if(!playing || N===0) return;
+  csGridTrack.querySelectorAll('.seq-block').forEach(el=>{
+    el.classList.toggle('now', Number(el.dataset.idx)===csNowIdx);
+  });
+}
+function csClearNow(){
+  csNowIdx=-1;
+  if(!csGridTrack) return;
+  csGridTrack.querySelectorAll('.seq-block.now').forEach(el=>el.classList.remove('now'));
+}
+function csUpdateNow(pos){
+  if(!csGridTrack) return;
+  if(!playing || N===0){ csClearNow(); return; }
+  const idx=posToSeg(pos).idx;
+  if(idx===csNowIdx) return;
+  csNowIdx=idx;
+  csApplyNow();
+}
+
+/* ---------- persistence: progression, markers, tempo, sound ---------- */
+
+const CS_STORE_KEY='chordStudioSongV1';
+
+function saveCsPrefs(){
+  if(csGridTrack===null) return; // chart not present on this page — nothing to save
+  try{
+    localStorage.setItem(CS_STORE_KEY, JSON.stringify({
+      prog:PROG.map(c=>({sym:c.sym, beats:c.beats})),
+      markers:MARKERS.map(m=>({beat:m.beat, label:m.label, color:m.color})),
+      bpm:Math.max(40, Math.min(240, Math.round(bpm)||90)),
+      sound:soundPreset,
+    }));
+  }catch{}
+}
+
+function loadCsPrefs(){
+  let p=null;
+  try{ p=JSON.parse(localStorage.getItem(CS_STORE_KEY)||'null'); }catch{ p=null; }
+  if(!p || typeof p!=='object') return;
+  if(Array.isArray(p.prog)){
+    const prog=p.prog.filter(c=>
+      c && typeof c.sym==='string' && parseChord(c.sym) &&
+      Number.isInteger(c.beats) && c.beats>=1 && c.beats<=64
+    ).slice(0,MAX_CHORDS).map(c=>({sym:c.sym.trim(), beats:c.beats}));
+    if(prog.length) PROG=prog;
+  }
+  if(Array.isArray(p.markers)){
+    MARKERS=p.markers
+      .filter(m=>
+        m && Number.isInteger(m.beat) && m.beat>=0 &&
+        typeof m.label==='string' && m.label.trim()
+      )
+      .map(m=>({
+        beat:m.beat,
+        label:m.label.trim().slice(0,24),
+        color:/^#[0-9a-f]{6}$/i.test(m.color||'') ? m.color : null,
+      }))
+      .sort((a,b)=>a.beat-b.beat);
+    MARKERS.forEach((m,i)=>{
+      if(!m.color) m.color=MARKER_COLORS[i%MARKER_COLORS.length];
+    });
+    const seen=new Set();
+    MARKERS=MARKERS.filter(m=>!seen.has(m.beat) && seen.add(m.beat));
+  }
+  if(Number.isFinite(p.bpm)){
+    bpm=Math.max(40, Math.min(240, Math.round(p.bpm)));
+    tempo.value=String(bpm);
+  }
+  if(SOUND_PRESETS[p.sound]) soundPreset=p.sound;
+}
+
+/* ---------- key-based chord palette ---------- */
+
+const keySelect=document.getElementById('keySelect');
+const keyChords=document.getElementById('keyChords');
+const modeSelect=document.getElementById('modeSelect');
+const soundSelect=document.getElementById('soundSelect');
+let chordMode='triads';
+let currentKey=KEYS.find(k=>k[0]==='G') || KEYS[0];
+
+function renderPalette(){
+  if(!keyChords) return;
+  keyChords.innerHTML='';
+  paletteData().forEach(c=>{
     const b=document.createElement('button');
     b.type='button';
-    b.className='chip';
-    b.title='Remove '+sym;
-    b.innerHTML= sym + '<span class="x" aria-hidden="true">×</span>';
-    b.addEventListener('click',()=>{ CHORDS.splice(i,1); rebuild(); });
-    chordChips.appendChild(b);
+    b.className='key-chord';
+    b.title='Add '+c.sym;
+    b.innerHTML= c.sym + '<span>'+c.roman+'</span>';
+    b.disabled=PROG.length>=MAX_CHORDS;
+    b.addEventListener('click',()=>{
+      if(PROG.length>=MAX_CHORDS) return;
+      mutateProg(()=>{ PROG.push({sym:c.sym, beats:4}); });
+      // land the fresh-card pulse on the newly added block and scroll to it
+      renderGrid(null, PROG.length-1);
+      if(csGridScroll) csGridScroll.scrollLeft=csGridScroll.scrollWidth;
+    });
+    keyChords.appendChild(b);
   });
 }
 
@@ -806,29 +1523,6 @@ function paletteData(){
   }));
 }
 
-function renderPalette(){
-  if(!keyChords) return;
-  keyChords.innerHTML='';
-  paletteData().forEach(c=>{
-    const b=document.createElement('button');
-    b.type='button';
-    b.className='key-chord';
-    b.title='Add '+c.sym;
-    b.innerHTML= c.sym + '<span>'+c.roman+'</span>';
-    b.disabled=CHORDS.length>=MAX_CHORDS;
-    b.addEventListener('click',()=>{ if(CHORDS.length<MAX_CHORDS){ CHORDS.push(c.sym); rebuild(); } });
-    keyChords.appendChild(b);
-  });
-}
-
-if(clearChords){
-  clearChords.addEventListener('click',()=>{ CHORDS=[]; rebuild(); });
-}
-
-if(themeSelect){
-  applyTheme();
-}
-
 if(soundSelect){
   Object.keys(SOUND_PRESETS).forEach(k=>{
     const o=document.createElement('option');
@@ -839,11 +1533,12 @@ if(soundSelect){
   soundSelect.value=soundPreset;
   soundSelect.addEventListener('change',()=>{
     soundPreset=SOUND_PRESETS[soundSelect.value] ? soundSelect.value : 'custom';
+    saveCsPrefs();
     if(padVoices || toneReady) switchSound();
   });
 }
 
-if(chordChips && keySelect && keyChords && modeSelect){
+if(keySelect && keyChords && modeSelect){
   KEYS.forEach(k=>{
     const o=document.createElement('option');
     o.value=k[1]+':maj';
@@ -873,24 +1568,37 @@ if(chordChips && keySelect && keyChords && modeSelect){
     chordMode=CHORD_MODES[modeSelect.value]?modeSelect.value:'triads';
     renderPalette();
   });
-  renderChips();
-  renderPalette();
 }
 
 function tick(now){
   const dt=Math.min(0.05,(now-last)/1000);
   last=now;
+  // paused = nothing on the canvas or transport can change; edits and scrubbing
+  // redraw through their own listeners, so idle frames skip the paint entirely
   if(playing){
     playClock+=dt;
     cur=(cur+dt)%totalDur();
+    syncMeta();
+    csUpdateNow(cur);
+    draw();
+    updateSynth();
   }
-  syncMeta();
-  draw();
-  updateSynth();
   requestAnimationFrame(tick);
 }
 
 window.addEventListener('resize', draw);
+
+// boot: restore the saved progression before first render, then light up
+if(csGridTrack){
+  loadCsPrefs();
+  if(soundSelect) soundSelect.value=soundPreset;
+}
+N=PROG.length;
+NOTES=N?voiceChords(PROG.map(c=>c.sym)):[];
+renderGrid();
+renderPalette();
+csIdleStatus();
+csSyncUndo();
 syncMeta();
 setPlaying(false);
 draw();
