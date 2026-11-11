@@ -575,7 +575,12 @@ async function initTone(){
     envelope:{attack:0.04, decay:0.3, sustain:0.75, release:0.9},
     filterEnvelope:{attack:0.05, decay:0.3, sustain:0.4, release:0.8, baseFrequency:110, octaves:1.8}
   }));
-  bass.connect(master);
+  // gentle saturation on the bass: second-order drive at low wet adds
+  // harmonics the sine sub can't carry, so the low end reads on small
+  // speakers instead of just being felt on big ones
+  const bassDrive=reg(new Tone.Chebyshev({order:2, wet:0.35}));
+  bass.connect(bassDrive);
+  bassDrive.connect(master);
   bass.volume.value=-6;
   // pure sine sub an octave under the bass — the weight you feel
   const sub=reg(new Tone.Synth({
