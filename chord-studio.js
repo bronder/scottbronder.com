@@ -2050,6 +2050,7 @@ function loadPreset(p){
 function renderPalette(){
   if(!keyChords) return;
   keyChords.innerHTML='';
+  csSyncCustomAdd();
   paletteData().forEach(c=>{
     const b=document.createElement('button');
     b.type='button';
@@ -2068,6 +2069,41 @@ function renderPalette(){
     });
     keyChords.appendChild(b);
   });
+}
+
+// any chord the voicing engine knows: root + quality, outside the key if needed
+const csCustomRoot=document.getElementById('cs-custom-root');
+const csCustomQ=document.getElementById('cs-custom-q');
+const csCustomAdd=document.getElementById('cs-custom-add');
+if(csCustomRoot && csCustomQ && csCustomAdd){
+  NOTE_SHARP.forEach((n,i)=>{
+    const o=document.createElement('option');
+    o.value=String(i);
+    o.textContent=n;
+    csCustomRoot.appendChild(o);
+  });
+  const Q_NAMES={'':'major','m':'minor','dim':'dim','aug':'aug','sus4':'sus4','sus2':'sus2','6':'6','m6':'m6','7':'7','maj7':'maj7','m7':'m7','m7b5':'m7♭5','dim7':'dim7','add9':'add9','9':'9','maj9':'maj9','m9':'m9'};
+  Object.keys(QUALITIES).forEach(q=>{
+    const o=document.createElement('option');
+    o.value=q;
+    o.textContent=Q_NAMES[q]||q;
+    csCustomQ.appendChild(o);
+  });
+  csCustomQ.value='';
+  csCustomAdd.addEventListener('click',()=>{
+    if(PROG.length>=MAX_CHORDS) return;
+    const sym=NOTE_SHARP[Number(csCustomRoot.value)||0]+csCustomQ.value;
+    if(!parseChord(sym)) return;
+    mutateProg(()=>{ PROG.push({sym, beats:4}); });
+    renderGrid(null, PROG.length-1);
+    const nb=csGridTrack.querySelector('.seq-block[data-idx="'+(PROG.length-1)+'"]');
+    if(nb) nb.scrollIntoView({block:'nearest', inline:'nearest', behavior:'smooth'});
+    if(csStatus) csStatus.textContent=sym+' added — outside the key, but it sings';
+  });
+  csSyncCustomAdd();
+}
+function csSyncCustomAdd(){
+  if(csCustomAdd) csCustomAdd.disabled=PROG.length>=MAX_CHORDS;
 }
 
 function paletteData(){
