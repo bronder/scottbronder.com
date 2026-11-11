@@ -1817,6 +1817,7 @@ function saveCsPrefs(){
       bpm:Math.max(40, Math.min(240, Math.round(bpm)||90)),
       sound:soundPreset,
       theme:csThemeKey,
+      speedStep:csSpeedStep,
       click:csClickOn,
       arp:csArpOn,
       arpRate:csArpRate,
@@ -1866,6 +1867,10 @@ function loadCsPrefs(){
     if(csThemeSel) csThemeSel.value=csThemeKey;
   }
   if(typeof p.click==='boolean') csClickOn=p.click;
+  if([0,2,4,6].includes(p.speedStep)){
+    csSpeedStep=p.speedStep;
+    if(csSpeedSel) csSpeedSel.value=String(csSpeedStep);
+  }
   if(typeof p.arp==='boolean') csArpOn=p.arp;
   if(['held','pulse','walk'].includes(p.bassMode)){
     csBassMode=p.bassMode;
@@ -2729,6 +2734,39 @@ if(csBassSel){
   });
 }
 
+/* ---------- speed trainer: the loop pushes you a little faster ---------- */
+
+let csSpeedStep=0;   // bpm added per two passes; 0 = off
+let csSpeedPasses=0;
+let csSpeedPrevCur=0;
+
+const csSpeedSel=document.getElementById('cs-trainer');
+if(csSpeedSel){
+  csSpeedSel.addEventListener('change',()=>{
+    csSpeedStep=[0,2,4,6].includes(Number(csSpeedSel.value)) ? Number(csSpeedSel.value) : 0;
+    csSpeedPasses=0;
+    saveCsPrefs();
+  });
+}
+
+function csTrainerTick(){
+  if(!csSpeedStep || !playing) return;
+  // a wrap shows up as the position jumping backwards
+  if(cur < csSpeedPrevCur-0.5){
+    csSpeedPasses++;
+    if(csSpeedPasses>=2){
+      csSpeedPasses=0;
+      const next=Math.min(Number(tempo.max), bpm+csSpeedStep);
+      if(next!==bpm){
+        tempo.value=String(next);
+        tempo.dispatchEvent(new Event('input',{bubbles:true}));
+        if(csStatus) csStatus.textContent='trainer: '+next+' bpm';
+      }
+    }
+  }
+  csSpeedPrevCur=cur;
+}
+
 function tick(now){
   const dt=Math.min(0.05,(now-last)/1000);
   last=now;
@@ -2747,6 +2785,7 @@ function tick(now){
     csBassSchedule();
     csSyncPadBass();
     csUpdateMeter();
+    csTrainerTick();
   }else if(csJamView || csHoverView){
     draw(); // the freeze-frame breathes (glow pulse) while held or hovered
     csUpdateMeter();
