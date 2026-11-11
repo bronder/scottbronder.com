@@ -1269,7 +1269,7 @@ function renderBlock(c,i,startBeat,move,fresh){
   el.setAttribute('data-idx',String(i));
   el.setAttribute('aria-label',
     c.sym+', '+c.beats+' beats, chord '+(i+1)+' of '+PROG.length+
-    '. Press Delete to remove.');
+    '. Press Delete to remove; arrows move; shift+arrows transpose.');
 
   const name=document.createElement('span');
   name.className='blk-name';
@@ -1361,6 +1361,18 @@ function renderBlock(c,i,startBeat,move,fresh){
       if(ni<0 || ni>=PROG.length) return;
       mutateProg(()=>{ PROG.splice(ni,0,PROG.splice(i,1)[0]); });
       const nb=csGridTrack.querySelector('.seq-block[data-idx="'+ni+'"]');
+      if(nb) nb.focus();
+    }else if(e.shiftKey && (e.key==='ArrowUp' || e.key==='ArrowDown')){
+      // shift+arrows transpose the chord a semitone — borrowed chords,
+      // secondary dominants, whatever the music wants
+      e.preventDefault();
+      const m=/^([A-G][#b]?)(.*)$/.exec(PROG[i].sym);
+      if(!m) return;
+      const pc=parseChord(PROG[i].sym);
+      if(!pc) return;
+      const np=(pc.root+(e.key==='ArrowUp'?1:-1)+12)%12;
+      mutateProg(()=>{ PROG[i].sym=NOTE_SHARP[np]+m[2]; });
+      const nb=csGridTrack.querySelector('.seq-block[data-idx="'+i+'"]');
       if(nb) nb.focus();
     }
   });
