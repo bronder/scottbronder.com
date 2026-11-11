@@ -277,8 +277,21 @@ function syncMeta(){
   if(label) label.textContent=chord;
 }
 
-// how much of each segment is spent sweeping to the next chord
-function sweepDur(b){ return Math.min(1.8, b*0.45); }
+// how much of each segment is spent sweeping to the next chord — the glide
+// depth control scales it, always leaving a hold so chords still speak
+let csGlide=1;
+function sweepDur(b){ return Math.min(b*0.45*csGlide, b*0.85); }
+const csGlideSlider=document.getElementById('cs-glide');
+if(csGlideSlider){
+  csGlideSlider.addEventListener('input',()=>{
+    csGlide=Math.max(0.4, Math.min(2, Number(csGlideSlider.value)/100));
+    const val=document.getElementById('cs-glide-val');
+    if(val) val.textContent=Math.round(csGlide*100)+'%';
+    syncMeta();
+    draw();
+    saveCsPrefs();
+  });
+}
 
 function noteAt(voice,t,noIntro,sessT){
   if(N===0) return 60;
@@ -1916,6 +1929,7 @@ function saveCsPrefs(){
       vol:csVolume,
       beatsPerMeasure:BEATS_PER_MEASURE,
       labels:csLabelMode,
+      glide:csGlide,
       theme:csThemeKey,
       speedStep:csSpeedStep,
       stopAfter:csStopAfter,
@@ -1967,6 +1981,10 @@ function loadCsPrefs(){
     csVolume=Math.max(0, Math.min(1, p.vol));
     if(csVolSlider) csVolSlider.value=String(Math.round(csVolume*100));
     csApplyVolume();
+  }
+  if(Number.isFinite(p.glide)){
+    csGlide=Math.max(0.4, Math.min(2, p.glide));
+    if(csGlideSlider) csGlideSlider.value=String(Math.round(csGlide*100));
   }
   if(['chords','numerals','both'].includes(p.labels)){
     csLabelMode=p.labels;
