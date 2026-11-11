@@ -220,17 +220,40 @@ function posToSeg(pos){
 function beatToPos(beat){
   return beat*60/bpm;
 }
+
+/* ---------- section loop: an optional playback window between beats ---------- */
+
+let csLoopFrom=null; // beat where the window starts (a marker's beat)
+let csLoopTo=null;   // beat where it ends (next marker, or the loop end)
+
+function csLoopActive(){
+  return csLoopFrom!==null && csLoopTo!==null && csLoopTo>csLoopFrom && csLoopFrom<totalBeats();
+}
+function csLoopLen(){
+  return csLoopActive() ? (csLoopTo-csLoopFrom)*60/bpm : totalDur();
+}
+function csWrapWindow(p){
+  if(!csLoopActive()){
+    const td=totalDur();
+    return ((p%td)+td)%td;
+  }
+  const a=csLoopFrom*60/bpm;
+  const len=csLoopLen();
+  return a+(((p-a)%len)+len)%len;
+}
+
 function fmtSec(s){ return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'); }
 function syncMeta(){
-  const td=totalDur();
-  const pos=((cur%td)+td)%td;
-  time.textContent=fmtSec(pos)+' / '+fmtSec(td);
+  const active=csLoopActive();
+  const len=csLoopLen();
+  const pos=csWrapWindow(cur)-(active?csLoopFrom*60/bpm:0);
+  time.textContent=fmtSec(pos)+' / '+fmtSec(len);
   // announce position as time, matching the visible readout — a bare range
   // input would otherwise say percentages
-  scrub.setAttribute('aria-valuetext', fmtSec(pos)+' of '+fmtSec(td));
-  scrub.max=String(Math.max(1,Math.round(td)));
+  scrub.setAttribute('aria-valuetext', fmtSec(pos)+' of '+fmtSec(len));
+  scrub.max=String(Math.max(1,Math.round(len)));
   scrub.value=String(Math.min(Number(scrub.max), Math.round(pos)));
-  const chord=(N>0 && PROG[posToSeg(pos).idx]) ? PROG[posToSeg(pos).idx].sym : '—';
+  const chord=(N>0 && PROG[posToSeg(csWrapWindow(cur)).idx]) ? PROG[posToSeg(csWrapWindow(cur)).idx].sym : '—';
   if(label) label.textContent=chord;
 }
 
@@ -239,8 +262,7 @@ function sweepDur(b){ return Math.min(1.8, b*0.45); }
 
 function noteAt(voice,t,noIntro,sessT){
   if(N===0) return 60;
-  const td=totalDur();
-  const tt=((t%td)+td)%td;
+  const tt=csWrapWindow(t);
   const seg=posToSeg(tt);
   const idx=seg.idx, local=seg.local, b=seg.dur;
   const from=NOTES[idx][voice];
@@ -929,7 +951,8 @@ if(csIntroBtn){
   });
 }
 scrub.addEventListener('input',()=>{
-  cur=Number(scrub.value)||0;
+  // the slider is window-relative when a section loop is active
+  cur=((csLoopActive()?csLoopFrom*60/bpm:0)+Number(scrub.value))||0;
   csFollow=true;
   sfLastSegIdx=-1;
   csNowIdx=-1;
@@ -963,6 +986,31 @@ let csHistory=[];
 let csNowIdx=-1;
 let csDrag=null;
 let csMdrag=null;
+
+// a stale window (markers gone, chart shortened) quietly reopens the full loop
+function csValidateLoopWindow(){
+  if(csLoopFrom===null) return;
+  if(!csLoopActive() || !MARKERS.some(m=>m.beat===csLoopFrom)){
+    csLoopFrom=null;
+    csLoopTo=null;
+  }
+}
+
+// shift-click a flag: loop from its section to the next flag (or the end)
+function csToggleSectionLoop(m){
+  if(csLoopFrom===m.beat){
+    csLoopFrom=null;
+    csLoopTo=null;
+    if(csStatus) csStatus.textContent='looping the whole progression';
+  }else{
+    const sorted=[...MARKERS].sort((a,b)=>a.beat-b.beat);
+    const next=sorted.find(k=>k.beat>m.beat);
+    csLoopFrom=m.beat;
+    csLoopTo=next ? next.beat : totalBeats();
+    if(csStatus) csStatus.textContent='looping '+m.label+' — '+((csLoopTo-csLoopFrom)/BEATS_PER_MEASURE)+' bars';
+  }
+  rebuild();
+}
 
 function csHexA(hex, a){
   const n=parseInt(hex.slice(1), 16);
@@ -1036,6 +1084,7 @@ function renderGrid(move, freshIdx){
   // move: { idx, dropIdx } while a block is being dragged to dropIdx
   csGridTrack.innerHTML='';
   normalizeMarkers();
+  csValidateLoopWindow();
   const tb=Math.max(totalBeats(), BEATS_PER_MEASURE);
   csGridTrack.style.width=tb*CS_PX_BEAT+'px';
 
@@ -1090,6 +1139,15 @@ function renderGrid(move, freshIdx){
     empty.className='grid-empty';
     empty.textContent='Your progression starts here. Tap a chord to add it.';
     csGridTrack.appendChild(empty);
+  }
+
+  // section loop window: validated against the current chart, drawn as a band
+  if(csLoopActive()){
+    const band=document.createElement('div');
+    band.className='cs-loopband';
+    band.style.left=(csLoopFrom*CS_PX_BEAT)+'px';
+    band.style.width=((csLoopTo-csLoopFrom)*CS_PX_BEAT)+'px';
+    csGridTrack.appendChild(band);
   }
 
   // blocks
@@ -1337,6 +1395,13 @@ function renderMarker(m){
     beginCsMarkerDrag(m,el,e.clientX);
   });
 
+  el.addEventListener('click',e=>{
+    if(e.shiftKey && !e.target.closest('.mk-del')){
+      e.preventDefault();
+      csToggleSectionLoop(m);
+    }
+  });
+
   el.addEventListener('keydown',e=>{
     if(el.querySelector('.mk-rename')) return;
     if(e.key==='Enter' || e.key===' '){
@@ -1442,8 +1507,7 @@ function beginCsMarkerRename(el,m){
 // jump the loop so the marker's section starts now
 function jumpToMarker(m){
   if(!playing || !PROG.length) return;
-  const td=totalDur();
-  cur=Math.min(Math.max(0,beatToPos(m.beat)), Math.max(0,td-0.001));
+  cur=csWrapWindow(beatToPos(m.beat));
   csFollow=true;
   sfLastSegIdx=-1;
   csNowIdx=-1;
@@ -2264,7 +2328,7 @@ function tick(now){
   // redraw through their own listeners, so idle frames skip the paint entirely
   if(playing){
     playClock+=dt;
-    cur=(cur+dt)%totalDur();
+    cur=csWrapWindow(cur+dt);
     syncMeta();
     csUpdateNow(cur);
     csUpdatePlayhead();
@@ -2283,7 +2347,7 @@ canvas.addEventListener('click',e=>{
   const rect=canvas.getBoundingClientRect();
   const frac=Math.min(1, Math.max(0, (e.clientX-rect.left-rect.width*0.06)/(rect.width*0.88)));
   const beat=frac*totalBeats();
-  cur=beat*60/bpm;
+  cur=csWrapWindow(beat*60/bpm);
   sfLastSegIdx=-1;
   csNowIdx=-1;
   csUpdateNow(cur);
