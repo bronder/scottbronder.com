@@ -2258,6 +2258,20 @@ function tick(now){
   requestAnimationFrame(tick);
 }
 
+// the idle overview is a scrub surface: click the neon to move the preview
+canvas.addEventListener('click',e=>{
+  if(playing || N===0 || csJamView) return;
+  const rect=canvas.getBoundingClientRect();
+  const frac=Math.min(1, Math.max(0, (e.clientX-rect.left-rect.width*0.06)/(rect.width*0.88)));
+  const beat=frac*totalBeats();
+  cur=beat*60/bpm;
+  sfLastSegIdx=-1;
+  csNowIdx=-1;
+  csUpdateNow(cur);
+  syncMeta();
+  draw();
+});
+
 window.addEventListener('resize', draw);
 // idle has no frame loop: re-render whenever the canvas box itself changes
 // size (late layout, or the tool's panel being shown again)
