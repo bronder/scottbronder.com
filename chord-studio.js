@@ -2031,6 +2031,17 @@ if(soundSelect){
     soundPreset=SOUND_PRESETS[soundSelect.value] ? soundSelect.value : 'custom';
     saveCsPrefs();
     if(padVoices || toneReady) switchSound();
+    // shopping for a timbre should be audible: while stopped, swell the chord
+    // under the preview hairline in the new sound (the jam voice rebuilds
+    // wearing it — switchSound tore the old one down)
+    if(!playing && N>0 && !csJamHeld.size && window.Tone && Tone.PolySynth){
+      const seg=posToSeg(cur).idx;
+      const notes=NOTES[seg].slice(0,4).map(midiToFreq);
+      csEnsureJam().then(j=>{
+        if(!j || playing) return;
+        try{ j.synth.triggerAttackRelease(notes, 1.2, Tone.now()+0.02, 0.8); }catch{}
+      });
+    }
   });
 }
 
