@@ -2046,6 +2046,40 @@ function renderPresets(){
     b.addEventListener('click',()=>loadPreset(p));
     csPresetsHost.appendChild(b);
   });
+  const roll=document.createElement('button');
+  roll.type='button';
+  roll.className='ghost-btn cs-preset';
+  roll.textContent='surprise me';
+  roll.title='roll a random progression in the key you picked';
+  roll.addEventListener('click',()=>csRollProgression());
+  csPresetsHost.appendChild(roll);
+}
+
+// weighted dice: grounded start, mostly-friendly middle, resolve to I/V/vi
+function csRollProgression(){
+  if(N>=MAX_CHORDS) return;
+  const data=paletteData();
+  const middle=[0,0,1,3,3,4,4,4,5,5];       // I ii IV V V V vi pool by degree
+  const endings=[0,0,0,4,4,5];              // I I I V V vi
+  const count=4+Math.floor(Math.random()*3); // 4-6 chords
+  const degrees=[0];
+  for(let i=1;i<count-1;i++){
+    let d=middle[Math.floor(Math.random()*middle.length)];
+    for(let tries=0; tries<3 && d===degrees[i-1]; tries++){
+      d=middle[Math.floor(Math.random()*middle.length)];
+    }
+    degrees.push(d);
+  }
+  degrees.push(endings[Math.floor(Math.random()*endings.length)]);
+  const prog=degrees.map(d=>({sym:data[d].sym, beats:Math.random()<0.2 ? 8 : 4}));
+  mutateProg(()=>{ PROG.splice(0, PROG.length, ...prog); });
+  if(csGridScroll) csGridScroll.scrollLeft=0;
+  const first=csGridTrack.querySelector('.seq-block');
+  if(first) first.scrollIntoView({block:'nearest', inline:'start', behavior:'smooth'});
+  if(csStatus){
+    const keyLabel=(keySelect && keySelect.selectedOptions[0]) ? keySelect.selectedOptions[0].textContent : '';
+    csStatus.textContent='rolled — '+csRomanReadout()+' in '+keyLabel+' · roll again';
+  }
 }
 
 function loadPreset(p){
