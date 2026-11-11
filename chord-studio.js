@@ -2695,7 +2695,10 @@ function csArpSchedule(){
     const chord=NOTES[seg ? seg.idx : 0];
     if(chord){
       const voice=CS_ARP_PATTERN[csArpSlot % CS_ARP_PATTERN.length];
-      try{ csArpSynth.triggerAttackRelease(midiToFreq(chord[voice]+12), '16n', t, 0.7); }catch{}
+      // a breath of humanity: timing wanders ±3ms, touch wanders a little more
+      const jt=t+(Math.random()-0.5)*0.006;
+      const jv=0.7+(Math.random()-0.5)*0.12;
+      try{ csArpSynth.triggerAttackRelease(midiToFreq(chord[voice]+12), '16n', jt, jv); }catch{}
     }
     csArpSlot++;
     csArpNextPos+=step;
