@@ -1829,12 +1829,12 @@ let currentKey=KEYS.find(k=>k[0]==='G') || KEYS[0];
 // whatever key (and mode) is selected; beats shape the feel — waltz in threes,
 // the epic loop in long swells
 const PRESETS=[
-  {name:'pop punk', degrees:[0,4,5,3], beats:[4,4,4,4], title:'I–V–vi–IV'},
+  {name:'pop punk', degrees:[0,4,5,3], beats:[4,4,4,4], sound:'symphony', title:'I–V–vi–IV'},
   {name:'doo-wop', degrees:[0,5,3,4], beats:[4,4,4,4], title:'I–vi–IV–V'},
-  {name:'aeolian descent', degrees:[0,6,5,4], beats:[4,4,4,4], title:'i–VII–VI–v — shines in a minor key'},
-  {name:'waltz', degrees:[0,5,3,0], beats:[3,3,3,3], title:'I–vi–IV–I in three-beat blocks'},
-  {name:'slow epic', degrees:[0,2,3,5], beats:[8,8,8,8], title:'I–iii–IV–vi — long swells for the big synths'},
-  {name:'jazz turnaround', degrees:[1,4,0], beats:[4,4,8], mode:'sevenths', title:'ii–V–I with 7ths'}
+  {name:'aeolian descent', degrees:[0,6,5,4], beats:[4,4,4,4], sound:'choir', title:'i–VII–VI–v — shines in a minor key'},
+  {name:'waltz', degrees:[0,5,3,0], beats:[3,3,3,3], sound:'organ', title:'I–vi–IV–I in three-beat blocks'},
+  {name:'slow epic', degrees:[0,2,3,5], beats:[8,8,8,8], sound:'orchestra', title:'I–iii–IV–vi — long swells for the big synths'},
+  {name:'jazz turnaround', degrees:[1,4,0], beats:[4,4,8], mode:'sevenths', sound:'organ', title:'ii–V–I with 7ths'}
 ];
 
 function renderPresets(){
@@ -1860,6 +1860,15 @@ function loadPreset(p){
     if(modeSelect) modeSelect.value=wantMode;
     renderPalette();
   }
+  // a preset is a full vibe — some bring their matched instrument too,
+  // applied through the select's own change path (validates, persists,
+  // and generation-guarded rebuilds if a patch is live)
+  let soundChanged=false;
+  if(p.sound && soundSelect && soundSelect.value!==p.sound){
+    soundSelect.value=p.sound;
+    soundSelect.dispatchEvent(new Event('change',{bubbles:true}));
+    soundChanged=soundPreset===p.sound;
+  }
   const data=paletteData();
   const prog=p.degrees.map((d,i)=>({sym:data[d].sym, beats:p.beats[i]||4}));
   mutateProg(()=>{
@@ -1871,7 +1880,10 @@ function loadPreset(p){
   if(first) first.scrollIntoView({block:'nearest', inline:'start', behavior:'smooth'});
   if(csStatus){
     const keyLabel=(keySelect && keySelect.selectedOptions[0]) ? keySelect.selectedOptions[0].textContent : '';
-    csStatus.textContent=p.name+' loaded — '+p.title+' in '+keyLabel;
+    const soundNote=soundChanged && SOUND_PRESETS[soundPreset]
+      ? ' · '+SOUND_PRESETS[soundPreset].name.toLowerCase()+' on'
+      : '';
+    csStatus.textContent=p.name+' loaded — '+p.title+' in '+keyLabel+soundNote;
   }
 }
 
