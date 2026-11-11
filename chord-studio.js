@@ -30,60 +30,6 @@ let N=0;
 // optionally restricted to certain chord tones. Preset-level settings shape the
 // shared bus (chorus, formant, reverb, vibrato, wah).
 const SOUND_PRESETS={
-  custom:{name:'Custom Pads',
-    layers:[{type:'fatsawtooth',count:5,spread:45,attack:0.35,sustain:0.85,release:1.8,glide:0.05,
-      filterBase:280,filterSus:0.4,filterOct:2.6,vol:-15}],
-    breath:[120,450],
-    chorus:{frequency:0.3,depth:0.8,wet:0.55},reverb:{decay:9,wet:0.65},shimmer:-20,wah:{base:1800,peak:5500,q:3}},
-  organ:{name:'Church Organ',
-    layers:[{partials:[{up:0,gain:1},{up:12,gain:0.55},{up:19,gain:0.3},{up:24,gain:0.35},{up:-12,gain:0.6}],
-      attack:0.02,sustain:1,release:0.35,glide:0.03,vol:-22}],
-    chorus:{frequency:0.2,depth:0.1,wet:0.15},reverb:{decay:11,wet:0.75},shimmer:-26,wah:{base:9000,peak:9000,q:0.7}},
-  choir:{name:'Cathedral Choir (Live)',
-    sampled:{inst:'choir_aahs', instVol:-14},
-    layers:[{partials:[{up:0,gain:1,wave:{type:'fattriangle',count:3,spread:15}},{up:12,gain:0.18}],
-      attack:0.6,sustain:0.9,release:2.4,glide:0.08,vol:-22}],
-    midShape:{type:'peaking',frequency:850,gain:6,Q:1.5},
-    vibrato:{depth:7,rate:5.3},
-    chorus:{frequency:0.3,depth:0.6,wet:0.5},reverb:{decay:8,wet:0.65},shimmer:-22,wah:{base:1200,peak:3600,q:4}},
-  symphony:{name:'Symphony Strings',
-    layers:[{type:'fatsawtooth',count:6,spread:70,attack:0.7,sustain:0.9,release:2.8,glide:0.07,
-      filterBase:340,filterSus:0.55,filterOct:2.8,vol:-15}],
-    breath:[100,400],
-    midShape:{type:'lowpass',frequency:3800,Q:0.7},vibrato:{depth:8,rate:5.2},
-    chorus:{frequency:0.3,depth:0.7,wet:0.5},reverb:{decay:8,wet:0.6},shimmer:-24,wah:{base:2000,peak:6000,q:2}},
-  orchestra:{name:'Full Orchestra',
-    layers:[
-      // string section: wide detuned saw pairs, slow swell
-      {type:'fatsawtooth',count:6,spread:70,attack:0.7,sustain:0.9,release:2.8,glide:0.07,
-        filterBase:340,filterSus:0.55,filterOct:2.8,vol:-17,haas:true},
-      // brass: focused saws, filter opens with a quicker "blat", mid weight
-      {type:'fatsawtooth',count:4,spread:25,attack:0.25,sustain:0.95,release:1.2,glide:0.05,
-        filterBase:500,filterSus:0.7,filterOct:2.4,fEnvA:0.12,vol:-17,haas:false},
-      // woodwinds: soft triangle + octave sine doubling the top lines
-      {partials:[{up:0,gain:1,wave:{type:'triangle'}},{up:12,gain:0.5}],
-        attack:0.3,sustain:0.85,release:1.5,glide:0.06,vol:-22,tones:[0,1]},
-      // low cellos/basses doubling the bottom tones an octave down
-      {partials:[{up:-12,gain:1,wave:{type:'fatsawtooth',count:2,spread:12}}],
-        attack:0.4,sustain:0.9,release:2,glide:0.06,vol:-20,tones:[2,3]}
-    ],
-    midShape:{type:'lowpass',frequency:4500,Q:0.7},
-    vibrato:{depth:7,rate:5.1},
-    chorus:{frequency:0.25,depth:0.5,wet:0.4},reverb:{decay:10,wet:0.7},shimmer:-22,wah:{base:2600,peak:6000,q:1.5}},
-  orchestraLive:{name:'Real Strings + Orchestra',sampled:{inst:'string_ensemble_1',harp:true},
-    layers:[
-      {type:'fatsawtooth',count:6,spread:70,attack:0.7,sustain:0.9,release:2.8,glide:0.07,
-        filterBase:340,filterSus:0.55,filterOct:2.8,vol:-21,haas:true},
-      {type:'fatsawtooth',count:4,spread:25,attack:0.25,sustain:0.95,release:1.2,glide:0.05,
-        filterBase:500,filterSus:0.7,filterOct:2.4,fEnvA:0.12,vol:-19,haas:false},
-      {partials:[{up:0,gain:1,wave:{type:'triangle'}},{up:12,gain:0.5}],
-        attack:0.3,sustain:0.85,release:1.5,glide:0.06,vol:-23,tones:[0,1]},
-      {partials:[{up:-12,gain:1,wave:{type:'fatsawtooth',count:2,spread:12}}],
-        attack:0.4,sustain:0.9,release:2,glide:0.06,vol:-21,tones:[2,3]}
-    ],
-    midShape:{type:'lowpass',frequency:4500,Q:0.7},
-    vibrato:{depth:7,rate:5.1},
-    chorus:{frequency:0.25,depth:0.5,wet:0.4},reverb:{decay:10,wet:0.7},shimmer:-22,wah:{base:2600,peak:6000,q:1.5}},
   glacier:{name:'Glacier',
     layers:[
       // the shelf: a mile-wide supersaw that blooms upward over seconds
@@ -118,7 +64,7 @@ const SOUND_PRESETS={
     shimmer:-19,
     wah:{base:2200,peak:5200,q:1.2}}
 };
-let soundPreset='custom';
+let soundPreset='glacier';
 
 // Chord symbol -> voicing engine. Each quality lists candidate shapes as four
 // offsets from the root (top voice first); the shape and octave that sit
@@ -485,7 +431,7 @@ function makeVoice(spec, tone, dest){
 
 async function initTone(){
   const gen=soundGen;
-  const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.custom;
+  const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.glacier;
   await Tone.start();
   if(gen!==soundGen) return; // a newer sound was picked before this build started
   const reverb=reg(new Tone.Reverb({decay:P.reverb.decay, preDelay:0.03, wet:P.reverb.wet}));
@@ -775,7 +721,7 @@ function csBloom(idx){
 function updateSynth(){
   if(padVoices && window.Tone){
     if(playing && N>0){
-      const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.custom;
+      const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.glacier;
       const td=totalDur();
       const pos=((cur%td)+td)%td;
       const seg=posToSeg(pos);
@@ -2379,12 +2325,12 @@ let currentKey=KEYS.find(k=>k[0]==='G') || KEYS[0];
 // whatever key (and mode) is selected; beats shape the feel — waltz in threes,
 // the epic loop in long swells
 const PRESETS=[
-  {name:'pop punk', degrees:[0,4,5,3], beats:[4,4,4,4], sound:'symphony', title:'I–V–vi–IV'},
+  {name:'pop punk', degrees:[0,4,5,3], beats:[4,4,4,4], sound:'glacier', title:'I–V–vi–IV'},
   {name:'doo-wop', degrees:[0,5,3,4], beats:[4,4,4,4], title:'I–vi–IV–V'},
-  {name:'aeolian descent', degrees:[0,6,5,4], beats:[4,4,4,4], sound:'choir', title:'i–VII–VI–v — shines in a minor key'},
-  {name:'waltz', degrees:[0,5,3,0], beats:[3,3,3,3], sound:'organ', title:'I–vi–IV–I in three-beat blocks'},
-  {name:'slow epic', degrees:[0,2,3,5], beats:[8,8,8,8], sound:'orchestra', title:'I–iii–IV–vi — long swells for the big synths'},
-  {name:'jazz turnaround', degrees:[1,4,0], beats:[4,4,8], mode:'sevenths', sound:'organ', title:'ii–V–I with 7ths'}
+  {name:'aeolian descent', degrees:[0,6,5,4], beats:[4,4,4,4], sound:'cathedral', title:'i–VII–VI–v — shines in a minor key'},
+  {name:'waltz', degrees:[0,5,3,0], beats:[3,3,3,3], sound:'cathedral', title:'I–vi–IV–I in three-beat blocks'},
+  {name:'slow epic', degrees:[0,2,3,5], beats:[8,8,8,8], sound:'glacier', title:'I–iii–IV–vi — long swells for the big synths'},
+  {name:'jazz turnaround', degrees:[1,4,0], beats:[4,4,8], mode:'sevenths', sound:'cathedral', title:'ii–V–I with 7ths'}
 ];
 
 function renderPresets(){
@@ -2631,7 +2577,7 @@ if(soundSelect){
   });
   soundSelect.value=soundPreset;
   soundSelect.addEventListener('change',()=>{
-    soundPreset=SOUND_PRESETS[soundSelect.value] ? soundSelect.value : 'custom';
+    soundPreset=SOUND_PRESETS[soundSelect.value] ? soundSelect.value : 'glacier';
     saveCsPrefs();
     if(padVoices || toneReady) switchSound();
     // shopping for a timbre should be audible: while stopped, swell the chord
@@ -2708,7 +2654,7 @@ function csClearJamView(){
 }
 
 function csJamOptions(){
-  const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.custom;
+  const P=SOUND_PRESETS[soundPreset] || SOUND_PRESETS.glacier;
   const L=(P.layers||[]).find(l=>!l.partials) || (P.layers||[])[0] || {};
   const osc=L.partials
     ? {type:'fatsawtooth', count:3, spread:20}
