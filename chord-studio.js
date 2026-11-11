@@ -680,6 +680,7 @@ async function switchSound(){
   toneNodes.length=0;
   sfCache={}; sfLastSegIdx=-1; sfBus=null; sfFailed=false;
   csJam=null; csJamHeld.clear();
+  csBloomSynth=null; csBloomIdx=-1;
   padVoices=null; bassVoice=null; subVoice=null; shimVoices=null;
   sweepEQ=null; sweepLP=null; toneMaster=null; toneReady=null; sweepUp=false; voicesActive=false;
   if(wasPlaying) ensureSynth();
@@ -743,11 +744,14 @@ let csBloomSynth=null;
 function csEnsureBloom(){
   if(csBloomSynth || !window.Tone || !Tone.Synth) return csBloomSynth;
   try{
-    csBloomSynth=new Tone.Synth({
+    // registered with reg() so a sound swap disposes the whole bell chain —
+    // an earlier version leaked a seven-second convolver per swap, and the
+    // stack of them starved the audio thread into crackling
+    csBloomSynth=reg(new Tone.Synth({
       oscillator:{type:'sine'},
       envelope:{attack:0.004, decay:1.4, sustain:0, release:1.8},
-    });
-    const rv=new Tone.Reverb({decay:7, preDelay:0.03, wet:0.55});
+    }));
+    const rv=reg(new Tone.Reverb({decay:5, preDelay:0.03, wet:0.55}));
     rv.connect(toneMaster || Tone.Destination);
     csBloomSynth.connect(rv);
     csBloomSynth.volume.value=-20;
