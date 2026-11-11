@@ -202,7 +202,18 @@ function reg(node){ toneNodes.push(node); return node; }
 
 /* ---------- segment timeline: per-chord lengths replace one global bar length ---------- */
 
-const BEATS_PER_MEASURE=4;
+let BEATS_PER_MEASURE=4; // measures can be 2-8 beats; the ruler, markers,
+                          // click accents and walking bass all follow
+
+const csTimeSigSel=document.getElementById('cs-timesig');
+if(csTimeSigSel){
+  csTimeSigSel.addEventListener('change',()=>{
+    const v=Number(csTimeSigSel.value);
+    if([2,3,4,5,6,7,8].includes(v)) BEATS_PER_MEASURE=v;
+    renderGrid();
+    saveCsPrefs();
+  });
+}
 
 function totalBeats(){
   return PROG.reduce((s,c)=>s+c.beats,0);
@@ -1827,6 +1838,7 @@ function saveCsPrefs(){
       bpm:Math.max(40, Math.min(240, Math.round(bpm)||90)),
       sound:soundPreset,
       vol:csVolume,
+      beatsPerMeasure:BEATS_PER_MEASURE,
       theme:csThemeKey,
       speedStep:csSpeedStep,
       stopAfter:csStopAfter,
@@ -1878,6 +1890,10 @@ function loadCsPrefs(){
     csVolume=Math.max(0, Math.min(1, p.vol));
     if(csVolSlider) csVolSlider.value=String(Math.round(csVolume*100));
     csApplyVolume();
+  }
+  if([2,3,4,5,6,7,8].includes(p.beatsPerMeasure)){
+    BEATS_PER_MEASURE=p.beatsPerMeasure;
+    if(csTimeSigSel) csTimeSigSel.value=String(BEATS_PER_MEASURE);
   }
   if(CS_THEMES[p.theme]){
     csThemeKey=p.theme;
@@ -2854,7 +2870,7 @@ function csBassSchedule(){
     const chord=NOTES[seg ? seg.idx : 0];
     if(chord){
       // walk: root on the downbeat, the fifth on beat three; pulse: roots
-      const useFifth=csBassMode==='walk' && (csBassBeatIdx % BEATS_PER_MEASURE)===2;
+      const useFifth=csBassMode==='walk' && (csBassBeatIdx % BEATS_PER_MEASURE)===Math.ceil(BEATS_PER_MEASURE/2);
       const m=chord[4]+(useFifth ? 7 : 0);
       try{ csBassSynth.triggerAttackRelease(midiToFreq(m), '8n', t, 0.85); }catch{}
     }
