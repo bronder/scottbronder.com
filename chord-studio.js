@@ -42,7 +42,11 @@ const SOUND_PRESETS={
         filterBase:160,filterSus:0.45,filterOct:2.6,fEnvA:1.8,vol:-22,haas:true},
       // glassy tops: soft triangles an octave up on the melody voices
       {partials:[{up:0,gain:1,wave:{type:'fattriangle',count:3,spread:18}},{up:12,gain:0.22}],
-        attack:1.8,sustain:0.9,release:4,glide:0.10,vol:-24,tones:[0,1]}
+        attack:1.8,sustain:0.9,release:4,glide:0.10,vol:-24,tones:[0,1]},
+      // the ice: a whisper of pure sines two octaves above the top voices,
+      // slower still to arrive — the light off the glacier's face
+      {partials:[{up:24,gain:1,wave:{type:'sine'}},{up:19,gain:0.4,wave:{type:'sine'}}],
+        attack:2.8,sustain:0.85,release:5,glide:0.14,vol:-27,tones:[0]}
     ],
     breath:[70,240],
     vibrato:{depth:6,rate:4.4},
