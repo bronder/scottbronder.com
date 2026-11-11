@@ -61,8 +61,13 @@ const SOUND_PRESETS={
         attack:0.9,sustain:1,release:3.5,glide:0.05,vol:-20},
       // the crypt: sub-octave drone beneath, slower to swell than the nave above
       {partials:[{up:-24,gain:1,wave:{type:'sine'}},{up:-12,gain:0.3,wave:{type:'sine'}}],
-        attack:2.5,sustain:0.95,release:5,glide:0.06,vol:-18,tones:[2,3]}
+        attack:2.5,sustain:0.95,release:5,glide:0.06,vol:-18,tones:[2,3]},
+      // the choir: soft triangles singing an "ah" through the preset's
+      // formant, an octave above the melody — voices in the nave
+      {partials:[{up:12,gain:1,wave:{type:'fattriangle',count:3,spread:12}},{up:19,gain:0.25,wave:{type:'sine'}}],
+        attack:1.6,sustain:0.9,release:4.5,glide:0.09,vol:-23,tones:[0,1]}
     ],
+    midShape:{type:'peaking',frequency:820,gain:5,Q:1.4},
     chorus:{frequency:0.15,depth:0.4,wet:0.35},
     reverb:{decay:15,wet:0.75},
     shimmer:-19,
